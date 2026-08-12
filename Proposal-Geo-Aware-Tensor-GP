@@ -1,0 +1,5523 @@
+# Operator-Spectral Prior：step-by-step 推导与介绍
+
+下面我把 **Operator-Spectral Prior** 从第一性原理推出来。核心思想非常简单：
+
+> 一个连续函数的“合理形状”，不应该只由坐标网络自己学；它应该由定义域的几何结构、边界条件、物理尺度和算子谱结构共同决定。
+
+你原来的贝叶斯函数张量路线已经有：
+
+$$  
+\text{continuous index}  
+\rightarrow  
+\text{latent function}  
+\rightarrow  
+\text{GP prior}  
+\rightarrow  
+\text{Bayesian tensor factorization}.  
+$$
+
+现在 Operator-Spectral prior 做的是把这里的 GP prior 进一步结构化：
+
+$$  
+\text{continuous domain geometry}  
+\rightarrow  
+\text{operator}  
+\rightarrow  
+\text{eigenbasis}  
+\rightarrow  
+\text{spectral prior}  
+\rightarrow  
+\text{Bayesian functional tensor factor}.  
+$$
+
+---
+
+# 1. 从普通函数先验开始
+
+假设我们要学习一个连续函数：
+
+$$  
+f:\mathcal{X}\rightarrow \mathbb{R}.  
+$$
+
+这里 (\mathcal{X}) 可以是：
+
+$$  
+\mathbb{R},\quad [0,L],\quad S^1,\quad S^2,\quad \Omega\subset\mathbb{R}^d,\quad [0,R]\times S^2.  
+$$
+
+传统神经场方法会直接设：
+
+$$  
+f(x)=\mathrm{MLP}_{\theta}(x).  
+$$
+
+或者带 positional encoding：
+
+$$  
+f(x)=\mathrm{MLP}_{\theta}(\gamma(x)).  
+$$
+
+贝叶斯 GP 方法会设：
+
+$$  
+f(x)\sim \mathcal{GP}(0,k(x,x')).  
+$$
+
+问题是：  
+如果我们直接手选 kernel：
+
+$$  
+k(x,x')  
+$$
+
+就容易变成“不同场景换不同 kernel”，方法论不够强。
+
+Operator-Spectral prior 的第一步是：  
+**不直接从 kernel 出发，而是从定义域上的算子出发。**
+
+---
+
+# 2. 第一步：选择一个刻画几何/物理结构的算子
+
+我们在空间 (\mathcal{X}) 上选择一个自伴正定或半正定算子：
+
+$$  
+\mathcal{A}:\mathcal{F}(\mathcal{X})\rightarrow \mathcal{F}(\mathcal{X}).  
+$$
+
+典型例子是 Laplacian 或其变体：
+
+$$  
+\mathcal{A}=-\Delta.  
+$$
+
+如果有边界条件，则算子要配合边界条件：
+
+$$  
+\mathcal{A}=-\Delta,\qquad f|_{\partial\Omega}=0  
+$$
+
+或者：
+
+$$  
+\frac{\partial f}{\partial n}\bigg|_{\partial\Omega}=0.  
+$$
+
+这一步很关键，因为不同几何空间的差异，不是靠你手写一堆 kernel，而是靠不同的 (\mathcal{A}) 统一表达。
+
+---
+
+## 2.1 为什么是算子？
+
+因为算子决定了函数空间里的“频率”“平滑性”和“几何尺度”。
+
+比如在一维区间 ([0,L]) 上：
+
+$$  
+\mathcal{A}=-\frac{d^2}{dx^2}  
+$$
+
+其特征函数是：
+
+$$  
+\phi_k(x)=\sin\left(\frac{k\pi x}{L}\right)  
+$$
+
+或：
+
+$$  
+\phi_k(x)=\cos\left(\frac{k\pi x}{L}\right),  
+$$
+
+取决于边界条件。
+
+在圆 (S^1) 上：
+
+$$  
+\mathcal{A}=-\frac{d^2}{d\theta^2},  
+$$
+
+特征函数是 Fourier basis：
+
+$$  
+\phi_m(\theta)=e^{im\theta}.  
+$$
+
+在球面 (S^2) 上：
+
+$$  
+\mathcal{A}=-\Delta_{S^2},  
+$$
+
+特征函数是球谐函数：
+
+$$  
+\phi_{\ell m}(\omega)=Y_{\ell m}(\omega).  
+$$
+
+所以 operator-spectral prior 的本质是：
+
+> 几何空间本身决定了什么叫“低频”和“高频”。
+
+---
+
+# 3. 第二步：求算子的谱分解
+
+我们考虑特征方程：
+
+$$  
+\mathcal{A}\phi_k=\lambda_k\phi_k.  
+$$
+
+其中：
+
+- (\phi_k)：第 (k) 个特征函数；
+    
+- (\lambda_k)：对应特征值；
+    
+- (\lambda_k) 通常可以理解为频率/粗糙度/能量尺度。
+    
+
+假设这些特征函数构成 (L^2(\mathcal{X})) 的一组正交基：
+
+# $$  
+\langle \phi_i,\phi_j\rangle_{L^2(\mathcal{X})}
+
+\delta_{ij}.  
+$$
+
+则任意函数 (f) 可以展开为：
+
+# $$  
+f(x)
+
+\sum_{k=1}^{\infty}  
+w_k\phi_k(x).  
+$$
+
+其中谱系数为：
+
+# $$  
+w_k
+
+\langle f,\phi_k\rangle.  
+$$
+
+为了计算，我们截断到前 (K) 个特征函数：
+
+$$  
+f(x)  
+\approx  
+\sum_{k=1}^{K}  
+w_k\phi_k(x).  
+$$
+
+写成向量形式：
+
+# $$  
+f(x)
+
+\Phi(x)^\top w,  
+$$
+
+其中：
+
+$$  
+\Phi(x)=  
+[\phi_1(x),\ldots,\phi_K(x)]^\top,  
+$$
+
+$$  
+w=[w_1,\ldots,w_K]^\top.  
+$$
+
+---
+
+# 4. 第三步：从“平滑性”推导谱先验
+
+现在问题变成：  
+我们应该如何给谱系数 (w_k) 设置 prior？
+
+直觉是：
+
+- 低频模式应该更容易出现；
+    
+- 高频模式应该更强收缩；
+    
+- 函数越平滑，高频系数应该越小。
+    
+
+这可以从能量泛函推出。
+
+---
+
+## 4.1 从 Sobolev norm 推导
+
+考虑函数的 Sobolev-type 正则：
+
+# $$  
+|f|_{\mathcal{A},p}^2
+
+\langle f,(I+\mathcal{A})^p f\rangle.  
+$$
+
+把 (f) 展开：
+
+$$  
+f=\sum_{k=1}^{\infty}w_k\phi_k.  
+$$
+
+因为：
+
+$$  
+\mathcal{A}\phi_k=\lambda_k\phi_k,  
+$$
+
+所以：
+
+# $$  
+(I+\mathcal{A})^p\phi_k
+
+(1+\lambda_k)^p\phi_k.  
+$$
+
+于是：
+
+# $$  
+|f|_{\mathcal{A},p}^2
+
+\sum_{k=1}^{\infty}  
+(1+\lambda_k)^p w_k^2.  
+$$
+
+这个式子非常重要。
+
+它说明如果我们想惩罚函数的粗糙度，那么自然的 penalty 是：
+
+$$  
+\sum_{k}  
+(1+\lambda_k)^p w_k^2.  
+$$
+
+也就是说，高 (\lambda_k) 的谱系数应该受到更强惩罚。
+
+---
+
+## 4.2 从 regularization 到 Gaussian prior
+
+如果我们定义 prior：
+
+$$  
+p(f)\propto  
+\exp  
+\left(  
+-\frac{\alpha}{2}  
+|f|_{\mathcal{A},p}^2  
+\right),  
+$$
+
+代入上式：
+
+$$  
+p(f)  
+\propto  
+\exp  
+\left(  
+-\frac{\alpha}{2}  
+\sum_{k=1}^{\infty}  
+(1+\lambda_k)^p w_k^2  
+\right).  
+$$
+
+因此谱系数独立服从：
+
+$$  
+w_k  
+\sim  
+\mathcal{N}  
+\left(  
+0,  
+\left[\alpha(1+\lambda_k)^p\right]^{-1}  
+\right).  
+$$
+
+也就是：
+
+$$  
+w_k\sim \mathcal{N}(0,\rho(\lambda_k)^{-1}),  
+$$
+
+其中：
+
+$$  
+\rho(\lambda_k)=\alpha(1+\lambda_k)^p.  
+$$
+
+这就是最基本的 Operator-Spectral prior。
+
+---
+
+# 5. 第四步：从谱先验得到 GP kernel
+
+现在我们反过来看，这个 prior 其实定义了一个 GP。
+
+因为：
+
+$$  
+f(x)=\sum_{k=1}^{K}w_k\phi_k(x),  
+$$
+
+且：
+
+$$  
+w_k\sim \mathcal{N}(0,\rho(\lambda_k)^{-1}),  
+$$
+
+所以：
+
+$$  
+\mathbb{E}[f(x)]=0.  
+$$
+
+协方差为：
+
+# $$  
+k(x,x')
+
+\mathbb{E}[f(x)f(x')]  
+$$
+
+# $$
+
+\mathbb{E}  
+\left[  
+\sum_{k=1}^{K}w_k\phi_k(x)  
+\sum_{j=1}^{K}w_j\phi_j(x')  
+\right].  
+$$
+
+由于 (w_k) 独立：
+
+# $$  
+\mathbb{E}[w_kw_j]
+
+\delta_{kj}\rho(\lambda_k)^{-1}.  
+$$
+
+所以：
+
+# $$  
+k(x,x')
+
+\sum_{k=1}^{K}  
+\rho(\lambda_k)^{-1}  
+\phi_k(x)\phi_k(x').  
+$$
+
+当 (K\rightarrow \infty) 时：
+
+# $$  
+k(x,x')
+
+\sum_{k=1}^{\infty}  
+\rho(\lambda_k)^{-1}  
+\phi_k(x)\phi_k(x').  
+$$
+
+这说明：
+
+> Operator-Spectral prior 等价于一个由算子谱结构定义的 GP kernel。
+
+但与普通 GP 不同的是，我们在实际实现中不需要构造 (N\times N) kernel matrix，而是在 feature-space 中学习 (w)。
+
+---
+
+# 6. 第五步：有限谱展开使推断可扩展
+
+传统 GP 对观测点：
+
+$$  
+\mathcal{D}={(x_n,y_n)}_{n=1}^N  
+$$
+
+会形成 kernel matrix：
+
+# $$  
+K_{NN}
+
+[k(x_i,x_j)]_{i,j=1}^{N}.  
+$$
+
+求后验通常涉及：
+
+$$  
+K_{NN}^{-1},  
+$$
+
+复杂度：
+
+$$  
+O(N^3).  
+$$
+
+而 Operator-Spectral prior 使用：
+
+$$  
+f(x)=\Phi(x)^\top w,  
+$$
+
+其中 (w\in \mathbb{R}^K)，且 (K\ll N) 或可控。
+
+观测模型：
+
+$$  
+y_n=\Phi(x_n)^\top w+\epsilon_n,  
+\qquad  
+\epsilon_n\sim \mathcal{N}(0,\sigma^2).  
+$$
+
+记：
+
+$$  
+\Phi_X=  
+\begin{bmatrix}  
+\Phi(x_1)^\top\  
+\vdots\  
+\Phi(x_N)^\top  
+\end{bmatrix}  
+\in \mathbb{R}^{N\times K}.  
+$$
+
+则：
+
+$$  
+y=\Phi_X w+\epsilon.  
+$$
+
+先验：
+
+$$  
+w\sim \mathcal{N}(0,\Lambda^{-1}),  
+$$
+
+其中：
+
+$$  
+\Lambda=\mathrm{diag}(\rho(\lambda_1),\ldots,\rho(\lambda_K)).  
+$$
+
+这是一个 Bayesian linear model。
+
+如果是单函数回归，后验甚至有闭式：
+
+# $$  
+p(w\mid y)
+
+\mathcal{N}(\mu_w,\Sigma_w),  
+$$
+
+其中：
+
+# $$  
+\Sigma_w
+
+\left(  
+\sigma^{-2}\Phi_X^\top\Phi_X+\Lambda  
+\right)^{-1},  
+$$
+
+# $$  
+\mu_w
+
+\sigma^{-2}\Sigma_w\Phi_X^\top y.  
+$$
+
+复杂度主要是：
+
+$$  
+O(NK^2+K^3).  
+$$
+
+如果 (K) 可控，比 (O(N^3)) 更好。
+
+在你的张量模型里，likelihood 非线性于多个 mode 的乘积，所以一般没有闭式后验，但可以用变分推断 + 梯度下降。
+
+---
+
+# 7. 第六步：把单函数 prior 嵌入函数张量
+
+现在从单个函数：
+
+$$  
+f(x)  
+$$
+
+扩展到高维函数张量：
+
+$$  
+u(\xi_1,\ldots,\xi_M).  
+$$
+
+一般 Tucker 形式为：
+
+# $$  
+u(\xi_1,\ldots,\xi_M)
+
+\sum_{r_1=1}^{R_1}  
+\cdots  
+\sum_{r_M=1}^{R_M}  
+\mathcal{G}_{r_1,\ldots,r_M}  
+\prod_{m=1}^{M}  
+f^{(m)}_{r_m}(\xi_m).  
+$$
+
+每个 mode (m) 对应一个连续索引空间：
+
+$$  
+\xi_m\in \mathcal{X}_m.  
+$$
+
+对每个 (\mathcal{X}_m)，选择算子：
+
+# $$  
+\mathcal{A}_m\phi_{m,k}
+
+\lambda_{m,k}\phi_{m,k}.  
+$$
+
+构造特征：
+
+# $$  
+\Phi_m(\xi_m)
+
+[\phi_{m,1}(\xi_m),\ldots,\phi_{m,K_m}(\xi_m)]^\top.  
+$$
+
+每个 factor function 写成：
+
+# $$  
+f^{(m)}_{r}(\xi_m)
+
+\Phi_m(\xi_m)^\top w^{(m)}_{r}.  
+$$
+
+谱权重 prior：
+
+$$  
+w^{(m)}_{r,k}  
+\sim  
+\mathcal{N}  
+\left(  
+0,  
+\rho_m(\lambda_{m,k})^{-1}  
+\right).  
+$$
+
+因此：
+
+$$  
+w^{(m)}_{r}  
+\sim  
+\mathcal{N}  
+\left(  
+0,  
+\Lambda_m^{-1}  
+\right),  
+$$
+
+其中：
+
+# $$  
+\Lambda_m
+
+\mathrm{diag}  
+\left(  
+\rho_m(\lambda_{m,1}),\ldots,\rho_m(\lambda_{m,K_m})  
+\right).  
+$$
+
+整体模型：
+
+# $$  
+\boxed{  
+u(\xi_1,\ldots,\xi_M)
+
+\left\langle  
+\mathcal{G},  
+(W^{(1)})^\top\Phi_1(\xi_1)  
+\otimes  
+\cdots  
+\otimes  
+(W^{(M)})^\top\Phi_M(\xi_M)  
+\right\rangle  
+}  
+$$
+
+其中：
+
+# $$  
+W^{(m)}
+
+[  
+w^{(m)}_1,\ldots,w^{(m)}_{R_m}]  
+\in  
+\mathbb{R}^{K_m\times R_m}.  
+$$
+
+这就是 Operator-Spectral Bayesian Functional Tensor 的核心模型。
+
+---
+
+# 8. 第七步：谱精度函数 (\rho(\lambda)) 怎么设计？
+
+这是方法新意的关键之一。不要把它写成固定 kernel，而应该设计成 **learnable spectral prior**。
+
+---
+
+## 8.1 固定 Sobolev prior
+
+最简单：
+
+# $$  
+\rho(\lambda)
+
+\alpha(1+\lambda)^p.  
+$$
+
+其中：
+
+- (\alpha)：整体 prior strength；
+    
+- (p)：平滑度阶数。
+    
+
+若 (p) 越大，高频衰减越强。
+
+这对应：
+
+# $$  
+\mathrm{Var}(w_k)
+
+\frac{1}{\alpha(1+\lambda_k)^p}.  
+$$
+
+---
+
+## 8.2 可学习平滑度
+
+可以令：
+
+$$  
+\alpha>0,\qquad p>0  
+$$
+
+可学习：
+
+$$  
+\alpha=\mathrm{softplus}(\tilde{\alpha}),  
+$$
+
+$$  
+p=\mathrm{softplus}(\tilde{p}).  
+$$
+
+然后通过 ELBO 自动学习。
+
+---
+
+## 8.3 Band-wise ARD prior
+
+如果特征函数有自然分组，比如球谐中同一个 (\ell) 下面有多个 (m)，可以设：
+
+$$  
+w_{\ell m}  
+\sim  
+\mathcal{N}(0,\rho_{\ell}^{-1}).  
+$$
+
+并给：
+
+$$  
+\rho_\ell\sim \mathrm{Gamma}(a,b).  
+$$
+
+这就是频段级自动相关性选择。
+
+---
+
+## 8.4 Learnable spectral density
+
+更高级：
+
+# $$  
+\rho_\eta(\lambda)
+
+\mathrm{softplus}(g_\eta(\lambda)).  
+$$
+
+其中 (g_\eta) 可以是一个小网络、样条函数或低阶多项式。
+
+比如：
+
+# $$  
+\log \rho_\eta(\lambda)
+
+\sum_{q=1}^{Q}\eta_q B_q(\lambda),  
+$$
+
+其中 (B_q(\lambda)) 是 spline basis。
+
+为了避免学出奇怪的非物理谱形状，可以加单调约束：
+
+$$  
+\frac{d\rho_\eta(\lambda)}{d\lambda}\geq 0.  
+$$
+
+这表达：
+
+> 高频模式通常应该更强收缩，但具体收缩速度由数据学习。
+
+这比简单“换 kernel”强很多。
+
+---
+
+# 9. 第八步：为什么这不是 kernel zoo？
+
+如果你说：
+
+$$  
+\text{time mode uses RBF kernel},  
+$$
+
+$$  
+\text{angle mode uses periodic kernel},  
+$$
+
+$$  
+\text{sphere mode uses spherical kernel},  
+$$
+
+那确实像 kernel zoo。
+
+但 Operator-Spectral prior 的统一点是：
+
+1. 每个 domain 由一个算子 (\mathcal{A}_m) 描述；
+    
+2. 算子的 eigenfunctions 提供 feature basis；
+    
+3. 算子的 eigenvalues 提供 frequency scale；
+    
+4. prior precision 是 eigenvalue 的函数：
+    
+    $$  
+    \rho_m(\lambda_{m,k}).  
+    $$
+    
+
+因此所有 mode 都遵循同一条规则：
+
+$$  
+\boxed{  
+\mathcal{A}_m  
+\Rightarrow  
+(\phi_{m,k},\lambda_{m,k})  
+\Rightarrow  
+f^{(m)}(\xi)=\sum_k w_k\phi_{m,k}(\xi)  
+\Rightarrow  
+w_k\sim \mathcal{N}(0,\rho_m(\lambda_{m,k})^{-1})  
+}  
+$$
+
+这就是统一方法论。
+
+---
+
+# 10. 第九步：不同几何空间的具体展开
+
+## 10.1 一维区间 ([0,L])
+
+算子：
+
+$$  
+\mathcal{A}=-\frac{d^2}{dx^2}.  
+$$
+
+Dirichlet 边界：
+
+$$  
+f(0)=f(L)=0.  
+$$
+
+特征函数：
+
+$$  
+\phi_k(x)=\sqrt{\frac{2}{L}}\sin\left(\frac{k\pi x}{L}\right).  
+$$
+
+特征值：
+
+$$  
+\lambda_k=\left(\frac{k\pi}{L}\right)^2.  
+$$
+
+prior：
+
+$$  
+w_k\sim  
+\mathcal{N}  
+\left(  
+0,  
+\left[\alpha\left(1+\left(\frac{k\pi}{L}\right)^2\right)^p\right]^{-1}  
+\right).  
+$$
+
+适合：
+
+- 深度 (z\in[0,H])；
+    
+- 距离 (r\in[0,R])；
+    
+- bounded physical coordinate。
+    
+
+---
+
+## 10.2 周期空间 (S^1)
+
+算子：
+
+$$  
+\mathcal{A}=-\frac{d^2}{d\theta^2}.  
+$$
+
+特征函数：
+
+$$  
+\phi_m(\theta)=e^{im\theta},  
+\qquad m\in \mathbb{Z}.  
+$$
+
+特征值：
+
+$$  
+\lambda_m=m^2.  
+$$
+
+实值形式：
+
+# $$  
+f(\theta)
+
+a_0+  
+\sum_{m=1}^{M}  
+a_m\cos(m\theta)+b_m\sin(m\theta).  
+$$
+
+prior：
+
+$$  
+a_m,b_m  
+\sim  
+\mathcal{N}  
+\left(  
+0,  
+[\alpha(1+m^2)^p]^{-1}  
+\right).  
+$$
+
+适合：
+
+- 方位角；
+    
+- 周期相位；
+    
+- 水声水平 bearing；
+    
+- 旋转角度。
+    
+
+---
+
+## 10.3 球面 (S^2)
+
+算子：
+
+$$  
+\mathcal{A}=-\Delta_{S^2}.  
+$$
+
+特征函数：
+
+$$  
+\phi_{\ell m}(\omega)=Y_{\ell m}(\omega).  
+$$
+
+特征值：
+
+$$  
+\lambda_{\ell}=\ell(\ell+1).  
+$$
+
+展开：
+
+# $$  
+f(\omega)
+
+\sum_{\ell=0}^{L}  
+\sum_{m=-\ell}^{\ell}  
+w_{\ell m}Y_{\ell m}(\omega).  
+$$
+
+prior：
+
+$$  
+w_{\ell m}  
+\sim  
+\mathcal{N}  
+\left(  
+0,  
+[\alpha(1+\ell(\ell+1))^p]^{-1}  
+\right).  
+$$
+
+或者 band-wise：
+
+$$  
+w_{\ell m}\sim \mathcal{N}(0,\rho_\ell^{-1}).  
+$$
+
+适合：
+
+- 球面方向图；
+    
+- DOA energy map；
+    
+- 全球表面场；
+    
+- radiation/scattering angular pattern。
+    
+
+---
+
+## 10.4 球体内部 ([0,R]\times S^2)
+
+可以使用乘积算子结构：
+
+$$  
+\mathcal{X}=[0,R]\times S^2.  
+$$
+
+设：
+
+$$  
+x=(r,\omega).  
+$$
+
+一种简单分离形式：
+
+# $$  
+f(r,\omega)
+
+\sum_{n=1}^{N}  
+\sum_{\ell=0}^{L}  
+\sum_{m=-\ell}^{\ell}  
+w_{n\ell m}  
+\psi_n(r)  
+Y_{\ell m}(\omega).  
+$$
+
+其中 (\psi_n(r)) 是径向算子的特征函数，例如：
+
+$$  
+-\frac{d^2}{dr^2}\psi_n=\mu_n\psi_n.  
+$$
+
+角向：
+
+$$  
+-\Delta_{S^2}Y_{\ell m}=\ell(\ell+1)Y_{\ell m}.  
+$$
+
+联合特征值可以取：
+
+$$  
+\lambda_{n\ell}=\mu_n+\ell(\ell+1).  
+$$
+
+prior：
+
+$$  
+w_{n\ell m}  
+\sim  
+\mathcal{N}  
+\left(  
+0,  
+[\alpha(1+\mu_n+\ell(\ell+1))^p]^{-1}  
+\right).  
+$$
+
+更物理的版本可以用 spherical Bessel：
+
+# $$  
+f(r,\omega)
+
+\sum_{n,\ell,m}  
+w_{n\ell m}  
+j_\ell(k_{n\ell}r)Y_{\ell m}(\omega).  
+$$
+
+但这个实现更重，不建议第一版就上。
+
+---
+
+## 10.5 一般有边界区域 (\Omega\subset\mathbb{R}^d)
+
+算子：
+
+$$  
+\mathcal{A}=-\Delta_\Omega.  
+$$
+
+边界条件：
+
+$$  
+f|_{\partial\Omega}=0  
+$$
+
+或：
+
+$$  
+\frac{\partial f}{\partial n}\bigg|_{\partial\Omega}=0.  
+$$
+
+特征系统：
+
+$$  
+-\Delta_\Omega\phi_k=\lambda_k\phi_k.  
+$$
+
+如果 (\Omega) 形状复杂，可以数值求解前 (K) 个 eigenfunctions。
+
+prior：
+
+$$  
+w_k\sim \mathcal{N}(0,\rho(\lambda_k)^{-1}).  
+$$
+
+适合：
+
+- irregular domain；
+    
+- 有复杂边界的物理区域；
+    
+- 海域、湖泊、腔体；
+    
+- 有障碍物的传播区域。
+    
+
+---
+
+## 10.6 图/传感器网络
+
+如果数据只在传感器网络上定义，使用 graph Laplacian：
+
+$$  
+L_{\mathrm{graph}}=D-A.  
+$$
+
+特征分解：
+
+$$  
+L_{\mathrm{graph}}u_k=\lambda_k u_k.  
+$$
+
+函数：
+
+$$  
+f(v)=\sum_{k=1}^{K}w_k u_k(v).  
+$$
+
+prior：
+
+$$  
+w_k\sim \mathcal{N}(0,\rho(\lambda_k)^{-1}).  
+$$
+
+适合：
+
+- 固定传感器阵列；
+    
+- 水听器网络；
+    
+- 电网节点；
+    
+- 交通网络；
+    
+- irregular measurement topology。
+    
+
+---
+
+# 11. 第十步：变分推断的完整形式
+
+对函数张量：
+
+# $$  
+u(\xi_1,\ldots,\xi_M)
+
+\left\langle  
+\mathcal{G},  
+\bigotimes_{m=1}^{M}  
+(W^{(m)})^\top\Phi_m(\xi_m)  
+\right\rangle.  
+$$
+
+观测：
+
+$$  
+y_n\sim  
+\mathcal{N}  
+\left(  
+u(\xi_{1,n},\ldots,\xi_{M,n}),  
+\sigma^2  
+\right).  
+$$
+
+设变分分布：
+
+# $$  
+q(\mathcal{G},{W^{(m)}},\sigma^2)
+
+q(\mathcal{G})  
+\prod_{m=1}^{M}  
+q(W^{(m)})  
+q(\sigma^2).  
+$$
+
+其中：
+
+# $$  
+q(w^{(m)}_{r,k})
+
+\mathcal{N}  
+\left(  
+\mu^{(m)}_{r,k},  
+(s^{(m)}_{r,k})^2  
+\right).  
+$$
+
+Core：
+
+# $$  
+q(\mathcal{G}_{r_1,\ldots,r_M})
+
+\mathcal{N}  
+\left(  
+\mu^{G}_{r_1,\ldots,r_M},  
+(s^{G}_{r_1,\ldots,r_M})^2  
+\right).  
+$$
+
+ELBO：
+
+# $$  
+\mathcal{L}
+
+## \mathbb{E}_q  
+\left[  
+\sum_{n=1}^{N}  
+\log p(y_n\mid \mathcal{G},{W^{(m)}},\sigma^2)  
+\right]
+
+## \mathrm{KL}(q(\mathcal{G})|p(\mathcal{G}))
+
+## \sum_{m=1}^{M}  
+\mathrm{KL}(q(W^{(m)})|p(W^{(m)}))
+
+\mathrm{KL}(q(\sigma^2)|p(\sigma^2)).  
+$$
+
+用 mini-batch：
+
+# $$  
+\mathcal{L}_{\mathcal{B}}
+
+## \frac{N}{|\mathcal{B}|}  
+\mathbb{E}_q  
+\left[  
+\sum_{n\in\mathcal{B}}  
+\log p(y_n\mid \mathcal{G},{W^{(m)}},\sigma^2)  
+\right]
+
+\text{KL terms}.  
+$$
+
+用 reparameterization：
+
+# $$  
+w^{(m)}_{r,k}
+
+\mu^{(m)}_{r,k}  
++  
+s^{(m)}_{r,k}\epsilon^{(m)}_{r,k},  
+\qquad  
+\epsilon^{(m)}_{r,k}\sim\mathcal{N}(0,1).  
+$$
+
+然后 Adam 直接优化：
+
+$$  
+\max_{\mu,s,\eta,\ldots}\mathcal{L}_{\mathcal{B}}.  
+$$
+
+没有 message passing，也不需要 state-space GP。
+
+---
+
+# 12. 第十一步：posterior uncertainty 如何计算？
+
+给定新点：
+
+$$  
+\xi_\ast=(\xi_{1,\ast},\ldots,\xi_{M,\ast}),  
+$$
+
+预测函数：
+
+# $$  
+u_\ast
+
+u(\xi_{1,\ast},\ldots,\xi_{M,\ast}).  
+$$
+
+posterior predictive：
+
+# $$  
+p(u_\ast\mid \mathcal{D})
+
+\int  
+p(u_\ast\mid \mathcal{G},W)  
+q(\mathcal{G},W)  
+d\mathcal{G}dW.  
+$$
+
+用 Monte Carlo：
+
+# $$  
+u_\ast^{(s)}
+
+\left\langle  
+\mathcal{G}^{(s)},  
+\bigotimes_{m=1}^{M}  
+(W^{(m,s)})^\top\Phi_m(\xi_{m,\ast})  
+\right\rangle.  
+$$
+
+预测均值：
+
+# $$  
+\hat{\mu}_\ast
+
+\frac{1}{S}  
+\sum_{s=1}^{S}  
+u_\ast^{(s)}.  
+$$
+
+预测方差：
+
+# $$  
+\hat{\sigma}_\ast^2
+
+\frac{1}{S-1}  
+\sum_{s=1}^{S}  
+(u_\ast^{(s)}-\hat{\mu}_\ast)^2  
++  
+\mathbb{E}_q[\sigma^2].  
+$$
+
+---
+
+# 13. 第十二步：geometry-resolved uncertainty
+
+因为每个 mode 都有谱坐标，所以可以分解不确定性。
+
+例如第 (m) 个 mode 的第 (k) 个谱分量，其后验能量为：
+
+# $$  
+E^{(m)}_k
+
+# \sum_{r=1}^{R_m}  
+\mathbb{E}_q  
+[  
+(w^{(m)}_{r,k})^2  
+]
+
+\sum_{r=1}^{R_m}  
+\left[  
+(\mu^{(m)}_{r,k})^2  
++  
+(s^{(m)}_{r,k})^2  
+\right].  
+$$
+
+后验不确定性为：
+
+# $$  
+U^{(m)}_k
+
+\sum_{r=1}^{R_m}  
+(s^{(m)}_{r,k})^2.  
+$$
+
+如果是球面：
+
+$$  
+k\leftrightarrow(\ell,m),  
+$$
+
+可以按 (\ell) 聚合：
+
+# $$  
+U_{\ell}
+
+\sum_{r}  
+\sum_{m=-\ell}^{\ell}  
+(s_{r,\ell m})^2.  
+$$
+
+如果是 (S^1)：
+
+# $$  
+U_{q}
+
+\sum_r  
+\left[  
+(s^{\cos}_{r,q})^2+(s^{\sin}_{r,q})^2  
+\right].  
+$$
+
+这可以给出一个很强的可解释性结果：
+
+> 模型在哪些几何尺度上不确定？
+
+这比普通 NeRF-like 方法强很多。
+
+---
+
+# 14. 第十三步：和物理算子的关系
+
+Operator-Spectral prior 不只适用于几何 Laplacian，也可以自然过渡到 physics-informed prior。
+
+如果有 PDE：
+
+$$  
+\mathcal{L}u=g.  
+$$
+
+一种 prior 是：
+
+$$  
+p(u)  
+\propto  
+\exp  
+\left(  
+-\frac{1}{2\sigma_{\mathrm{phys}}^2}  
+|\mathcal{L}u-g|^2  
+\right).  
+$$
+
+如果考虑 homogeneous case：
+
+$$  
+\mathcal{L}u\approx 0,  
+$$
+
+那么：
+
+$$  
+p(u)  
+\propto  
+\exp  
+\left(  
+-\frac{1}{2\sigma_{\mathrm{phys}}^2}  
+|\mathcal{L}u|^2  
+\right).  
+$$
+
+令：
+
+$$  
+\mathcal{A}=\mathcal{L}^\ast\mathcal{L}.  
+$$
+
+则：
+
+$$  
+|\mathcal{L}u|^2
+
+# \langle u,\mathcal{L}^\ast\mathcal{L}u\rangle
+
+\langle u,\mathcal{A}u\rangle.  
+$$
+
+如果：
+
+$$  
+\mathcal{A}\phi_k=\lambda_k\phi_k,  
+$$
+
+且：
+
+$$  
+u=\sum_k w_k\phi_k,  
+$$
+
+则：
+
+# $$  
+|\mathcal{L}u|^2
+
+\sum_k \lambda_k w_k^2.  
+$$
+
+因此：
+
+$$  
+w_k  
+\sim  
+\mathcal{N}  
+\left(  
+0,  
+(\lambda_k+\epsilon)^{-1}  
+\right).  
+$$
+
+这说明：
+
+> Physics-informed prior 和 Geometry-aware prior 在数学形式上是同构的；区别只是算子 (\mathcal{A}) 的来源不同。
+
+几何版：
+
+$$  
+\mathcal{A}=-\Delta.  
+$$
+
+物理版：
+
+$$  
+\mathcal{A}=\mathcal{L}^\ast\mathcal{L}.  
+$$
+
+这就是你后续 Physical-informed Bayesian Functional Tensor 可以参考的地方。
+
+---
+
+# 15. 最后压缩成一个完整 pipeline
+
+## Step 1：确定每个 mode 的连续索引空间
+
+例如水声场：
+
+$$  
+u(f,\rho,z,\alpha)  
+$$
+
+其中：
+
+$$  
+f\in\mathbb{R}_+,\quad  
+\rho\in[0,R],\quad  
+z\in[0,H],\quad  
+\alpha\in S^1.  
+$$
+
+---
+
+## Step 2：为每个 mode 选择算子
+
+$$  
+\mathcal{A}_f,\quad  
+\mathcal{A}_\rho,\quad  
+\mathcal{A}_z,\quad  
+\mathcal{A}_\alpha.  
+$$
+
+例如：
+
+$$  
+\mathcal{A}_\alpha=-\frac{d^2}{d\alpha^2}.  
+$$
+
+$$  
+\mathcal{A}_z=-\frac{d^2}{dz^2}  
+$$
+
+with boundary condition.
+
+---
+
+## Step 3：求或构造谱特征
+
+# $$  
+\mathcal{A}_m\phi_{m,k}
+
+\lambda_{m,k}\phi_{m,k}.  
+$$
+
+得到：
+
+# $$  
+\Phi_m(\xi_m)
+
+[  
+\phi_{m,1}(\xi_m),\ldots,\phi_{m,K_m}(\xi_m)]^\top.  
+$$
+
+---
+
+## Step 4：定义谱权重 prior
+
+$$  
+w^{(m)}_{r,k}  
+\sim  
+\mathcal{N}  
+\left(  
+0,  
+\rho_m(\lambda_{m,k})^{-1}  
+\right).  
+$$
+
+其中：
+
+# $$  
+\rho_m(\lambda)
+
+\alpha_m(1+\lambda)^{p_m}  
+$$
+
+或：
+
+# $$  
+\rho_m(\lambda)
+
+\mathrm{softplus}(g_{\eta_m}(\lambda)).  
+$$
+
+---
+
+## Step 5：定义 Bayesian Tucker
+
+# $$  
+u(\xi_1,\ldots,\xi_M)
+
+\left\langle  
+\mathcal{G},  
+\bigotimes_{m=1}^{M}  
+(W^{(m)})^\top\Phi_m(\xi_m)  
+\right\rangle.  
+$$
+
+---
+
+## Step 6：定义观测 likelihood
+
+$$  
+y_n\sim  
+\mathcal{N}  
+\left(  
+u(\xi_{1,n},\ldots,\xi_{M,n}),  
+\sigma^2  
+\right).  
+$$
+
+---
+
+## Step 7：定义变分 posterior
+
+$$  
+q(W^{(m)})=  
+\prod_{r,k}  
+\mathcal{N}  
+\left(  
+\mu^{(m)}_{r,k},  
+(s^{(m)}_{r,k})^2  
+\right).  
+$$
+
+$$  
+q(\mathcal{G})=  
+\prod_{\mathbf{r}}  
+\mathcal{N}  
+\left(  
+\mu^G_{\mathbf{r}},  
+(s^G_{\mathbf{r}})^2  
+\right).  
+$$
+
+---
+
+## Step 8：优化 stochastic ELBO
+
+# $$  
+\mathcal{L}
+
+## \mathbb{E}_q[\log p(\mathcal{D}\mid u)]
+
+## \sum_m\mathrm{KL}(q(W^{(m)})|p(W^{(m)}))
+
+## \mathrm{KL}(q(\mathcal{G})|p(\mathcal{G}))
+
+\cdots.  
+$$
+
+用 reparameterization + Adam。
+
+---
+
+## Step 9：预测与不确定性
+
+$$  
+p(u_\ast\mid \mathcal{D})  
+$$
+
+用 posterior samples 估计：
+
+$$  
+\hat{\mu}_\ast,\quad \hat{\sigma}_\ast^2.  
+$$
+
+---
+
+## Step 10：解释几何尺度 uncertainty
+
+计算：
+
+# $$  
+U^{(m)}_k
+
+\sum_r(s^{(m)}_{r,k})^2.  
+$$
+
+或按频段聚合，得到：
+
+$$  
+U^{(m)}(\lambda)  
+$$
+
+展示模型在不同几何尺度上的不确定性。
+
+---
+
+# 16. 这套 prior 的一句话总结
+
+**Operator-Spectral prior** 可以用一句话概括：
+
+> 给定一个连续索引空间，不直接手选 kernel，也不直接用 MLP 记忆坐标，而是先用该空间上的几何/物理算子定义一组谱基函数，再对谱系数施加随特征值变化的贝叶斯先验，从而得到既尊重几何结构、又可用梯度下降扩展推断的函数先验。
+
+最核心三条公式是：
+
+$$  
+\mathcal{A}\phi_k=\lambda_k\phi_k  
+$$
+
+$$  
+f(x)=\sum_{k=1}^{K}w_k\phi_k(x)  
+$$
+
+$$  
+w_k\sim  
+\mathcal{N}  
+\left(  
+0,  
+\rho(\lambda_k)^{-1}  
+\right)  
+$$
+
+嵌入张量后：
+
+# $$  
+u(\xi_1,\ldots,\xi_M)
+
+\left\langle  
+\mathcal{G},  
+\bigotimes_{m=1}^{M}  
+(W^{(m)})^\top\Phi_m(\xi_m)  
+\right\rangle.  
+$$
+
+这就是这篇论文可以站住的核心方法论。
+
+--- 
+
+> 不同场景的 closed-form 形式
+
+不一定有闭式解。甚至在真正有意思的复杂物理场景里，**通常没有闭式解**。如果一个方法要求每个 mode 的 eigenfunction/eigenvalue 都能解析写出来，那它基本只能活在教科书里，和现实数据会分手得很体面。
+
+更合理的框架是：
+
+$$  
+\text{operator-spectral prior}  
+\neq  
+\text{必须解析求特征函数}  
+$$
+
+而是：
+
+$$  
+\text{给定 mode 的几何/物理结构}  
+\Rightarrow  
+\text{构造一个自伴算子}  
+\Rightarrow  
+\text{用闭式、数值或可学习近似得到一组 basis}  
+\Rightarrow  
+\text{在这些 basis 上放谱先验}  
+$$
+
+下面分层说清楚。
+
+---
+
+# 1. 每个 mode 的算子本来就可以不同
+
+在函数张量里，我们一般有：
+
+# $$  
+u(\xi_1,\ldots,\xi_M)
+
+\left\langle  
+\mathcal{G},  
+\bigotimes_{m=1}^{M}  
+f^{(m)}(\xi_m)  
+\right\rangle.  
+$$
+
+每个 mode 的索引空间可能完全不同：
+
+$$  
+\xi_m\in \mathcal{X}_m.  
+$$
+
+比如水声场：
+
+$$  
+u(f,\rho,z,\alpha)  
+$$
+
+其中：
+
+- (f)：频率；
+    
+- (\rho)：水平距离；
+    
+- (z)：深度；
+    
+- (\alpha)：方位角。
+    
+
+那么四个 mode 可以对应四个不同算子：
+
+$$  
+\mathcal{A}_f,\quad  
+\mathcal{A}_\rho,\quad  
+\mathcal{A}_z,\quad  
+\mathcal{A}_\alpha.  
+$$
+
+对应特征系统分别是：
+
+# $$  
+\mathcal{A}_m \phi_{m,k}
+
+\lambda_{m,k}\phi_{m,k}.  
+$$
+
+所以整体模型不是要求一个全局算子，而是每个 mode 自己有一套谱结构：
+
+# $$  
+f^{(m)}_r(\xi_m)
+
+\sum_{k=1}^{K_m}  
+w^{(m)}_{r,k}\phi_{m,k}(\xi_m).  
+$$
+
+也就是：
+
+# $$  
+f^{(m)}_r(\xi_m)
+
+\Phi_m(\xi_m)^\top w^{(m)}_r.  
+$$
+
+因此，不同 mode 用不同算子完全没问题，反而是这个框架的优势。
+
+---
+
+# 2. eigenfunction / eigenvalue 有三种来源
+
+## 2.1 第一类：闭式解析解
+
+这是最舒服的情况，但只适合规则几何。
+
+### 一维区间 ([0,L])
+
+算子：
+
+# $$  
+\mathcal{A}
+
+-\frac{d^2}{dx^2}  
+$$
+
+Dirichlet 边界：
+
+$$  
+f(0)=f(L)=0  
+$$
+
+特征函数：
+
+# $$  
+\phi_k(x)
+
+\sqrt{\frac{2}{L}}  
+\sin\left(\frac{k\pi x}{L}\right)  
+$$
+
+特征值：
+
+# $$  
+\lambda_k
+
+\left(\frac{k\pi}{L}\right)^2.  
+$$
+
+Neumann 边界：
+
+$$  
+f'(0)=f'(L)=0  
+$$
+
+特征函数：
+
+# $$  
+\phi_k(x)
+
+\sqrt{\frac{2}{L}}  
+\cos\left(\frac{k\pi x}{L}\right)  
+$$
+
+特征值同样是：
+
+# $$  
+\lambda_k
+
+\left(\frac{k\pi}{L}\right)^2.  
+$$
+
+---
+
+### 周期空间 (S^1)
+
+算子：
+
+# $$  
+\mathcal{A}
+
+-\frac{d^2}{d\alpha^2}  
+$$
+
+特征函数：
+
+# $$  
+\phi_m(\alpha)
+
+e^{im\alpha}  
+$$
+
+特征值：
+
+$$  
+\lambda_m=m^2.  
+$$
+
+实值形式：
+
+# $$  
+f(\alpha)
+
+a_0+  
+\sum_{m=1}^{M}  
+a_m\cos(m\alpha)  
++  
+b_m\sin(m\alpha).  
+$$
+
+这个适合方位角、周期相位、方向角。
+
+---
+
+### 球面 (S^2)
+
+算子：
+
+# $$  
+\mathcal{A}
+
+-\Delta_{S^2}  
+$$
+
+特征函数：
+
+# $$  
+\phi_{\ell m}(\omega)
+
+Y_{\ell m}(\omega)  
+$$
+
+特征值：
+
+# $$  
+\lambda_\ell
+
+\ell(\ell+1).  
+$$
+
+这里 (\omega\in S^2)，(\ell=0,1,\ldots,L)，(m=-\ell,\ldots,\ell)。
+
+---
+
+### 矩形区域 ([0,L_x]\times[0,L_y])
+
+算子：
+
+# $$  
+\mathcal{A}
+
+# -\Delta
+
+## -\frac{\partial^2}{\partial x^2}
+
+\frac{\partial^2}{\partial y^2}.  
+$$
+
+Dirichlet 边界下：
+
+# $$  
+\phi_{ij}(x,y)
+
+\sin\left(\frac{i\pi x}{L_x}\right)  
+\sin\left(\frac{j\pi y}{L_y}\right)  
+$$
+
+特征值：
+
+# $$  
+\lambda_{ij}
+
+\left(\frac{i\pi}{L_x}\right)^2  
++  
+\left(\frac{j\pi}{L_y}\right)^2.  
+$$
+
+---
+
+这些都是“好学生版本”。问题是，物理世界基本不是好学生。
+
+---
+
+## 2.2 第二类：数值特征分解
+
+对于复杂几何、复杂边界、非均匀介质，你一般没有闭式解。这时用数值方法求前 (K) 个 eigenpairs：
+
+$$  
+\mathcal{A}\phi_k=\lambda_k\phi_k.  
+$$
+
+做法是先离散化算子，把连续特征问题变成矩阵特征值问题。
+
+---
+
+### 情况 A：规则网格上的 finite difference
+
+如果 mode 是一维或二维规则网格，比如：
+
+$$  
+z\in[0,H],\quad \rho\in[0,R],  
+$$
+
+你可以用 finite difference 离散 (-\frac{d^2}{dz^2}) 或 (-\Delta)。
+
+例如一维二阶差分：
+
+$$  
+-\frac{d^2 f}{dz^2}  
+\approx  
+\frac{-f_{i-1}+2f_i-f_{i+1}}{\Delta z^2}.  
+$$
+
+于是得到矩阵：
+
+$$  
+L_z\in\mathbb{R}^{N_z\times N_z}.  
+$$
+
+然后求：
+
+$$  
+L_z v_k=\lambda_k v_k.  
+$$
+
+这里：
+
+- (v_k) 是离散 eigenvector；
+    
+- (\lambda_k) 是离散 eigenvalue；
+    
+- (v_k(z_i)) 近似 (\phi_k(z_i))。
+    
+
+如果需要在连续点 (z) 上评价 (\phi_k(z))，可以对 (v_k) 做插值：
+
+$$  
+\phi_k(z)  
+\approx  
+\mathrm{Interp}(v_k;z).  
+$$
+
+---
+
+### 情况 B：有限元 FEM
+
+如果空间区域 (\Omega) 形状复杂，比如不规则海域、障碍物区域、真实地形边界，finite element 更自然。
+
+连续问题：
+
+$$  
+-\Delta \phi_k=\lambda_k\phi_k  
+$$
+
+离散后一般得到广义特征值问题：
+
+# $$  
+K v_k
+
+\lambda_k M v_k.  
+$$
+
+其中：
+
+- (K)：stiffness matrix；
+    
+- (M)：mass matrix；
+    
+- (v_k)：有限元基下的系数。
+    
+
+这时特征函数近似为：
+
+# $$  
+\phi_k(x)
+
+\sum_{i=1}^{N}  
+(v_k)_i \psi_i(x),  
+$$
+
+其中 (\psi_i(x)) 是 FEM basis。
+
+这适合：
+
+- irregular domain；
+    
+- complex boundary；
+    
+- underwater terrain；
+    
+- cavity / scattering region；
+    
+- 有障碍物的传播问题。
+    
+
+---
+
+### 情况 C：图 Laplacian
+
+如果某个 mode 不是连续规则坐标，而是传感器网络或不规则采样点集合：
+
+$$  
+{x_i}_{i=1}^{N},  
+$$
+
+可以构造图：
+
+# $$  
+W_{ij}
+
+\exp\left(  
+-\frac{|x_i-x_j|^2}{2\ell^2}  
+\right)  
+$$
+
+或 kNN graph。
+
+图 Laplacian：
+
+$$  
+L=D-W.  
+$$
+
+求：
+
+$$  
+L v_k=\lambda_k v_k.  
+$$
+
+这样得到 graph Fourier basis。
+
+这适合：
+
+- 水听器阵列；
+    
+- 不规则观测站；
+    
+- mesh node；
+    
+- 非欧式传感器拓扑；
+    
+- 没有明确连续域但有邻接结构的 mode。
+    
+
+---
+
+## 2.3 第三类：可学习或近似谱基
+
+有些时候连数值求 eigenfunction 都不划算，或者 domain 很大、动态变化。这时可以不显式求精确 eigenbasis，而用近似 basis。
+
+### Option A：随机 Fourier feature / Laplacian feature
+
+在简单欧式空间中可以用：
+
+$$  
+\phi_k(x)=\cos(\omega_k^\top x+b_k),  
+$$
+
+其中：
+
+$$  
+\omega_k\sim p(\omega).  
+$$
+
+这不是严格 eigenfunction，但可以近似平稳 kernel。
+
+---
+
+### Option B：Nyström basis
+
+给定 inducing points：
+
+$$  
+Z={z_1,\ldots,z_M}.  
+$$
+
+用 kernel matrix：
+
+$$  
+K_{ZZ}  
+$$
+
+做特征分解：
+
+$$  
+K_{ZZ}=U\Sigma U^\top.  
+$$
+
+构造近似特征函数：
+
+$$  
+\phi_k(x)  
+\approx  
+\frac{1}{\sqrt{\sigma_k}}  
+k(x,Z)u_k.  
+$$
+
+这适合：
+
+- 没有显式算子；
+    
+- 但你能定义一个 kernel；
+    
+- 数据采样点复杂；
+    
+- 希望保留 GP 风格。
+    
+
+---
+
+### Option C：learned eigenbasis / neural basis
+
+你可以用小网络表示：
+
+$$  
+\phi_k(x)=\mathrm{NN}_k(x)  
+$$
+
+然后用约束让它近似满足：
+
+$$  
+\mathcal{A}\phi_k\approx \lambda_k\phi_k.  
+$$
+
+损失：
+
+# $$  
+\mathcal{L}_{\mathrm{eig}}
+
+\sum_k  
+\left|  
+\mathcal{A}\phi_k-\lambda_k\phi_k  
+\right|^2  
++  
+\sum_{i\neq j}  
+\left(  
+\langle \phi_i,\phi_j\rangle  
+\right)^2.  
+$$
+
+同时归一化：
+
+$$  
+|\phi_k|^2=1.  
+$$
+
+不过这条路线比较重，第一篇不建议作为主方案。它会把论文变成“如何学 eigenfunction”，主线容易跑偏。
+
+---
+
+# 3. 不同 mode 的算子怎么选？
+
+这才是最关键的问题。算子不是随便选的，它应该来自三个来源之一：
+
+$$  
+\text{geometry}  
+,\quad  
+\text{boundary condition}  
+,\quad  
+\text{physics}.  
+$$
+
+---
+
+## 3.1 如果 mode 是普通连续坐标
+
+比如：
+
+$$  
+r\in[0,R]  
+$$
+
+默认选：
+
+$$  
+\mathcal{A}_r=-\frac{d^2}{dr^2}.  
+$$
+
+边界条件按物理含义选：
+
+### Dirichlet
+
+$$  
+f(0)=f(R)=0.  
+$$
+
+表示边界函数值固定。
+
+### Neumann
+
+$$  
+f'(0)=f'(R)=0.  
+$$
+
+表示边界通量/梯度为零。
+
+### Robin
+
+$$  
+af+b\frac{\partial f}{\partial n}=0.  
+$$
+
+更一般，可表达吸收边界、阻抗边界等。
+
+---
+
+## 3.2 如果 mode 是方位角
+
+比如：
+
+$$  
+\alpha\in S^1.  
+$$
+
+选：
+
+$$  
+\mathcal{A}_\alpha=-\frac{d^2}{d\alpha^2}.  
+$$
+
+basis：
+
+$$  
+\cos(m\alpha),\quad \sin(m\alpha).  
+$$
+
+这就是周期 Fourier basis。  
+水声里的 bearing angle 很适合这个，而不是强行 (S^2) 球谐。
+
+---
+
+## 3.3 如果 mode 是方向球面
+
+比如 DOA：
+
+$$  
+\omega\in S^2.  
+$$
+
+选：
+
+$$  
+\mathcal{A}_\omega=-\Delta_{S^2}.  
+$$
+
+basis：
+
+$$  
+Y_{\ell m}(\omega).  
+$$
+
+---
+
+## 3.4 如果 mode 是深度
+
+比如：
+
+$$  
+z\in[0,H].  
+$$
+
+这就不要无脑 Fourier。深度方向有边界：
+
+- 海面；
+    
+- 海底；
+    
+- 温跃层；
+    
+- 声速剖面。
+    
+
+最简单是：
+
+$$  
+\mathcal{A}_z=-\frac{d^2}{dz^2}  
+$$
+
+加边界条件。  
+更物理一点可以用 Sturm-Liouville operator：
+
+# $$  
+\mathcal{A}_z f
+
+-\frac{d}{dz}  
+\left(  
+p(z)\frac{df}{dz}  
+\right)  
++  
+q(z)f.  
+$$
+
+特征问题：
+
+# $$  
+-\frac{d}{dz}  
+\left(  
+p(z)\frac{d\phi_k}{dz}  
+\right)  
++  
+q(z)\phi_k
+
+\lambda_k w(z)\phi_k.  
+$$
+
+这个非常适合分层介质，因为 (p(z),q(z),w(z)) 可以编码声速剖面、介质参数、边界效应。
+
+当然，这会比普通 Laplacian 更复杂，但物理味也更强。
+
+---
+
+## 3.5 如果 mode 是频率
+
+频率 (f) 比较特殊。它不一定是“几何空间”，而更像参数轴。
+
+你可以有三种选择。
+
+### Choice A：普通 smoothness operator
+
+$$  
+\mathcal{A}_f=-\frac{d^2}{df^2}.  
+$$
+
+表示频率响应是平滑的。
+
+### Choice B：log-frequency coordinate
+
+很多波传播问题更适合：
+
+$$  
+\eta=\log f.  
+$$
+
+然后：
+
+# $$  
+\mathcal{A}_\eta
+
+-\frac{d^2}{d\eta^2}.  
+$$
+
+因为物理响应可能在 log-frequency 上更平滑。
+
+### Choice C：不用固定 eigenbasis，用 learned spectral prior
+
+频率响应可能有共振、振荡和多尺度变化。可以用一组混合 basis：
+
+# $$  
+\Phi_f(f)
+
+[  
+\text{spline}(f),  
+\sin(\omega_1 f),  
+\cos(\omega_1 f),  
+\ldots  
+].  
+$$
+
+然后 spectral precision 学出来。
+
+---
+
+# 4. 如果每个 mode 的算子不同，整体怎么统一？
+
+假设有四个 mode：
+
+$$  
+u(f,\rho,z,\alpha).  
+$$
+
+为每个 mode 分别求：
+
+$$  
+\mathcal{A}_f\phi^f_i=\lambda^f_i\phi^f_i  
+$$
+
+$$  
+\mathcal{A}_\rho\phi^\rho_j=\lambda^\rho_j\phi^\rho_j  
+$$
+
+$$  
+\mathcal{A}_z\phi^z_k=\lambda^z_k\phi^z_k  
+$$
+
+$$  
+\mathcal{A}_\alpha\phi^\alpha_l=\lambda^\alpha_l\phi^\alpha_l.  
+$$
+
+然后构造：
+
+$$  
+\Phi_f(f),\quad  
+\Phi_\rho(\rho),\quad  
+\Phi_z(z),\quad  
+\Phi_\alpha(\alpha).  
+$$
+
+每个 mode 的 factor 是：
+
+$$  
+F_f(f)=(W^f)^\top \Phi_f(f)  
+$$
+
+$$  
+F_\rho(\rho)=(W^\rho)^\top \Phi_\rho(\rho)  
+$$
+
+$$  
+F_z(z)=(W^z)^\top \Phi_z(z)  
+$$
+
+$$  
+F_\alpha(\alpha)=(W^\alpha)^\top \Phi_\alpha(\alpha).  
+$$
+
+整体 Tucker：
+
+# $$  
+u(f,\rho,z,\alpha)
+
+\left\langle  
+\mathcal{G},  
+F_f(f)\otimes F_\rho(\rho)\otimes F_z(z)\otimes F_\alpha(\alpha)  
+\right\rangle.  
+$$
+
+每个 mode 的先验分别是：
+
+$$  
+w^f_{r,i}  
+\sim  
+\mathcal{N}  
+\left(  
+0,  
+\rho_f(\lambda^f_i)^{-1}  
+\right)  
+$$
+
+$$  
+w^\rho_{r,j}  
+\sim  
+\mathcal{N}  
+\left(  
+0,  
+\rho_\rho(\lambda^\rho_j)^{-1}  
+\right)  
+$$
+
+$$  
+w^z_{r,k}  
+\sim  
+\mathcal{N}  
+\left(  
+0,  
+\rho_z(\lambda^z_k)^{-1}  
+\right)  
+$$
+
+$$  
+w^\alpha_{r,l}  
+\sim  
+\mathcal{N}  
+\left(  
+0,  
+\rho_\alpha(\lambda^\alpha_l)^{-1}  
+\right).  
+$$
+
+所以统一性不在于“算子相同”，而在于：
+
+$$  
+\boxed{  
+\text{每个 mode 都遵循}  
+\quad  
+\mathcal{A}_m\rightarrow(\phi_{m,k},\lambda_{m,k})  
+\rightarrow \rho_m(\lambda_{m,k})  
+\rightarrow p(w^{(m)}_{r,k})  
+}  
+$$
+
+---
+
+# 5. 对复杂场景，应该怎么落地？
+
+我建议你在论文里把实现分成三层，这样审稿人会觉得非常清楚。
+
+---
+
+## Level 1：Closed-form basis
+
+适用于简单几何。
+
+例子：
+
+|Mode|Domain|Operator|Basis|
+|---|---|---|---|
+|range|([0,R])|(-d^2/dr^2)|sine/cosine|
+|depth|([0,H])|(-d^2/dz^2)|sine/cosine|
+|bearing|(S^1)|(-d^2/d\alpha^2)|Fourier|
+|direction|(S^2)|(-\Delta_{S^2})|spherical harmonics|
+
+这是第一篇最该用的。
+
+---
+
+## Level 2：Numerical eigenbasis
+
+适用于复杂边界或非均匀介质。
+
+例子：
+
+|Mode|Domain|Method|
+|---|---|---|
+|irregular 2D region|(\Omega\subset\mathbb{R}^2)|FEM eigenfunctions|
+|mesh surface|manifold mesh|discrete Laplace-Beltrami|
+|sensor network|graph|graph Laplacian eigenvectors|
+|depth with sound-speed profile|Sturm-Liouville|finite difference / FEM|
+
+这可以作为方法扩展或 appendix。
+
+---
+
+## Level 3：Learned / approximate basis
+
+适用于没有明确几何或超大规模场景。
+
+例子：
+
+|Method|用途|
+|---|---|
+|random features|平稳 kernel 近似|
+|Nyström|数据驱动 basis|
+|neural eigenfunctions|高复杂场景|
+|dictionary learning|empirical basis|
+
+这不建议第一篇主打，但可以作为 future extension。
+
+---
+
+# 6. 对水声方向，具体建议怎么选？
+
+如果做水声，我建议第一版不要搞太复杂。
+
+## 6.1 如果数据是 (u(f,\rho,z))
+
+用：
+
+$$  
+\mathcal{A}_f=-\frac{d^2}{d(\log f)^2}  
+$$
+
+$$  
+\mathcal{A}_\rho=-\frac{d^2}{d\rho^2}  
+$$
+
+$$  
+\mathcal{A}_z=-\frac{d^2}{dz^2}  
+$$
+
+模型：
+
+# $$  
+u(f,\rho,z)
+
+\left\langle  
+\mathcal{G},  
+F_f(f)\otimes F_\rho(\rho)\otimes F_z(z)  
+\right\rangle.  
+$$
+
+这里全部可闭式处理，容易跑。
+
+---
+
+## 6.2 如果数据是 (u(f,\rho,z,\alpha))
+
+方位角：
+
+$$  
+\alpha\in S^1.  
+$$
+
+用 Fourier：
+
+# $$  
+F_\alpha(\alpha)
+
+(W^\alpha)^\top  
+[  
+1,\cos\alpha,\sin\alpha,\ldots,\cos M\alpha,\sin M\alpha].  
+$$
+
+整体：
+
+# $$  
+u(f,\rho,z,\alpha)
+
+\left\langle  
+\mathcal{G},  
+F_f(f)\otimes F_\rho(\rho)\otimes F_z(z)\otimes F_\alpha(\alpha)  
+\right\rangle.  
+$$
+
+这会是非常漂亮的 geometry-aware demo：
+
+- (f,\rho,z)：bounded / smooth continuous axis；
+    
+- (\alpha)：periodic geometry；
+    
+- 先验统一通过 operator spectrum；
+    
+- 推断统一用 variational SGD。
+    
+
+---
+
+## 6.3 如果数据是 (u(f,r,\omega)), (\omega\in S^2)
+
+用：
+
+$$  
+\mathcal{A}_\omega=-\Delta_{S^2}.  
+$$
+
+basis：
+
+$$  
+Y_{\ell m}(\omega).  
+$$
+
+模型：
+
+# $$  
+u(f,r,\omega)
+
+\left\langle  
+\mathcal{G},  
+F_f(f)\otimes F_r(r)\otimes F_\omega(\omega)  
+\right\rangle.  
+$$
+
+其中：
+
+# $$  
+F_\omega(\omega)
+
+(W^\omega)^\top  
+[  
+Y_{00}(\omega),Y_{1,-1}(\omega),\ldots,Y_{LM}(\omega)]^\top.  
+$$
+
+这个比 (S^1) 更重，适合作为第二阶段。
+
+---
+
+# 7. 有没有必要求“联合算子”的 eigenfunction？
+
+你可能会问：  
+如果函数是：
+
+$$  
+u(f,\rho,z,\alpha)  
+$$
+
+是否应该对整个 product domain：
+
+# $$  
+\mathcal{X}
+
+\mathcal{X}_f\times\mathcal{X}_\rho\times\mathcal{X}_z\times S^1  
+$$
+
+求一个联合算子：
+
+# $$  
+\mathcal{A}
+
+\mathcal{A}_f  
++  
+\mathcal{A}_\rho  
++  
+\mathcal{A}_z  
++  
+\mathcal{A}_\alpha  
+?  
+$$
+
+理论上可以。
+
+如果每个 mode 的特征函数是：
+
+# $$  
+\mathcal{A}_m\phi_{m,k_m}
+
+\lambda_{m,k_m}\phi_{m,k_m},  
+$$
+
+那么 product basis：
+
+# $$  
+\Phi_{\mathbf{k}}(\xi_1,\ldots,\xi_M)
+
+\prod_{m=1}^{M}  
+\phi_{m,k_m}(\xi_m)  
+$$
+
+是联合算子：
+
+# $$  
+\mathcal{A}
+
+\sum_{m=1}^{M}  
+\mathcal{A}_m  
+$$
+
+的特征函数，对应特征值：
+
+# $$  
+\lambda_{\mathbf{k}}
+
+\sum_{m=1}^{M}  
+\lambda_{m,k_m}.  
+$$
+
+也就是：
+
+# $$  
+\mathcal{A}\Phi_{\mathbf{k}}
+
+\left(  
+\sum_{m=1}^{M}  
+\lambda_{m,k_m}  
+\right)  
+\Phi_{\mathbf{k}}.  
+$$
+
+但如果你直接使用完整 product basis，会有维度爆炸：
+
+# $$  
+K_{\mathrm{joint}}
+
+\prod_{m=1}^{M}K_m.  
+$$
+
+这就是为什么我们用 Tucker factorization。  
+Tucker 的意义是避免显式构造完整联合谱基，而是低秩地组合 mode-wise spectral factors。
+
+所以你可以在论文里这样解释：
+
+> Full operator spectral expansion on the product domain is theoretically natural but computationally infeasible due to the exponential growth of product eigenbasis. Our Bayesian functional Tucker model provides a low-rank approximation to the product spectral representation.
+
+这句话很关键。
+
+---
+
+# 8. 和普通 basis expansion 的区别在哪里？
+
+有人可能质疑：  
+“你这不就是 Fourier / basis expansion 吗？”
+
+回答是：不只是。
+
+因为你有四层结构：
+
+1. basis 不是任意 basis，而是 operator eigenbasis；
+    
+2. prior 不是普通 weight decay，而是 eigenvalue-dependent Bayesian prior：
+    
+    $$  
+    w_k\sim\mathcal{N}(0,\rho(\lambda_k)^{-1});  
+    $$
+    
+3. 多 mode 的 product basis 不显式展开，而是用 Bayesian Tucker 低秩化；
+    
+4. posterior uncertainty 可以按 mode 和 eigenvalue 分解。
+    
+
+普通 basis expansion 只有第一点的一半。
+
+---
+
+# 9. 如果 eigenbasis 计算成本高怎么办？
+
+几个 practical trick：
+
+## 9.1 只取低频前 (K) 个
+
+通常 prior 会压制高频，因此只需要前 (K) 个：
+
+$$  
+k=1,\ldots,K.  
+$$
+
+高频信息由 residual/noise 或 neural residual 捕捉。
+
+---
+
+## 9.2 多分辨率 basis
+
+用低频全局 basis + 局部 basis：
+
+# $$  
+\Phi(x)
+
+[\Phi_{\mathrm{global}}(x),\Phi_{\mathrm{local}}(x)].  
+$$
+
+例如：
+
+- global Laplacian eigenbasis；
+    
+- local RBF；
+    
+- wavelet；
+    
+- spline。
+    
+
+---
+
+## 9.3 Hybrid neural residual
+
+可以设：
+
+# $$  
+f(x)
+
+\Phi(x)^\top w  
++  
+\epsilon_\theta(x),  
+$$
+
+其中：
+
+$$  
+\epsilon_\theta(x)  
+$$
+
+是小 MLP residual。
+
+但要小心：这个 residual 不能太强，否则会把 geometry prior 架空。
+
+可以给 residual 加强收缩：
+
+$$  
+\epsilon_\theta(x)\sim \text{small residual network}.  
+$$
+
+---
+
+## 9.4 Basis precomputation
+
+对固定 domain，eigenbasis 可以预计算一次。
+
+训练时只需要查表：
+
+$$  
+\Phi(x_n).  
+$$
+
+如果 (x_n) 不在网格上，则插值：
+
+# $$  
+\Phi(x_n)
+
+\mathrm{Interp}(\Phi_{\mathrm{grid}},x_n).  
+$$
+
+---
+
+# 10. 一个建议的 paper implementation 策略
+
+第一篇不要野心过大。建议这样落：
+
+## 主实验 setting
+
+选择：
+
+$$  
+u(f,\rho,z,\alpha)  
+$$
+
+对应 mode：
+
+|Mode|Domain|Basis|
+|---|---|---|
+|frequency (f)|([\log f_{\min},\log f_{\max}])|cosine/spline|
+|range (\rho)|([0,R])|sine/cosine|
+|depth (z)|([0,H])|sine/cosine with boundary|
+|bearing (\alpha)|(S^1)|Fourier|
+
+全部闭式。  
+先证明方法有效。
+
+## 扩展实验
+
+再加一个 numerical eigenbasis：
+
+- irregular sensor graph；
+    
+- mesh domain；
+    
+- depth-dependent Sturm-Liouville。
+    
+
+这样论文会同时具备：
+
+- clean theory；
+    
+- scalable implementation；
+    
+- physical relevance；
+    
+- generality evidence。
+    
+
+---
+
+# 11. 最后回答你的问题
+
+## Q1：eigenfunction 和 eigenvalue 具体怎么算？
+
+三种方式：
+
+$$  
+\boxed{  
+\text{closed-form}  
+}  
+$$
+
+适用于规则几何，如区间、周期圆、球面、矩形。
+
+$$  
+\boxed{  
+\text{numerical eigen-decomposition}  
+}  
+$$
+
+把算子离散成矩阵：
+
+$$  
+A v_k=\lambda_k v_k  
+$$
+
+或 FEM 广义特征问题：
+
+$$  
+K v_k=\lambda_k M v_k.  
+$$
+
+$$  
+\boxed{  
+\text{approximate / learned basis}  
+}  
+$$
+
+用 random features、Nyström、graph basis 或 neural eigenbasis。
+
+---
+
+## Q2：是否一定有闭式解？
+
+不需要。  
+闭式只是最简单情况。复杂场景下数值 eigenbasis 完全可以，而且更合理。
+
+---
+
+## Q3：每个 mode 的算子可能不一样怎么办？
+
+这正是框架的设计目标。  
+每个 mode 独立构造：
+
+# $$  
+\mathcal{A}_m\phi_{m,k}
+
+\lambda_{m,k}\phi_{m,k}.  
+$$
+
+再用统一的谱先验：
+
+$$  
+w^{(m)}_{r,k}  
+\sim  
+\mathcal{N}  
+\left(  
+0,  
+\rho_m(\lambda_{m,k})^{-1}  
+\right).  
+$$
+
+最后通过 Tucker core 组合：
+
+# $$  
+u(\xi_1,\ldots,\xi_M)
+
+\left\langle  
+\mathcal{G},  
+\bigotimes_m  
+(W^{(m)})^\top\Phi_m(\xi_m)  
+\right\rangle.  
+$$
+
+所以：
+
+$$  
+\boxed{  
+\text{算子可以不同，统一性来自 operator} \rightarrow \text{spectrum} \rightarrow \text{prior} \rightarrow \text{tensor factor 的流程。}  
+}  
+$$
+
+---
+
+# 12. 我建议你在论文里怎么表述这点
+
+可以写成：
+
+> For each tensor mode, we associate the underlying coordinate domain with a self-adjoint positive operator. When analytic eigensystems are available, such as Fourier bases on periodic domains or spherical harmonics on (S^2), we use them directly. For irregular domains or sensor geometries, we compute numerical eigenfunctions through finite-difference, finite-element, or graph Laplacian discretizations. Thus, the proposed framework does not require closed-form eigenfunctions; it only requires a finite set of operator-induced spectral features, which can be precomputed or approximated.
+
+这段话基本可以直接放进 method 里。
+
+---
+
+# Geometry-aware Bayesian Functional Tensor：Toy Model 实验计划
+
+## 0. 实验目标
+
+你的 toy model 不应该一开始追求“真实物理复杂性”，而应该验证三个核心命题：
+
+1. **几何结构有用**  
+    当真实函数具有周期、边界、球面、径向-角向等结构时，operator-spectral prior 比 generic coordinate MLP / random Fourier feature / standard tensor 更稳。
+    
+2. **贝叶斯不确定性有用**  
+    在稀疏观测、缺失区域、外推区域、高频恢复等场景下，模型不仅能给出更好的重建，还能给出合理的 posterior uncertainty。
+    
+3. **函数张量结构有用**  
+    对高维函数：
+    
+    $$  
+    u(\xi_1,\ldots,\xi_M)  
+    $$
+    
+    单纯 MLP 容易参数多、泛化差；低秩 functional tensor 能通过 mode-wise structure 提升样本效率。
+    
+
+你要构建的核心模型可以固定为：
+
+# $$  
+u(\xi_1,\ldots,\xi_M)
+
+\left\langle  
+\mathcal{G},  
+\bigotimes_{m=1}^{M}  
+(W^{(m)})^\top\Phi_m(\xi_m)  
+\right\rangle,  
+$$
+
+其中：
+
+# $$  
+\mathcal{A}_m\phi_{m,k}
+
+\lambda_{m,k}\phi_{m,k},  
+$$
+
+$$  
+w^{(m)}_{r,k}  
+\sim  
+\mathcal{N}  
+\left(  
+0,  
+\rho_m(\lambda_{m,k})^{-1}  
+\right).  
+$$
+
+---
+
+# 1. 总体实验路线
+
+我建议分成四级 toy model：
+
+|Level|Toy task|目的|难度|
+|---|---|---|---|
+|1|低维几何函数回归|验证 operator-spectral prior 本身|低|
+|2|二维/三维函数张量补全|验证 functional tensor 结构|中|
+|3|几何错配实验|证明“几何 prior 不是装饰”|中|
+|4|物理启发场重构|接近水声/波场/PDE 场景|较高|
+
+第一篇论文里，Level 1–3 是方法论核心证据；Level 4 是向物理场延伸的故事。
+
+---
+
+# 2. 模型实现总框架
+
+## 2.1 数据形式
+
+每条观测为：
+
+# $$  
+\mathcal{D}
+
+\left{  
+(\xi_{1,n},\ldots,\xi_{M,n},y_n)  
+\right}_{n=1}^{N}  
+$$
+
+其中：
+
+# $$  
+y_n
+
+u^\star(\xi_{1,n},\ldots,\xi_{M,n})  
++  
+\epsilon_n,  
+\qquad  
+\epsilon_n\sim\mathcal{N}(0,\sigma_{\mathrm{noise}}^2).  
+$$
+
+## 2.2 Proposed model
+
+每个 mode 的 factor：
+
+# $$  
+F^{(m)}(\xi_m)
+
+(W^{(m)})^\top \Phi_m(\xi_m)  
+\in \mathbb{R}^{R_m}.  
+$$
+
+整体输出：
+
+# $$  
+\hat{u}(\xi_1,\ldots,\xi_M)
+
+\left\langle  
+\mathcal{G},  
+F^{(1)}(\xi_1)\otimes\cdots\otimes F^{(M)}(\xi_M)  
+\right\rangle.  
+$$
+
+如果用 CP 版本，则更简单：
+
+# $$  
+\hat{u}(\xi_1,\ldots,\xi_M)
+
+\sum_{r=1}^{R}  
+\lambda_r  
+\prod_{m=1}^{M}  
+f^{(m)}_{r}(\xi_m),  
+$$
+
+其中：
+
+# $$  
+f^{(m)}_{r}(\xi_m)
+
+\Phi_m(\xi_m)^\top w^{(m)}_r.  
+$$
+
+建议实现时先做 **CP**，跑通后再做 **Tucker**。CP 更适合 toy model 调试，Tucker 更适合论文最终版本。
+
+---
+
+## 2.3 贝叶斯参数化
+
+对每个谱权重：
+
+# $$  
+q(w^{(m)}_{r,k})
+
+\mathcal{N}  
+\left(  
+\mu^{(m)}_{r,k},  
+(s^{(m)}_{r,k})^2  
+\right).  
+$$
+
+用 reparameterization：
+
+# $$  
+w^{(m)}_{r,k}
+
+\mu^{(m)}_{r,k}  
++  
+s^{(m)}_{r,k}\epsilon,  
+\qquad  
+\epsilon\sim\mathcal{N}(0,1).  
+$$
+
+先验：
+
+# $$  
+p(w^{(m)}_{r,k})
+
+\mathcal{N}  
+\left(  
+0,  
+\rho_m(\lambda_{m,k})^{-1}  
+\right).  
+$$
+
+默认谱精度：
+
+# $$  
+\rho_m(\lambda)
+
+\alpha_m(1+\lambda)^{p_m}.  
+$$
+
+其中：
+
+$$  
+\alpha_m=\mathrm{softplus}(\tilde{\alpha}_m),  
+\qquad  
+p_m=\mathrm{softplus}(\tilde{p}_m).  
+$$
+
+这样 (\alpha_m,p_m) 可以训练。
+
+---
+
+## 2.4 ELBO
+
+对 mini-batch (\mathcal{B})：
+
+# $$  
+\mathcal{L}_{\mathcal{B}}
+
+## \frac{N}{|\mathcal{B}|}  
+\sum_{n\in\mathcal{B}}  
+\mathbb{E}_q  
+\left[  
+\log p(y_n\mid \hat{u}_n,\sigma^2)  
+\right]
+
+## \sum_m  
+\mathrm{KL}\left(q(W^{(m)})|p(W^{(m)})\right)
+
+\mathrm{KL}\left(q(\mathcal{G})|p(\mathcal{G})\right).  
+$$
+
+似然：
+
+# $$  
+p(y_n\mid \hat{u}_n,\sigma^2)
+
+\mathcal{N}(y_n\mid \hat{u}_n,\sigma^2).  
+$$
+
+KL 对每个 (w) 解析：
+
+# $$  
+\mathrm{KL}(q(w)|p(w))
+
+\frac{1}{2}  
+\left[  
+\log  
+\frac{\rho^{-1}}{s^2}  
++  
+\rho(s^2+\mu^2)  
+-1  
+\right].  
+$$
+
+训练目标：
+
+$$  
+\max \mathcal{L}_{\mathcal{B}}  
+$$
+
+或最小化：
+
+$$  
+-\mathcal{L}_{\mathcal{B}}.  
+$$
+
+用 Adam 即可。
+
+---
+
+# 3. Toy Model 1：单变量几何函数回归
+
+## 3.1 目的
+
+先不做张量，只验证 operator-spectral prior 在不同几何空间上的效果。
+
+任务：
+
+$$  
+y_n=f^\star(x_n)+\epsilon_n.  
+$$
+
+比较：
+
+1. proposed spectral Bayesian model；
+    
+2. coordinate MLP；
+    
+3. random Fourier feature Bayesian regression；
+    
+4. wrong geometry prior；
+    
+5. standard GP / sparse GP，可选。
+    
+
+---
+
+## 3.2 Case 1：区间 ([0,1]) 上的边界函数
+
+定义：
+
+$$  
+x\in[0,1].  
+$$
+
+真实函数：
+
+# $$  
+f^\star(x)
+
+1.2\sin(\pi x)  
++  
+0.7\sin(3\pi x)  
++  
+0.3\sin(8\pi x).  
+$$
+
+这个函数满足 Dirichlet 边界：
+
+$$  
+f^\star(0)=f^\star(1)=0.  
+$$
+
+正确算子：
+
+# $$  
+\mathcal{A}
+
+-\frac{d^2}{dx^2},  
+\qquad f(0)=f(1)=0.  
+$$
+
+特征函数：
+
+# $$  
+\phi_k(x)
+
+\sqrt{2}\sin(k\pi x).  
+$$
+
+特征值：
+
+$$  
+\lambda_k=(k\pi)^2.  
+$$
+
+模型：
+
+$$  
+f(x)=\sum_{k=1}^{K}w_k\phi_k(x).  
+$$
+
+先验：
+
+$$  
+w_k\sim  
+\mathcal{N}  
+\left(  
+0,  
+[\alpha(1+\lambda_k)^p]^{-1}  
+\right).  
+$$
+
+### 实验设置
+
+训练点数：
+
+$$  
+N_{\mathrm{train}}\in{10,20,50,100}.  
+$$
+
+噪声：
+
+$$  
+\sigma_{\mathrm{noise}}\in{0.01,0.05,0.1}.  
+$$
+
+测试点：
+
+$$  
+N_{\mathrm{test}}=1000.  
+$$
+
+训练点采样：
+
+- uniform random；
+    
+- clustered sampling；
+    
+- left-half only：
+    
+    $$  
+    x\in[0,0.6]  
+    $$
+    
+    测试外推到：
+    
+    $$  
+    x\in(0.6,1].  
+    $$
+    
+
+### 预期结果
+
+Proposed model 应该在小样本下明显优于 MLP，因为先验知道边界和低频结构。Wrong prior 应该明显变差。
+
+---
+
+## 3.3 Case 2：周期空间 (S^1)
+
+令：
+
+$$  
+\theta\in[0,2\pi).  
+$$
+
+真实函数：
+
+# $$  
+f^\star(\theta)
+
+1.0\cos(2\theta)  
++  
+0.5\sin(5\theta)  
++  
+0.2\cos(12\theta).  
+$$
+
+正确算子：
+
+# $$  
+\mathcal{A}
+
+-\frac{d^2}{d\theta^2}.  
+$$
+
+basis：
+
+$$  
+\phi_0(\theta)=1,  
+$$
+
+$$  
+\phi^{c}_m(\theta)=\cos(m\theta),  
+\qquad  
+\phi^{s}_m(\theta)=\sin(m\theta).  
+$$
+
+特征值：
+
+$$  
+\lambda_m=m^2.  
+$$
+
+模型：
+
+# $$  
+f(\theta)
+
+w_0+  
+\sum_{m=1}^{M}  
+a_m\cos(m\theta)+b_m\sin(m\theta).  
+$$
+
+先验：
+
+$$  
+a_m,b_m  
+\sim  
+\mathcal{N}  
+\left(  
+0,  
+[\alpha(1+m^2)^p]^{-1}  
+\right).  
+$$
+
+### 关键测试：周期边界
+
+训练点中故意去掉靠近 (0/2\pi) 的区域，例如：
+
+$$  
+\theta\in[0.2,2\pi-0.2].  
+$$
+
+测试模型是否知道：
+
+$$  
+f(0)=f(2\pi).  
+$$
+
+### Baseline 预期
+
+- MLP with raw (\theta)：很可能在边界处断裂；
+    
+- MLP with ((\sin\theta,\cos\theta))：会好一些；
+    
+- proposed spectral prior：更稳，且有不确定性；
+    
+- wrong interval sine basis：边界行为错误。
+    
+
+---
+
+# 4. Toy Model 2：二维函数张量，验证 low-rank structure
+
+## 4.1 目的
+
+验证 proposed model 不只是单函数回归，而是真正适合高维函数：
+
+$$  
+u(x,t)  
+$$
+
+或：
+
+$$  
+u(r,\theta).  
+$$
+
+---
+
+## 4.2 Case 2A：time × space 函数
+
+定义：
+
+# $$  
+u^\star(t,x)
+
+\sum_{r=1}^{R^\star}  
+a_r^\star(t)b_r^\star(x).  
+$$
+
+设：
+
+$$  
+t\in[0,1],  
+\qquad  
+x\in[0,1].  
+$$
+
+真实函数：
+
+# $$  
+u^\star(t,x)
+
+\sin(2\pi t)\sin(\pi x)  
++  
+0.5\cos(4\pi t)\sin(3\pi x)  
++  
+0.3\sin(6\pi t)\sin(6\pi x).  
+$$
+
+这里：
+
+- (t) 是周期或非周期均可；
+    
+- (x) 满足 Dirichlet 边界。
+    
+
+正确 basis：
+
+时间：
+
+# $$  
+\Phi_t(t)
+
+[  
+1,\sin(2\pi t),\cos(2\pi t),\ldots  
+]  
+$$
+
+空间：
+
+# $$  
+\Phi_x(x)
+
+[  
+\sin(\pi x),\sin(2\pi x),\ldots  
+].  
+$$
+
+Proposed CP：
+
+# $$  
+u(t,x)
+
+\sum_{r=1}^{R}  
+\lambda_r  
+f_r^{(t)}(t)  
+f_r^{(x)}(x).  
+$$
+
+或 Tucker：
+
+# $$  
+u(t,x)
+
+\sum_{i=1}^{R_t}  
+\sum_{j=1}^{R_x}  
+G_{ij}  
+f_i^{(t)}(t)  
+f_j^{(x)}(x).  
+$$
+
+### 稀疏观测
+
+从完整 grid：
+
+$$  
+{t_i}_{i=1}^{T}\times{x_j}_{j=1}^{X}  
+$$
+
+中随机采样：
+
+$$  
+r_{\mathrm{obs}}\in{1%,5%,10%,20%}.  
+$$
+
+训练数据：
+
+# $$  
+\mathcal{D}_{\mathrm{obs}}
+
+{(t_n,x_n,y_n)}_{n=1}^{N}.  
+$$
+
+测试完整 grid。
+
+---
+
+## 4.3 关键对比
+
+### Baseline 1：Coordinate MLP
+
+$$  
+\hat{u}(t,x)=\mathrm{MLP}(t,x).  
+$$
+
+### Baseline 2：Neural tensor factorization
+
+# $$  
+\hat{u}(t,x)
+
+\sum_{r=1}^{R}  
+f_{r,\theta}^{(t)}(t)  
+f_{r,\theta}^{(x)}(x).  
+$$
+
+其中 (f) 是小 MLP。
+
+### Baseline 3：Deterministic spectral tensor
+
+同 proposed，但没有 posterior：
+
+$$  
+w_k \text{ is deterministic}.  
+$$
+
+只做 L2 regularization：
+
+$$  
+\lambda_k w_k^2.  
+$$
+
+### Baseline 4：Wrong geometry
+
+例如 (x) 维不用 sine basis，而用 Fourier periodic basis。  
+这样会违反边界：
+
+$$  
+u(t,0)=u(t,1)=0.  
+$$
+
+### Baseline 5：Matrix/tensor completion
+
+如果完整 grid 上补全，可以做：
+
+- low-rank matrix completion；
+    
+- tensor completion；
+    
+- Bayesian CP/Tucker with discrete factors。
+    
+
+这个 baseline 的缺点是不能处理 arbitrary continuous coordinates。
+
+---
+
+## 4.4 指标
+
+### 重建误差
+
+# $$  
+\mathrm{RelErr}
+
+\frac{|\hat{U}-U^\star|_F}{|U^\star|_F}.  
+$$
+
+### NLL
+
+# $$  
+\mathrm{NLL}
+
+-\sum_{n\in\mathrm{test}}  
+\log p(y_n\mid \mathcal{D}).  
+$$
+
+### Coverage
+
+例如 (95%) 置信区间：
+
+# $$  
+\mathrm{Coverage}_{95}
+
+\frac{1}{N_{\mathrm{test}}}  
+\sum_n  
+\mathbf{1}  
+\left[  
+y_n^\star  
+\in  
+\hat{\mu}_n\pm 1.96\hat{\sigma}_n  
+\right].  
+$$
+
+### Calibration error
+
+可以用：
+
+$$  
+\left|  
+\mathrm{Coverage}_{95}-0.95  
+\right|.  
+$$
+
+### Uncertainty-quality correlation
+
+误差：
+
+$$  
+e_n=  
+|\hat{\mu}_n-y_n^\star|.  
+$$
+
+不确定性：
+
+$$  
+s_n=\hat{\sigma}_n.  
+$$
+
+计算 Spearman correlation：
+
+# $$  
+\rho_{\mathrm{err,unc}}
+
+\mathrm{Spearman}(e_n,s_n).  
+$$
+
+好的不确定性应该和真实误差正相关。
+
+---
+
+# 5. Toy Model 3：径向-角向场，贴近声学/传播场
+
+这是最关键的 toy model，因为它能回应你真正关心的物理场方向。
+
+## 5.1 数据域
+
+考虑：
+
+$$  
+u^\star(f,r,\alpha)  
+$$
+
+其中：
+
+- (f\in[f_{\min},f_{\max}])：频率；
+    
+- (r\in[0,R])：传播距离；
+    
+- (\alpha\in S^1)：方位角。
+    
+
+这是水声/波场中比 (S^2) 更自然的 toy setting。
+
+---
+
+## 5.2 真实函数生成方式
+
+设计一个有低秩结构 + 几何结构 + 多尺度频率的场：
+
+# $$  
+u^\star(f,r,\alpha)
+
+\sum_{q=1}^{Q}  
+A_q(f)  
+B_q(r)  
+C_q(\alpha).  
+$$
+
+例如：
+
+$$  
+A_1(f)=\sin(2\pi f),  
+\quad  
+B_1(r)=\exp(-0.5r)\sin(3\pi r),  
+\quad  
+C_1(\alpha)=1+0.5\cos(\alpha).  
+$$
+
+$$  
+A_2(f)=\cos(4\pi f),  
+\quad  
+B_2(r)=\exp(-0.2r)\sin(7\pi r),  
+\quad  
+C_2(\alpha)=0.3\sin(3\alpha).  
+$$
+
+$$  
+A_3(f)=\sin(6\pi f),  
+\quad  
+B_3(r)=\exp(-0.8r)\cos(5\pi r),  
+\quad  
+C_3(\alpha)=0.2\cos(8\alpha).  
+$$
+
+整体：
+
+# $$  
+u^\star(f,r,\alpha)
+
+A_1(f)B_1(r)C_1(\alpha)  
++  
+A_2(f)B_2(r)C_2(\alpha)  
++  
+A_3(f)B_3(r)C_3(\alpha).  
+$$
+
+如果想更像声传播，可以加上传播相位：
+
+# $$  
+u^\star(f,r,\alpha)
+
+\sum_{q=1}^{Q}  
+A_q(\alpha)  
+\frac{1}{\sqrt{r+\epsilon}}  
+\cos  
+\left(  
+2\pi f \frac{r}{c_q(\alpha)}  
++  
+\varphi_q  
+\right)  
+\exp(-\beta_q r).  
+$$
+
+其中 (c_q(\alpha)) 是方向相关的有效声速：
+
+# $$  
+c_q(\alpha)
+
+c_0  
+\left[  
+1+\delta_q\cos(\alpha-\alpha_q)  
+\right].  
+$$
+
+这个版本更物理，但训练更难。
+
+建议先做 separable low-rank 版本，再做 wave-like 版本。
+
+---
+
+## 5.3 正确几何 basis
+
+### 频率 (f)
+
+如果归一化到：
+
+$$  
+f\in[0,1],  
+$$
+
+可用 Fourier / RBF / cosine basis。
+
+简单起步：
+
+$$  
+\Phi_f(f)=  
+[  
+1,\sin(2\pi f),\cos(2\pi f),\ldots,\sin(2\pi K_f f),\cos(2\pi K_f f)  
+].  
+$$
+
+### 距离 (r)
+
+如果：
+
+$$  
+r\in[0,1],  
+$$
+
+可用 Dirichlet 或 Neumann basis。
+
+如果不希望边界为 0，可以用 cosine basis：
+
+$$  
+\phi_k(r)=\cos(k\pi r).  
+$$
+
+特征值：
+
+$$  
+\lambda_k=(k\pi)^2.  
+$$
+
+### 方位角 (\alpha)
+
+周期 basis：
+
+# $$  
+\Phi_\alpha(\alpha)
+
+[  
+1,\cos\alpha,\sin\alpha,\ldots,\cos(K_\alpha\alpha),\sin(K_\alpha\alpha)  
+].  
+$$
+
+---
+
+## 5.4 Proposed model
+
+Tucker：
+
+# $$  
+u(f,r,\alpha)
+
+\sum_{i=1}^{R_f}  
+\sum_{j=1}^{R_r}  
+\sum_{k=1}^{R_\alpha}  
+G_{ijk}  
+a_i(f)b_j(r)c_k(\alpha).  
+$$
+
+其中：
+
+$$  
+a_i(f)=\Phi_f(f)^\top w_i^f,  
+$$
+
+$$  
+b_j(r)=\Phi_r(r)^\top w_j^r,  
+$$
+
+$$  
+c_k(\alpha)=\Phi_\alpha(\alpha)^\top w_k^\alpha.  
+$$
+
+贝叶斯先验：
+
+$$  
+w_{i,q}^{f}\sim  
+\mathcal{N}  
+\left(  
+0,\rho_f(\lambda_q^f)^{-1}  
+\right),  
+$$
+
+$$  
+w_{j,q}^{r}\sim  
+\mathcal{N}  
+\left(  
+0,\rho_r(\lambda_q^r)^{-1}  
+\right),  
+$$
+
+$$  
+w_{k,q}^{\alpha}\sim  
+\mathcal{N}  
+\left(  
+0,\rho_\alpha(\lambda_q^\alpha)^{-1}  
+\right).  
+$$
+
+---
+
+## 5.5 稀疏观测任务
+
+### Task A：随机稀疏重建
+
+随机观测：
+
+$$  
+r_{\mathrm{obs}}\in{0.5%,1%,5%,10%}.  
+$$
+
+完整 grid：
+
+# $$  
+N_f\times N_r\times N_\alpha
+
+50\times 64\times 64.  
+$$
+
+### Task B：角向缺失 wedge
+
+只观测：
+
+$$  
+\alpha\in[0,1.5\pi]  
+$$
+
+测试：
+
+$$  
+\alpha\in(1.5\pi,2\pi).  
+$$
+
+这考验 periodic prior 和 uncertainty。
+
+### Task C：远距离外推
+
+训练：
+
+$$  
+r\in[0,0.7R],  
+$$
+
+测试：
+
+$$  
+r\in(0.7R,R].  
+$$
+
+这考验径向 prior 和 uncertainty。
+
+### Task D：高频缺失
+
+训练：
+
+$$  
+f\in[f_{\min},f_{\mathrm{mid}}],  
+$$
+
+测试：
+
+$$  
+f\in(f_{\mathrm{mid}},f_{\max}].  
+$$
+
+这个更难，也更接近你之前的跨频率场重构兴趣。
+
+---
+
+# 6. Toy Model 4：球体/球壳版本
+
+这个可以作为扩展，不建议第一个做。
+
+## 6.1 球壳 (S^2)
+
+数据：
+
+$$  
+u^\star(r,\omega)  
+$$
+
+先固定 (r=R)，得到：
+
+$$  
+u^\star(\omega)  
+$$
+
+或者：
+
+$$  
+u^\star(f,\omega).  
+$$
+
+真实函数：
+
+# $$  
+u^\star(\omega)
+
+1.0Y_{0,0}(\omega)  
++  
+0.8Y_{2,1}(\omega)  
++  
+0.4Y_{5,-2}(\omega)  
++  
+0.2Y_{10,3}(\omega).  
+$$
+
+加噪声：
+
+$$  
+y_n=u^\star(\omega_n)+\epsilon_n.  
+$$
+
+模型用球谐 basis：
+
+$$  
+u(\omega)=\sum_{\ell=0}^{L}\sum_{m=-\ell}^{\ell}w_{\ell m}Y_{\ell m}(\omega).  
+$$
+
+任务：
+
+- sparse angular reconstruction；
+    
+- missing cap reconstruction；
+    
+- high-(\ell) recovery；
+    
+- uncertainty by (\ell)。
+    
+
+---
+
+## 6.2 球体内部 ([0,R]\times S^2)
+
+真实函数：
+
+# $$  
+u^\star(r,\omega)
+
+\sum_{q=1}^{Q}  
+B_q(r)  
+Y_{\ell_q m_q}(\omega).  
+$$
+
+例如：
+
+# $$  
+u^\star(r,\omega)
+
+\sin(\pi r)Y_{1,0}(\omega)  
++  
+0.5\sin(3\pi r)Y_{3,2}(\omega)  
++  
+0.2\cos(5\pi r)Y_{6,-1}(\omega).  
+$$
+
+Proposed factor：
+
+# $$  
+u(r,\omega)
+
+\sum_{i=1}^{R_r}  
+\sum_{j=1}^{R_\omega}  
+G_{ij}  
+b_i(r)c_j(\omega).  
+$$
+
+其中：
+
+$$  
+b_i(r)=\Phi_r(r)^\top w_i^r,  
+$$
+
+$$  
+c_j(\omega)=\Phi_{S^2}(\omega)^\top w_j^\omega.  
+$$
+
+这可以展示模型对球体内部数据的适用性。
+
+---
+
+# 7. 物理启发 Toy Model：简化 Helmholtz / 波场
+
+你可以设计一个不需要真实 PDE solver 的 wave-like 函数。
+
+## 7.1 2D polar wave field
+
+定义：
+
+# $$  
+u^\star(k,r,\alpha)
+
+\frac{1}{\sqrt{r+\epsilon}}  
+\cos  
+\left(  
+kr+\delta(\alpha)  
+\right)  
+\exp(-\beta r).  
+$$
+
+其中：
+
+# $$  
+\delta(\alpha)
+
+0.5\cos(2\alpha)+0.2\sin(5\alpha).  
+$$
+
+再加一个多路径项：
+
+# $$  
+u^\star(k,r,\alpha)
+
+\sum_{q=1}^{Q}  
+A_q(\alpha)  
+\frac{1}{\sqrt{r+\epsilon}}  
+\cos  
+\left(  
+k\frac{r}{c_q(\alpha)}  
++\varphi_q  
+\right)  
+\exp(-\beta_q r).  
+$$
+
+其中：
+
+# $$  
+A_q(\alpha)
+
+a_{q,0}  
++  
+a_{q,1}\cos(\alpha-\alpha_q).  
+$$
+
+这个函数具备：
+
+- radial decay；
+    
+- frequency-dependent oscillation；
+    
+- angular anisotropy；
+    
+- multi-path-like mixture。
+    
+
+非常适合模拟声场。
+
+---
+
+## 7.2 任务
+
+### Sparse receiver reconstruction
+
+随机采样少数 ((r,\alpha)) 接收点，重建完整场。
+
+### Missing angular sector
+
+模拟某个方向没有传感器：
+
+$$  
+\alpha\in[\alpha_0,\alpha_1]  
+$$
+
+完全缺失。
+
+### Cross-frequency interpolation
+
+训练频率：
+
+$$  
+k\in{k_1,k_2,k_3}  
+$$
+
+测试：
+
+$$  
+k_\ast\notin {k_1,k_2,k_3}.  
+$$
+
+### Cross-frequency extrapolation
+
+训练低频：
+
+$$  
+k\leq k_0  
+$$
+
+测试高频：
+
+$$  
+k>k_0.  
+$$
+
+这能连接你更长期的 physical-informed / frequency generalization 方向。
+
+---
+
+# 8. Baseline 设计
+
+baseline 一定要分层，否则审稿人会问：你到底证明了什么？
+
+## 8.1 Deterministic coordinate models
+
+### Baseline A：MLP / INR
+
+# $$  
+\hat{u}(\xi_1,\ldots,\xi_M)
+
+\mathrm{MLP}(\xi_1,\ldots,\xi_M).  
+$$
+
+增强版本：
+
+# $$  
+\hat{u}
+
+\mathrm{MLP}(\gamma(\xi_1,\ldots,\xi_M)).  
+$$
+
+其中 (\gamma) 是 Fourier features。
+
+作用：证明 generic neural field 不如 geometry-aware prior 在小样本和几何外推下稳定。
+
+---
+
+### Baseline B：NeRF-like positional encoding
+
+使用 random Fourier features：
+
+# $$  
+\gamma(x)
+
+[  
+\sin(Bx),\cos(Bx)  
+].  
+$$
+
+其中：
+
+$$  
+B\sim\mathcal{N}(0,\sigma_B^2).  
+$$
+
+作用：证明 random spectral feature 不如 operator-spectral feature。
+
+---
+
+## 8.2 Deterministic functional tensor models
+
+### Baseline C：Neural CP / Tucker
+
+CP：
+
+# $$  
+\hat{u}(\xi_1,\ldots,\xi_M)
+
+\sum_{r=1}^{R}  
+\prod_{m=1}^{M}  
+f^{(m)}_{r,\theta_m}(\xi_m).  
+$$
+
+每个 factor 是 MLP。
+
+Tucker：
+
+# $$  
+\hat{u}
+
+\left\langle  
+\mathcal{G},  
+F^{(1)}_{\theta_1}(\xi_1)\otimes\cdots\otimes F^{(M)}_{\theta_M}(\xi_M)  
+\right\rangle.  
+$$
+
+作用：证明低秩 factorization 本身不够，geometry-aware prior 和 Bayesian posterior 有额外价值。
+
+---
+
+### Baseline D：Deterministic operator-spectral tensor
+
+和 proposed 用同样的 (\Phi_m)，但权重是 deterministic：
+
+$$  
+w=\mu.  
+$$
+
+目标：
+
+$$  
+\min  
+\sum_n  
+(y_n-\hat{u}_n)^2  
++  
+\lambda  
+\sum_{m,r,k}  
+\rho_m(\lambda_{m,k})  
+(w^{(m)}_{r,k})^2.  
+$$
+
+作用：区分“几何谱特征”与“贝叶斯不确定性”的贡献。
+
+这个 baseline 很重要。否则别人会说你提升主要来自 basis，不是 Bayesian。
+
+---
+
+## 8.3 Bayesian baselines
+
+### Baseline E：Bayesian neural network
+
+$$  
+\hat{u}=\mathrm{BNN}(\xi)  
+$$
+
+权重 posterior：
+
+$$  
+q(\theta).  
+$$
+
+作用：证明 generic Bayesian 不等于 geometry-aware Bayesian。
+
+实际可以用 MC dropout 或 Bayes by Backprop 简化。
+
+---
+
+### Baseline F：Bayesian tensor without geometry
+
+离散 grid 上的 Bayesian CP/Tucker：
+
+$$  
+U_{i_1,\ldots,i_M}  
+\approx  
+\left[  
+\mathcal{G};A^{(1)},\ldots,A^{(M)}  
+\right].  
+$$
+
+只对 grid index 建 discrete factor，不处理连续坐标。
+
+作用：证明 continuous functional representation 的价值。
+
+---
+
+### Baseline G：Random-feature Bayesian tensor
+
+每个 mode 用 random Fourier feature：
+
+# $$  
+f^{(m)}_r(\xi)
+
+\gamma_m(\xi)^\top w^{(m)}_r.  
+$$
+
+且：
+
+$$  
+w^{(m)}_r\sim\mathcal{N}(0,I).  
+$$
+
+作用：证明 operator-induced spectral prior 比 generic random features 更有结构。
+
+---
+
+## 8.4 Geometry mismatch baselines
+
+这是你最应该做的消融。
+
+### Wrong basis
+
+比如真实函数是周期的 (S^1)，baseline 用 interval sine basis。
+
+### Wrong boundary condition
+
+真实函数满足 Neumann：
+
+$$  
+\frac{\partial f}{\partial x}=0  
+$$
+
+baseline 用 Dirichlet sine basis。
+
+### Wrong spectral prior
+
+真实函数高频较强，但 prior 过度平滑：
+
+$$  
+p\gg 1.  
+$$
+
+或者真实函数低频为主，baseline 不做高频 shrinkage。
+
+作用：证明 proposed model 的核心不是随便套一个 prior，而是 geometry/operator selection 很关键。
+
+---
+
+# 9. 核心消融实验
+
+## 9.1 是否使用 operator-spectral basis
+
+比较：
+
+1. raw coordinate MLP；
+    
+2. random Fourier feature；
+    
+3. operator-spectral feature；
+    
+4. wrong operator-spectral feature。
+    
+
+指标：
+
+- RelErr；
+    
+- NLL；
+    
+- Coverage；
+    
+- out-of-domain error。
+    
+
+---
+
+## 9.2 是否使用 Bayesian posterior
+
+比较：
+
+1. deterministic spectral tensor；
+    
+2. Bayesian spectral tensor；
+    
+3. Bayesian spectral tensor with learned (\rho(\lambda))。
+    
+
+重点看：
+
+- NLL；
+    
+- Coverage；
+    
+- uncertainty-error correlation；
+    
+- active sensing 如果要做的话。
+    
+
+---
+
+## 9.3 是否使用 learnable spectral prior
+
+比较：
+
+### Fixed prior
+
+$$  
+\rho(\lambda)=\alpha(1+\lambda)^p  
+$$
+
+其中 (\alpha,p) 固定。
+
+### Learnable scalar prior
+
+$$  
+\alpha,p \text{ learned}.  
+$$
+
+### Learnable spectral density
+
+$$  
+\rho_\eta(\lambda)=\mathrm{softplus}(g_\eta(\lambda)).  
+$$
+
+看：
+
+- 小样本是否过拟合；
+    
+- 高频恢复是否更好；
+    
+- learned (\rho(\lambda)) 是否反映真实频谱。
+    
+
+---
+
+## 9.4 Rank sensitivity
+
+测试：
+
+$$  
+R\in{2,4,8,16,32}.  
+$$
+
+看：
+
+- deterministic model 是否随 (R) 增大过拟合；
+    
+- Bayesian shrinkage 是否自动抑制无用 rank。
+    
+
+可以画：
+
+$$  
+\mathbb{E}_q[\mathcal{G}_{r_1,\ldots,r_M}^2]  
+$$
+
+或每个 rank component 的 posterior energy。
+
+---
+
+## 9.5 Observation sparsity
+
+测试观测率：
+
+$$  
+r_{\mathrm{obs}}\in{0.5%,1%,5%,10%,20%}.  
+$$
+
+预期：
+
+- 数据多时，MLP 可能追上；
+    
+- 数据少时，proposed 优势明显；
+    
+- NLL 和 coverage 是 proposed 的主要卖点。
+    
+
+---
+
+# 10. 推荐实验组合：一篇论文里怎么排
+
+如果做一篇方法论文，我建议最终实验表述如下。
+
+---
+
+## Experiment 1：Geometry prior sanity check
+
+### 任务
+
+单函数回归：
+
+1. interval boundary；
+    
+2. periodic (S^1)；
+    
+3. spherical (S^2)，可选。
+    
+
+### 目的
+
+证明 operator-spectral prior 的归纳偏置有效。
+
+### 图
+
+- 函数重建曲线；
+    
+- posterior uncertainty band；
+    
+- boundary / periodic extrapolation；
+    
+- learned spectral precision (\rho(\lambda))。
+    
+
+---
+
+## Experiment 2：Functional tensor sparse reconstruction
+
+### 任务
+
+二维/三维 synthetic tensor：
+
+$$  
+u(t,x),\qquad u(f,r,\alpha).  
+$$
+
+### 目的
+
+证明 functional tensor structure + Bayesian spectral factor 的效果。
+
+### 表
+
+不同观测率下：
+
+|Method|1%|5%|10%|NLL|Coverage|
+|---|--:|--:|--:|--:|--:|
+
+---
+
+## Experiment 3：Geometry mismatch and domain extrapolation
+
+### 任务
+
+1. 周期边界缺口；
+    
+2. 远距离外推；
+    
+3. missing angular wedge；
+    
+4. wrong boundary condition。
+    
+
+### 目的
+
+证明“几何感知”不是泛泛而谈。
+
+### 图
+
+- missing wedge reconstruction；
+    
+- uncertainty 在缺失区域显著升高；
+    
+- wrong geometry prior 在边界处失败。
+    
+
+---
+
+## Experiment 4：Physics-inspired wave field
+
+### 任务
+
+wave-like radial-angular field：
+
+$$  
+u(k,r,\alpha).  
+$$
+
+### 目的
+
+证明方法可以走向声学/波场。
+
+### 指标
+
+- full-field RelErr；
+    
+- high-frequency interpolation/extrapolation；
+    
+- uncertainty calibration；
+    
+- angular spectrum recovery。
+    
+
+---
+
+## Experiment 5：Ablation
+
+至少包括：
+
+1. without Bayesian posterior；
+    
+2. without operator-spectral prior；
+    
+3. random Fourier feature prior；
+    
+4. fixed spectral density；
+    
+5. learned spectral density；
+    
+6. CP vs Tucker；
+    
+7. rank sensitivity。
+    
+
+---
+
+# 11. 实现建议
+
+## 11.1 用 PyTorch 实现
+
+核心类：
+
+```python
+class SpectralBasis:
+    def __call__(self, x):
+        # return Phi(x), shape [batch, K]
+        pass
+
+class IntervalSineBasis(SpectralBasis):
+    pass
+
+class PeriodicFourierBasis(SpectralBasis):
+    pass
+
+class SphericalHarmonicBasis(SpectralBasis):
+    pass
+
+class BayesianSpectralFactor(nn.Module):
+    def forward(self, x, sample=True):
+        # Phi(x) @ W_sample
+        pass
+
+class BayesianFunctionalTensor(nn.Module):
+    def forward(self, coords):
+        # Tucker or CP contraction
+        pass
+
+    def kl(self):
+        # sum KL terms
+        pass
+```
+
+## 11.2 先实现 CP，再实现 Tucker
+
+CP forward：
+
+# $$  
+u_n
+
+\sum_{r=1}^{R}  
+\lambda_r  
+\prod_{m=1}^{M}  
+f^{(m)}_r(\xi_{m,n}).  
+$$
+
+代码逻辑：
+
+```python
+factors = []
+for m in range(M):
+    Fm = factor_m(x_m)  # [batch, R]
+    factors.append(Fm)
+
+prod = torch.ones(batch, R)
+for Fm in factors:
+    prod = prod * Fm
+
+y_hat = (prod * lambda_r).sum(dim=-1)
+```
+
+Tucker forward 可以先用 `torch.einsum`：
+
+```python
+y_hat = torch.einsum('abc,ba,bb,bc->b', G, F1, F2, F3)
+```
+
+注意实际 einsum 索引要避开重复命名，例如：
+
+```python
+y_hat = torch.einsum('ijk,bi,bj,bk->b', G, F1, F2, F3)
+```
+
+---
+
+## 11.3 Bayesian weight sampling
+
+对每个 factor weight：
+
+```python
+eps = torch.randn_like(mu)
+W = mu + softplus(log_s) * eps
+```
+
+KL：
+
+```python
+var_q = s ** 2
+precision_p = rho_lambda
+kl = 0.5 * (
+    torch.log(1.0 / precision_p) - torch.log(var_q)
+    + precision_p * (var_q + mu ** 2)
+    - 1.0
+).sum()
+```
+
+更稳定地写：
+
+```python
+log_var_p = -torch.log(precision_p)
+log_var_q = torch.log(var_q + 1e-8)
+
+kl = 0.5 * (
+    log_var_p - log_var_q
+    + precision_p * (var_q + mu ** 2)
+    - 1.0
+).sum()
+```
+
+---
+
+## 11.4 Loss
+
+负 ELBO：
+
+# $$  
+\mathcal{J}
+
+\frac{N}{|\mathcal{B}|}  
+\frac{1}{2\sigma^2}  
+\sum_{n\in\mathcal{B}}  
+(y_n-\hat{y}_n)^2  
++  
+\mathrm{KL}.  
+$$
+
+如果学习 (\sigma)：
+
+# $$  
+\mathcal{J}_{\mathrm{nll}}
+
+\frac{N}{|\mathcal{B}|}  
+\sum_{n\in\mathcal{B}}  
+\left[  
+\frac{1}{2}\log \sigma^2  
++  
+\frac{(y_n-\hat{y}_n)^2}{2\sigma^2}  
+\right].  
+$$
+
+---
+
+# 12. 最小实验参数建议
+
+## 12.1 Basis size
+
+|Mode|(K)|
+|---|--:|
+|1D interval|16–64|
+|(S^1) Fourier|16–64 frequencies|
+|(S^2) spherical harmonics|(L=6,8,12)|
+|radial|16–64|
+
+## 12.2 Rank
+
+CP：
+
+$$  
+R\in{4,8,16}.  
+$$
+
+Tucker：
+
+$$  
+(R_1,R_2,R_3)  
+\in  
+{(4,4,4),(6,6,6),(8,8,8)}.  
+$$
+
+## 12.3 Monte Carlo samples
+
+Training:
+
+$$  
+S_{\mathrm{train}}=1\text{ or }2.  
+$$
+
+Evaluation:
+
+$$  
+S_{\mathrm{eval}}=50\text{ or }100.  
+$$
+
+## 12.4 Optimization
+
+- Adam；
+    
+- learning rate：
+    
+    $$  
+    10^{-3}  
+    $$
+    
+- epochs：
+    
+    $$  
+    5{,}000\text{ to }20{,}000  
+    $$
+    
+
+toy model 不大，可以多跑 seed。
+
+## 12.5 Seeds
+
+至少：
+
+$$  
+5  
+$$
+
+个 random seeds。
+
+报告：
+
+$$  
+\text{mean}\pm\text{std}.  
+$$
+
+---
+
+# 13. 可能出现的问题与解决
+
+## 13.1 Bayesian model 欠拟合
+
+原因：KL 太强。  
+解决：
+
+- KL annealing：
+    
+    # $$  
+    \beta_{\mathrm{KL}}(e)
+    
+    \min(1,e/E_{\mathrm{warmup}})  
+    $$
+    
+- 先训练 deterministic mean，再打开 variance；
+    
+- 减小 prior precision (\alpha)。
+    
+
+---
+
+## 13.2 Posterior variance collapse
+
+原因：likelihood 太强，或者 (s) 初始化过小。  
+解决：
+
+- 初始化：
+    
+    $$  
+    s=0.05\sim0.1  
+    $$
+    
+- 学习 (\sigma^2)；
+    
+- 用 softplus parameterization；
+    
+- 增加 observation noise。
+    
+
+---
+
+## 13.3 MLP baseline 太强
+
+这很正常，尤其数据密集时。  
+解决：
+
+- 强调 sparse regime；
+    
+- 做缺失 wedge / boundary extrapolation；
+    
+- 做 uncertainty metrics；
+    
+- 给 MLP 同样参数预算；
+    
+- 报 training data efficiency curve。
+    
+
+---
+
+## 13.4 Spectral basis 太强，Bayesian 贡献不明显
+
+所以必须有 deterministic spectral tensor baseline。  
+如果 deterministic spectral 已经 RMSE 很强，你要看：
+
+- NLL；
+    
+- coverage；
+    
+- uncertainty-error correlation；
+    
+- active sensing；
+    
+- robustness under noise；
+    
+- overfitting under high rank。
+    
+
+贝叶斯优势常常不在 RMSE，而在 sparse/noisy/uncertain setting。
+
+---
+
+# 14. 可以考虑的一个高级实验：active sensing
+
+如果想让 Bayesian 更有存在感，可以加一个 toy active sensing。
+
+## 14.1 任务
+
+初始观测：
+
+$$  
+\mathcal{D}_0  
+$$
+
+每一步选择一个新点：
+
+# $$  
+\xi^\star
+
+\arg\max_{\xi}  
+\mathrm{Var}[u(\xi)\mid \mathcal{D}_t].  
+$$
+
+观测后更新模型：
+
+# $$  
+\mathcal{D}_{t+1}
+
+\mathcal{D}_t\cup{(\xi^\star,y^\star)}.  
+$$
+
+比较：
+
+1. random sampling；
+    
+2. grid sampling；
+    
+3. deterministic model uncertainty proxy；
+    
+4. proposed posterior variance。
+    
+
+指标：
+
+$$  
+\mathrm{RelErr}  
+\text{ vs. number of samples}.  
+$$
+
+这个实验非常能凸显 Bayesian posterior 的价值。
+
+但它会增加工作量，可以作为 appendix 或后续增强。
+
+---
+
+# 15. 最推荐的第一版实验组合
+
+如果你现在要最快 build 出 demo，我建议按这个顺序做：
+
+## Week 1：单函数 spectral Bayesian regression
+
+实现：
+
+- interval sine basis；
+    
+- periodic Fourier basis；
+    
+- Bayesian linear regression / VI。
+    
+
+输出：
+
+- posterior mean；
+    
+- uncertainty band；
+    
+- wrong geometry comparison。
+    
+
+---
+
+## Week 2：CP functional tensor
+
+实现：
+
+# $$  
+u(t,x)
+
+\sum_{r=1}^{R}  
+\lambda_r a_r(t)b_r(x).  
+$$
+
+跑：
+
+- random sparse；
+    
+- boundary extrapolation；
+    
+- compare MLP / neural CP / deterministic spectral CP。
+    
+
+---
+
+## Week 3：radial-angular acoustic toy
+
+实现：
+
+# $$  
+u(f,r,\alpha)
+
+\sum_r a_r(f)b_r(r)c_r(\alpha).  
+$$
+
+跑：
+
+- random sparse；
+    
+- missing angular wedge；
+    
+- far-range extrapolation；
+    
+- cross-frequency interpolation。
+    
+
+---
+
+## Week 4：Tucker + ablation
+
+把 CP 换成 Tucker：
+
+# $$  
+u(f,r,\alpha)
+
+\sum_{i,j,k}  
+G_{ijk}a_i(f)b_j(r)c_k(\alpha).  
+$$
+
+加入：
+
+- learned spectral prior；
+    
+- rank shrinkage；
+    
+- uncertainty calibration；
+    
+- active sensing，可选。
+    
+
+---
+
+# 16. 最终论文实验表格设计
+
+## Table 1：Sparse reconstruction
+
+|Method|Obs 1%|Obs 5%|Obs 10%|NLL|Coverage|
+|---|--:|--:|--:|--:|--:|
+|MLP||||||
+|Fourier-feature MLP||||||
+|Neural CP||||||
+|Deterministic spectral CP||||||
+|Bayesian spectral CP||||||
+|Proposed Tucker||||||
+
+---
+
+## Table 2：Geometry mismatch
+
+|Method|Correct geometry|Wrong boundary|Wrong periodicity|Random features|
+|---|--:|--:|--:|--:|
+|RelErr|||||
+|NLL|||||
+|Coverage|||||
+
+---
+
+## Table 3：Ablation
+
+|Variant|RelErr|NLL|Coverage|Unc-error Corr|
+|---|--:|--:|--:|--:|
+|Fixed prior|||||
+|Learn (\alpha,p)|||||
+|Learn (\rho_\eta(\lambda))|||||
+|No KL|||||
+|No rank shrinkage|||||
+
+---
+
+## Figure 1：method schematic
+
+展示：
+
+$$  
+\mathcal{X}_m  
+\rightarrow  
+\mathcal{A}_m  
+\rightarrow  
+(\phi_{m,k},\lambda_{m,k})  
+\rightarrow  
+p(w_{m,k})  
+\rightarrow  
+f_m(\xi_m)  
+\rightarrow  
+\text{Bayesian Tucker}.  
+$$
+
+---
+
+## Figure 2：posterior mean and uncertainty
+
+画：
+
+- true field；
+    
+- observed sparse points；
+    
+- predicted mean；
+    
+- predicted std；
+    
+- error map。
+    
+
+---
+
+## Figure 3：spectral uncertainty
+
+画：
+
+$$  
+U_k=\sum_r(s_{r,k})^2  
+$$
+
+或按频段：
+
+$$  
+U(\lambda).  
+$$
+
+展示模型在高频/缺失方向上不确定性更高。
+
+---
+
+# 17. 最终推荐：第一篇 toy paper 的核心实验对象
+
+我建议你第一篇不要从 (S^2) 开始，而从：
+
+$$  
+u(f,r,\alpha)  
+$$
+
+开始。
+
+原因：
+
+1. 和水声/波场最贴近；
+    
+2. (\alpha\in S^1) 的几何非常清楚；
+    
+3. Fourier basis 实现简单；
+    
+4. missing wedge 实验很有说服力；
+    
+5. 可以自然扩展到 (S^2)；
+    
+6. 不会被审稿人误解成天气/地球科学。
+    
+
+最终主任务可以叫：
+
+> **Sparse radial-angular wave field reconstruction**
+
+模型：
+
+# $$  
+u(f,r,\alpha)
+
+\left\langle  
+\mathcal{G},  
+F_f(f)\otimes F_r(r)\otimes F_\alpha(\alpha)  
+\right\rangle.  
+$$
+
+其中：
+
+$$  
+F_f(f)=(W^f)^\top\Phi_f(f),  
+$$
+
+$$  
+F_r(r)=(W^r)^\top\Phi_r(r),  
+$$
+
+$$  
+F_\alpha(\alpha)=(W^\alpha)^\top\Phi_\alpha(\alpha).  
+$$
+
+先验：
+
+$$  
+w^m_{r,k}  
+\sim  
+\mathcal{N}  
+\left(  
+0,  
+[\alpha_m(1+\lambda^m_k)^{p_m}]^{-1}  
+\right).  
+$$
+
+这就足够证明：
+
+- geometry-aware；
+    
+- Bayesian；
+    
+- functional tensor；
+    
+- scalable gradient inference；
+    
+- physics-inspired。
+    
+
+这是一条很稳的实验路线。
