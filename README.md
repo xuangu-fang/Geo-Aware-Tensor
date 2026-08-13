@@ -2,9 +2,12 @@
 
 ## 中文研究文档
 
-中文核心技术报告、两条方法线的完整迭代记录，以及下一步研究讨论稿见 [`papers/zh/`](papers/zh/README.md)。
-用户反馈后的三轮方法迭代、十 seed 确认和共享 phase diagram 见
-[`papers/zh/三轮持续迭代记录.md`](papers/zh/三轮持续迭代记录.md)；机器可读统计与图片见
+建议先读最新的[故事线与进展总报告](papers/zh/最新版本故事线与进展总报告.md)
+（[PDF 版](papers/zh/最新版本故事线与进展总报告.pdf)）。它用一份短报告说明两篇论文当前的
+核心方法、与初始 proposal 的重大变化、正负证据、应删除的支线和最小下一步。
+
+中文核心技术报告与完整迭代记录见 [`papers/zh/`](papers/zh/README.md)；这些材料是证据账本，
+不再作为项目的首要阅读入口。机器可读统计与图片见
 [`papers/longterm_results/`](papers/longterm_results/TABLES.md)。
 
 下一轮的项目管理、数据准入、论文实验和审稿风险分别见
