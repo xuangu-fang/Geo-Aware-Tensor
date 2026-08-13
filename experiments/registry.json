@@ -33,9 +33,10 @@
     {
       "id": "A-DATA-R4-INDEPENDENT-WAVE-GATE",
       "paper": "A",
-      "status": "IDEA",
+      "status": "SMOKE",
       "primary_metric": "dataset gate",
-      "artifact": "papers/DATASET_SELECTION.md"
+      "result": "32/32 cases passed finite, source, symmetric-PSD, and repeat-checksum gates",
+      "artifact": "papers/dataset_gates/independent_wave_smoke_summary.json"
     },
     {
       "id": "B-DATA-R4-WELL-ACOUSTIC-GATE",

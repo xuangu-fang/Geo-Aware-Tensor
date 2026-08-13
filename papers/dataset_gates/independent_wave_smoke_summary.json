@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "generator": "geoaware.independent_wave_solver.generate_wave_dataset",
+  "equation": "u_tt + damping*u_t + L_c*u = Ricker(t)*Gaussian(x-source)",
+  "tensor_semantics": [
+    "geometry",
+    "source",
+    "time",
+    "irregular spatial node"
+  ],
+  "resolutions": [
+    24,
+    32
+  ],
+  "sources": [
+    [
+      -0.72,
+      -0.38
+    ],
+    [
+      -0.72,
+      0.38
+    ]
+  ],
+  "n_geometries": 8,
+  "n_cases": 32,
+  "field_std_range": [
+    0.07054470479488373,
+    0.07203220576047897
+  ],
+  "field_abs_max_range": [
+    1.4172999858856201,
+    1.5666334629058838
+  ],
+  "record_time_range": [
+    0.0,
+    2.0
+  ],
+  "audit": {
+    "all_fields_finite_and_nondegenerate": true,
+    "all_sources_in_fluid": true,
+    "max_operator_symmetry_error": 0.0,
+    "min_operator_eigenvalue": -1.6142049821038928e-06,
+    "post_scattering_energy_fraction_range": [
+      0.5010042545709873,
+      0.5112975658452867
+    ]
+  },
+  "repeat_run_checksums_match": true,
+  "case_checksums": {
+    "wall_left_door_low_r24_s0.npz": "cb42db24b87768ef550b8589526c2079c724d5465419ddb02f34b1f9f864e1f5",
+    "wall_left_door_low_r24_s1.npz": "2e919274a4e523b6d33bc69cdd6df7c56c54f918a3712f9302c37b2d99c809d8",
+    "wall_left_door_low_r32_s0.npz": "bf57c9502097094a16df17810f89a55f9dc2997d774617cb08ecc7986ae8ec7a",
+    "wall_left_door_low_r32_s1.npz": "121facfd754dbecedba3343abf98678445192a86272876110faa58ecf54d4aad",
+    "wall_center_door_mid_r24_s0.npz": "2bf19057b9107b9d252cf4a586fa01e2fe47292ae46d1ad727cee06f5cdc55d1",
+    "wall_center_door_mid_r24_s1.npz": "aef8fec2e3a9c932d54e8a8822cb60c543193a4084958e47d3aad218df6e1a13",
+    "wall_center_door_mid_r32_s0.npz": "f3e698a8f9a398bdacff731a23bff5cc48e22d3d23da32caa73834b7cd528b4d",
+    "wall_center_door_mid_r32_s1.npz": "aab39daaf113727dfe0219713c43feaff2062a6d47e605a0b43626d7473d34a8",
+    "wall_right_door_high_r24_s0.npz": "c1bd0b89a09c2b3eadace330602bf2aab21ed0b9cfdf3050e8c59962b7503aaf",
+    "wall_right_door_high_r24_s1.npz": "28dca3e4ec85d6950b7e9ef2607b59dd71329309c92d391bfbcb6444cedf8122",
+    "wall_right_door_high_r32_s0.npz": "79f48aeceb273a6065c6f45d798e87610fb26f618cac0e128ad47e156377e619",
+    "wall_right_door_high_r32_s1.npz": "cbcd749a392ce762343a6c5e6ab7c5729bf3b4368b2e9f6ea68c5d634abcc991",
+    "circle_center_r24_s0.npz": "45089224bba01b2e44d0a02569bb4e8ece80819337675cc5add989d2a69dcb98",
+    "circle_center_r24_s1.npz": "69b67bbc9331bba976625b91c3fc26fb5b612dc3d8b603d59401cf6dadf67c49",
+    "circle_center_r32_s0.npz": "19817be4e3d0d3ff569d5499842a1189275f01e3e23e051d19a61e98c7572afd",
+    "circle_center_r32_s1.npz": "d1620ea363ca8b77b943263c32292f85c2f8eb922f5377d7589a666c06a7afcf",
+    "circle_offset_r24_s0.npz": "4d177a93bf22ba0b8abb40fd77a33236867344dbd3e9f53ff7a2c90d80054547",
+    "circle_offset_r24_s1.npz": "b89d72e93e06c6653c4f046ab54431f9a6ff4498a0697d0a31976047bd263119",
+    "circle_offset_r32_s0.npz": "2b41898af29c94217aa2612562bd9c53970701657a9774ea0644c873fd1b7366",
+    "circle_offset_r32_s1.npz": "ec33c196a837ea1ae52e9301a0b0d2924f7e5d1073c4a6ffb97f82e796d13ad1",
+    "ellipse_tilted_r24_s0.npz": "31dc508c9d77c32839832bfe32e006e3d40bc1fa25928c28a2533b6341f7b49f",
+    "ellipse_tilted_r24_s1.npz": "32f56c7039e6f3a49ceca76f813dc3e240b76cdf3a4e6c1ff4d52dff36c473e9",
+    "ellipse_tilted_r32_s0.npz": "e329110e83b1adc51f670a2a5edf5dc24e48f8f5f24a78586c5246f0e32e57ac",
+    "ellipse_tilted_r32_s1.npz": "de6273a4061531ff8a6f7d3481c491b8f8e7fb44dcc733286616299b95f9542f",
+    "double_vertical_r24_s0.npz": "19ef4983333a56727b2f5fdcf2feac99f68bb984491fa510975a20b07190590d",
+    "double_vertical_r24_s1.npz": "412d296660a348109784bc5c8d040e4f2eb9a0d84d6a7055068921d2f1a35860",
+    "double_vertical_r32_s0.npz": "39f31173528dba81a41be08cdb6a90411be2e1cdce25517282b86d6f88124ef3",
+    "double_vertical_r32_s1.npz": "66877a2e21b5337ec2627abfaa297cfd6869e5fbf74948f53d1850bd72d66625",
+    "double_diagonal_r24_s0.npz": "23ab4f65df3d75f19cb75c9d1cb74ed500ceb00e298a36fb924e049873531059",
+    "double_diagonal_r24_s1.npz": "50a9c675508cb01fe34624fc71916422e341ed936cef70a0c6606a3954c679c0",
+    "double_diagonal_r32_s0.npz": "dabf55331caf1f0889a3fa785c8b418d7b39cb06dda06ceb4a61bfee68929f66",
+    "double_diagonal_r32_s1.npz": "8de586ce091a9c50f86ddb9ef4a48a796a1de1ef468f468ba4cb3db3e209baa5"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "dataset": "independent_wave_smoke",
+  "split_unit": "geometry",
+  "leakage_rule": "All sources, resolutions, and times from one geometry remain in one split.",
+  "train_geometries": [
+    "wall_left_door_low",
+    "wall_center_door_mid",
+    "circle_center",
+    "ellipse_tilted",
+    "double_vertical"
+  ],
+  "validation_geometries": [
+    "circle_offset"
+  ],
+  "test_geometries": [
+    "wall_right_door_high",
+    "double_diagonal"
+  ],
+  "resolution_protocol": {
+    "in_resolution": 24,
+    "transfer_resolution": 32,
+    "rule": "Select hyperparameters at resolution 24 only; evaluate the same selected model at resolution 32."
+  }
+}

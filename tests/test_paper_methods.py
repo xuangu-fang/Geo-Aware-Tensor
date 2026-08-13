@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 
 from geoaware.bayes_data import graph_time_features, make_two_room_diffusion
@@ -15,6 +16,11 @@ from geoaware.neural_tensor import (
 )
 from geoaware.tensor_bayes import OperatorBayesianCP, OperatorBayesianTucker
 from geoaware.tensor_data import explicit_mode_bases, operator_cp_tensor, operator_tucker_tensor
+from geoaware.independent_wave_solver import (
+    WaveGeometrySpec,
+    build_wave_domain,
+    simulate_damped_wave,
+)
 
 
 def test_anisotropic_exact_posterior_is_finite_under_extreme_sparsity():
@@ -129,3 +135,20 @@ def test_phase_envelope_tucker_has_explicit_small_core():
     assert time_factor.shape == (n, 4)
     assert model.envelope_core.shape == (model.components, 6, 4)
     assert torch.isfinite(model.forward_points(geometry, time, space)).all()
+
+
+def test_independent_wave_solver_is_finite_and_operator_is_symmetric_psd():
+    spec = WaveGeometrySpec("test_circle", "circle",
+                            {"cx": .05, "cy": .0, "radius": .2})
+    domain = build_wave_domain(spec, resolution=12)
+    difference = domain.wave_operator - domain.wave_operator.T
+    symmetry_error = float(np.max(np.abs(difference.data))) if difference.nnz else 0.
+    assert symmetry_error < 1e-8
+    vector = np.linspace(-1., 1., len(domain.coordinates))
+    assert float(vector @ (domain.wave_operator @ vector)) >= -1e-7
+    fields, metadata = simulate_damped_wave(
+        domain, (-.72, -.38), np.linspace(0., .5, 8))
+    assert fields.shape == (8, len(domain.coordinates))
+    assert np.isfinite(fields).all()
+    assert float(fields.std()) > 1e-4
+    assert metadata["time_step"] > 0
