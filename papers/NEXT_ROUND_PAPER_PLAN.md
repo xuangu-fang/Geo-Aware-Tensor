@@ -1,5 +1,12 @@
 # 下一轮论文级实验计划
 
+> **2026-08-13 状态更新：**本文件前半部分保留了扩展实验池，但不再等同于当前
+> 执行清单。第七轮已经完成 Paper A block/noise 十种子确认，以及 Paper B
+> FNO/U-Net/persistence/path-noise。当前只执行：A canonical Tucker 写作与外部数据
+> 适配决策；B 写作/failure gallery；复现 manifest。GINO、structured factor
+> posterior、更多 envelope/impedance 组件均不是投稿前自动必做项。详见
+> [`zh/第七轮发表导向迭代报告.md`](zh/第七轮发表导向迭代报告.md)。
+
 ## 1. Paper A：Operator Geometry-Aware Tensor Decomposition
 
 ### 1.1 论文主问题

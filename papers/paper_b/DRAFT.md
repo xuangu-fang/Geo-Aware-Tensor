@@ -8,6 +8,10 @@
 > beats the official NeuralOperator 2.0 FNO over ten test seeds (`0.99175` versus
 > `0.99808`, 8/10 wins, one-sided Wilcoxon `p=0.01367`). See
 > [`../zh/不规则域几何语义校正.md`](../zh/不规则域几何语义校正.md).
+> The Well 1.2 classic U-Net and observed-only persistence baselines are now
+> included as well. Paired CP obtains `0.99175`, versus `1.00174` for U-Net and
+> `1.00160` for time-scaled persistence. A path-uncertainty extension was tested
+> but did not provide a sufficiently large or stable gain to enter the method.
 
 ## Abstract
 
@@ -221,6 +225,46 @@ inductive-bias claim, not a large-error-reduction claim.
 
 ![Official FNO confirmation](../longterm_results/the_well_official_fno_confirmation.png)
 
+### 8.2 The Well U-Net and sanity baselines
+
+We also adapt the `UNetClassic` architecture distributed with The Well 1.2,
+which credits PDEBench, and retrain it under the identical sparse early-40
+task. The architecture has four encoder/decoder levels, BatchNorm and Tanh; no
+future targets enter its inputs. A local adaptation is necessary because The
+Well benchmark extra pins an older NeuralOperator release that conflicts with
+the official FNO 2.0 environment used above.
+
+Across the same ten test seeds, U-Net obtains `1.00174±0.00208` macro NRMSE.
+Paired phase CP wins 9/10 seeds, gives a one-sided Wilcoxon `p=0.001953`, and
+uses 23,040 parameters versus 7,763,617. A zero predictor obtains `1.00640`.
+An observed-only time-scaled persistence baseline fits one slope and intercept
+per query time from the same 1% training labels and obtains
+`1.00160±0.00276`. These controls show that the small paired-CP gain is not
+explained by a trivial near-zero or persistent solution.
+
+![FNO, U-Net and sanity comparison](../longterm_results/round7_headline.png)
+
+### 8.3 Robustness to an imperfect path map
+
+We add a fixed Gaussian-correlated error with two-grid-cell correlation width
+to the normalized intrinsic-distance map. At 6% path error over three
+validation seeds, clean-path paired CP obtains `0.98335±0.00283`, while the
+noisy-path model obtains `0.98643±0.00148`; it remains better than the
+validation U-Net (`0.99446`) and the Euclidean wrong-path control (`0.99705`).
+
+We additionally test the posterior mean
+
+\[
+\widehat y(g,t,x)=\mathbb E_{d\mid\widehat d}
+[f_{\rm paired}(g,t,x,d)],
+\qquad d\mid\widehat d\sim\mathcal N(\widehat d,\sigma_d^2),
+\]
+
+using four fixed Gaussian quadrature points. It yields
+`0.98558±0.00079`, only `0.00085` better on average and worse on one of three
+seeds. We therefore retain path marginalization as an exploratory robustness
+result, not a contribution or default component.
+
 ## 9. Limitations
 
 The domain graph and a meaningful source are known. Shortest-path phase is a
@@ -229,8 +273,10 @@ or refractive travel metrics. The strongest synthetic benchmark remains much
 easier than The Well. The public confirmation supports only a small
 early-horizon gain; long-horizon scattering remains a documented failure. The
 current source-set minimum distance also collapses multiple rings to one scalar.
-Multi-source path-impedance factors and strong official neural-operator
-baselines remain necessary before submission.
+FNO and U-Net baselines are complete under our frozen regression protocol, but
+this is not the full-supervision next-step task used by The Well's public
+leaderboard. Multi-source behavior and longer-horizon reflections remain open;
+we do not add path-impedance or envelope modules without a new predeclared task.
 
 ## 10. Reproduction
 

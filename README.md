@@ -5,6 +5,8 @@
 建议先读最新的[故事线与进展总报告](papers/zh/最新版本故事线与进展总报告.md)
 （[PDF 版](papers/zh/最新版本故事线与进展总报告.pdf)）。它用一份短报告说明两篇论文当前的
 核心方法、与初始 proposal 的重大变化、正负证据、应删除的支线和最小下一步。
+最新一轮冻结实验和明确的 GO/NO-GO 决策见
+[第七轮发表导向迭代报告](papers/zh/第七轮发表导向迭代报告.md)。
 
 中文核心技术报告与完整迭代记录见 [`papers/zh/`](papers/zh/README.md)；这些材料是证据账本，
 不再作为项目的首要阅读入口。机器可读统计与图片见
@@ -25,7 +27,7 @@ traditional CP/Tucker factors become geometry-aware while their multilinear
 decoder stays explicit. Each track has a full iteration log, frozen multi-seed
 confirmation, paired statistics, figures, negative results, and manifests:
 
-- [Paper A: Operator Geometry-Aware Bayesian Tucker](papers/paper_a/DRAFT.md)
+- [Paper A: Operator Geometry-Aware Bayesian Tucker](papers/paper_a/DRAFT_TUCKER.md)
   places mode operators, an explicit Tucker core, and conditional Bayesian
   uncertainty inside classical tensor decomposition; its main frozen result
   uses 2% observations.

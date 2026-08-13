@@ -1,0 +1,87 @@
+{
+  "experiment_id": "B-WELL-EARLY40-THE-WELL-UNET-CONFIRMATION",
+  "status": "POSTHOC_BASELINE_CONFIRMATION",
+  "protocol_note": "The paired-phase method was frozen before adding this baseline. The Well 1.2 UNetClassic architecture is locally adapted and retrained under the identical 1% early-40 protocol.",
+  "library": {
+    "name": "the_well",
+    "version": "1.2.0",
+    "model": "UNetClassic",
+    "upstream": "PDEBench"
+  },
+  "validation_seed0": {
+    "paired_phase_cp": 0.9801830127835274,
+    "the_well_unet": 0.9944619610905647
+  },
+  "test_summary": {
+    "paired_phase_cp_mean": 0.9917503522709012,
+    "paired_phase_cp_std": 0.006101669284081549,
+    "the_well_unet_mean": 1.0017395917326213,
+    "the_well_unet_std": 0.002077716698979239,
+    "paired_wins": 9,
+    "seeds": 10,
+    "relative_improvement_percent": 0.9971892440072695,
+    "one_sided_wilcoxon_statistic": 1.0,
+    "one_sided_wilcoxon_p": 0.001953125
+  },
+  "efficiency_seed0_validation": {
+    "paired_parameters": 23040,
+    "unet_parameters": 7763617,
+    "parameter_ratio_unet_over_paired": 336.9625434027778,
+    "paired_elapsed_seconds": 3.1790879061445594,
+    "unet_elapsed_seconds": 8.929664962925017,
+    "paired_peak_gpu_bytes": 118644224,
+    "unet_peak_gpu_bytes": 218979840
+  },
+  "rows": [
+    {
+      "seed": 10,
+      "paired_phase_cp": 0.9933983031660318,
+      "the_well_unet": 1.0028920024633408
+    },
+    {
+      "seed": 11,
+      "paired_phase_cp": 1.0068312957882881,
+      "the_well_unet": 1.00441025942564
+    },
+    {
+      "seed": 12,
+      "paired_phase_cp": 0.9920195657759905,
+      "the_well_unet": 1.0005166195333004
+    },
+    {
+      "seed": 13,
+      "paired_phase_cp": 0.9855354111641645,
+      "the_well_unet": 1.0038556419312954
+    },
+    {
+      "seed": 14,
+      "paired_phase_cp": 0.9935442917048931,
+      "the_well_unet": 1.0003897733986378
+    },
+    {
+      "seed": 15,
+      "paired_phase_cp": 0.9845819566398859,
+      "the_well_unet": 0.9994408972561359
+    },
+    {
+      "seed": 16,
+      "paired_phase_cp": 0.9890719093382359,
+      "the_well_unet": 1.0026254951953888
+    },
+    {
+      "seed": 17,
+      "paired_phase_cp": 0.9897792115807533,
+      "the_well_unet": 0.9981466755270958
+    },
+    {
+      "seed": 18,
+      "paired_phase_cp": 0.9917402751743793,
+      "the_well_unet": 1.0036257356405258
+    },
+    {
+      "seed": 19,
+      "paired_phase_cp": 0.9910013023763895,
+      "the_well_unet": 1.0014928169548512
+    }
+  ]
+}

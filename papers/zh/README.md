@@ -5,6 +5,9 @@
 - [最新版本故事线与进展总报告](最新版本故事线与进展总报告.md)：建议优先阅读；
   用最简主线说明 A/B 当前方法、与初始 proposal 的重大变化、正负证据和最小下一步。
 - [同报告 PDF](最新版本故事线与进展总报告.pdf)：包含当前主要图表，适合离线审阅。
+- [第七轮发表导向迭代报告](第七轮发表导向迭代报告.md)：冻结主方法后补齐
+  Paper A block/noise 十种子压力测试、Paper B U-Net/persistence/path-noise，以及
+  主动采样和路径边缘化的 GO/NO-GO 决策。
 - [不规则域几何语义校正与退出报告](不规则域几何语义校正.md)：记录 wave/elliptic
   两级 gate、强 coordinate/SDF 反证，以及为何该方向正式降为 negative appendix。
 

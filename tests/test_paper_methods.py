@@ -17,6 +17,7 @@ from geoaware.neural_tensor import (
 from geoaware.tensor_bayes import OperatorBayesianCP, OperatorBayesianTucker
 from geoaware.tensor_data import explicit_mode_bases, operator_cp_tensor, operator_tucker_tensor
 from geoaware.the_well_pilot import block_mean_256_to_64, fixed_random_mask, nrmse_on_mask
+from geoaware.well_baselines import WellUNetClassic
 from geoaware.independent_wave_solver import (
     WaveGeometrySpec,
     build_wave_domain,
@@ -174,3 +175,12 @@ def test_the_well_block_mean_preserves_small_off_stride_source():
     assert reduced.shape == (64, 64)
     assert np.isclose(reduced.sum(), .25)
     assert float(reduced.max()) > 0.
+
+
+def test_well_unet_classic_preserves_spatial_shape():
+    model = WellUNetClassic(dim_in=5, dim_out=1, init_features=4)
+    model.eval()
+    with torch.no_grad():
+        prediction = model(torch.randn(2, 5, 32, 32))
+    assert prediction.shape == (2, 1, 32, 32)
+    assert torch.isfinite(prediction).all()

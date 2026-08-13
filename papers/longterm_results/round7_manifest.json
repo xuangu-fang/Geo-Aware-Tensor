@@ -1,0 +1,20 @@
+{
+  "sha256": {
+    "src/geoaware/well_baselines.py": "f34e5a298960823821c19893934cb6409a5ba5a80a5c9ea19972249ba273b825",
+    "experiments/run_the_well_official_unet.py": "d09ac7d89ff4228a6aa600857e7b4c7fc004e86abb483a06811fa8b52d0edd6c",
+    "experiments/analyze_the_well_official_unet.py": "7cf4e48ff5d0a11d7caa309546c5888f297ee58ef2c861a124836dcc6bb8fe89",
+    "experiments/run_the_well_sanity_baselines.py": "9c0f61b69b065930220ed1b81b12fb4b3d1bcf99df920a5a142827b4f2e25688",
+    "experiments/run_the_well_path_uncertainty.py": "cda7ae0232a3e0ef7d09d7b1cd7fa294e7b1bdcc197dc2055a56b797abb7ff78",
+    "experiments/run_tensor_core_iv_acquisition.py": "3659f8e8eb53682c950e5d8a272fe5df351f03aa97af83c52fb6ac70a2062d5b",
+    "experiments/analyze_round7.py": "51778eca922d7970b525fe138729ee8186de15c979c07065e947f3522d2e98a3",
+    "papers/paper_a/DRAFT_TUCKER.md": "dcc96b7afd587f5c8277f5809fe2f89368527dcf79d60b1c779c0dd54c6db496",
+    "papers/paper_b/DRAFT.md": "8126d2e4ea572671cb8849a2f748967ad5ae21e65496289d420102a8e6ed59ff",
+    "papers/longterm_results/round7_summary.json": "7945e23fe928ab1b2d28640d3759fedc4ecdf8292c768595fea6037fd07c8669"
+  },
+  "environment": {
+    "python": "/home/ubuntu/project/yanjiu/.venv/bin/python",
+    "torch": "2.11.0+cu128",
+    "neuraloperator": "2.0.0",
+    "the_well_architecture_source": "1.2.0"
+  }
+}

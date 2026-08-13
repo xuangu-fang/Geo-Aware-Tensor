@@ -43,6 +43,14 @@ PYTHONPATH=src /home/ubuntu/project/yanjiu/.venv/bin/python \
   experiments/run_the_well_official_fno.py --help
 PYTHONPATH=src /home/ubuntu/project/yanjiu/.venv/bin/python \
   experiments/analyze_the_well_official_fno.py
+
+# The Well 1.2 classic U-Net, sanity baselines, and round-7 aggregation
+PYTHONPATH=src /home/ubuntu/project/yanjiu/.venv/bin/python \
+  experiments/run_the_well_official_unet.py --help
+PYTHONPATH=src /home/ubuntu/project/yanjiu/.venv/bin/python \
+  experiments/run_the_well_sanity_baselines.py
+PYTHONPATH=src /home/ubuntu/project/yanjiu/.venv/bin/python \
+  experiments/analyze_round7.py
 ```
 
 ## Required output

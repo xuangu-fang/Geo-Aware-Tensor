@@ -53,25 +53,24 @@ IDEA → SMOKE → PILOT → SELECTED → FROZEN → CONFIRM → PAPER
 |---|---|---|
 | M0 POC 与三轮方法迭代 | DONE | A/B 实现、10-seed A 确认、B envelope 去留、共享 phase diagram |
 | M1 数据证据链 | DONE | 独立 solver + The Well 112-case block-mean pilot；全量 source/hash/leakage audit 与一 seed harness |
-| M2 Paper A 推断与消融 | REFORMULATE | 可分离与完整 2D 低频 graph-mode 均被拒绝；下一候选为 localized operator bandpass/wavelet Tucker |
-| M3 Paper B 外部泛化 | EARLY-HORIZON CONFIRMED | The Well 40-frame/1% frozen config 在 32 test geometry、10 fresh seeds 上 modest 但显著优于三对照；长时域仍拒绝 |
-| M4 论文冻结 | BLOCKED BY M1–M3 | 主表、消融、统计、复杂度、负结果全部冻结 |
+| M2 Paper A 推断与消融 | CONTROLLED CONFIRMED | 随机 2%、中心 block 缺失、30% 噪声均完成十 seed；core-IV 主动采样拒绝；外部证据仍缺 |
+| M3 Paper B 外部泛化 | BASELINES CONFIRMED | The Well early-40/1% 在 10 seeds 上胜 ordinary CP/INR/FNO/U-Net/persistence；长时与一般 boundary 拒绝 |
+| M4 论文冻结 | WRITING | 方法冻结；canonical drafts、主表、复现 manifest 和 claim 清理进行中 |
 
 ## 5. 下一轮工作包
 
-### WP-A1：独立数据上的算子几何 Tucker
+### WP-A1：Paper A 外部有效性或机制论文定位
 
 - 输入：独立 wave/Helmholtz solver 和 The Well acoustic subset。
-- 输出：operator construction、CP/Tucker/flat/wrong/discrete 对照、1%/2%/5% mask。
+- 输出：只选择具有真实 tensor modes 和可定义 mode operators 的数据；否则明确定位为 controlled mechanism paper。
 - 晋级条件：至少一个非同源数据上，Geo-Tucker 在 10 个 seed 中稳定优于 flat operator GP 与 Geo-CP；wrong geometry 明显退化。
 - 失败条件：正确/错误 operator 无差别，或收益只来自更大 core。
 
-### WP-A2：从“core Bayesian”到可辩护的 structured posterior
+### WP-A2：conditional Bayesian 表述与负结果固定
 
 - 输入：当前 operator Tucker。
-- 输出：gauge-fixed mode factors、block/matrix-normal 或低秩 Gauss–Newton covariance、coverage-width 曲线。
-- 晋级条件：90% coverage 落入 87%–93%，且同等 coverage 下 width 优于 flat GP；均值误差不退化超过 5%。
-- 风险：若 factor posterior 不稳定，则论文表述限定为“Bayesian core with operator-regularized MAP factors”，不宣称 fully Bayesian。
+- 输出：统一表述为“operator-regularized MAP factors + conditional Bayesian core”；core-IV 失败进入 limitation。
+- 禁止：为了主动采样正结果临时加入 random/IV 混合策略；不得宣称 fully Bayesian。
 
 ### WP-B1：独立多几何波传播
 
@@ -82,8 +81,8 @@ IDEA → SMOKE → PILOT → SELECTED → FROZEN → CONFIRM → PAPER
 ### WP-B2：几何误差和 source 不确定性
 
 - 输入：source shift、边界扰动、material coefficient error。
-- 输出：oracle/estimated/wrong/no geometry 曲线。
-- 晋级条件：轻微 geometry error 下性能平滑退化，而不是从 oracle 结果突然崩溃。
+- 状态：6% 相关路径误差三 seed 已完成，原 paired 平滑退化且仍优于验证 U-Net/wrong path。
+- 决策：路径后验边缘化收益不足，不升级；若继续，只允许预先声明的 source-shift failure gallery。
 
 ### WP-S1：统一 baseline harness
 
