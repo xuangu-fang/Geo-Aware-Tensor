@@ -79,6 +79,7 @@ The external-data gates need the optional range-reading dependencies:
 .venv/bin/pip install -e '.[dev,data]'
 .venv/bin/python experiments/build_independent_wave_dataset.py
 .venv/bin/python experiments/gate_the_well_acoustic.py
+.venv/bin/python experiments/extract_the_well_pilot.py
 ```
 
 Generated fields stay under ignored `data/`; compact audits, pinned split

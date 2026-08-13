@@ -52,6 +52,14 @@
       "status": "IDEA",
       "primary_metric": "sanity and parity checks",
       "artifact": "papers/NEXT_ROUND_PAPER_PLAN.md"
+    },
+    {
+      "id": "SHARED-DATA-R4-WELLMAZE-EXTRACT-64-16-32",
+      "paper": "shared",
+      "status": "PILOT",
+      "primary_metric": "dataset extraction and loader gate",
+      "result": "112/112 pinned trajectories; 374781856 local bytes; leakage-safe loader verified",
+      "artifact": "papers/dataset_gates/the_well_pilot_extraction_summary.json"
     }
   ]
 }

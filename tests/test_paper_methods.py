@@ -16,6 +16,7 @@ from geoaware.neural_tensor import (
 )
 from geoaware.tensor_bayes import OperatorBayesianCP, OperatorBayesianTucker
 from geoaware.tensor_data import explicit_mode_bases, operator_cp_tensor, operator_tucker_tensor
+from geoaware.the_well_pilot import fixed_random_mask, nrmse_on_mask
 from geoaware.independent_wave_solver import (
     WaveGeometrySpec,
     build_wave_domain,
@@ -152,3 +153,15 @@ def test_independent_wave_solver_is_finite_and_operator_is_symmetric_psd():
     assert np.isfinite(fields).all()
     assert float(fields.std()) > 1e-4
     assert metadata["time_step"] > 0
+
+
+def test_the_well_mask_is_exact_deterministic_and_metric_held_out():
+    shape = (5, 6, 7)
+    first = fixed_random_mask(shape, ratio=.05, seed=3)
+    second = fixed_random_mask(shape, ratio=.05, seed=3)
+    assert np.array_equal(first, second)
+    assert int(first.sum()) == round(.05*np.prod(shape))
+    target = np.ones(shape, dtype=np.float32)
+    prediction = target.copy()
+    prediction[~first] = 0.
+    assert np.isclose(nrmse_on_mask(target, prediction, ~first), 1.)

@@ -51,6 +51,10 @@ The Well 提供统一 HDF5/metadata API；acoustic scattering maze 包含 pressu
 range-read 可用，因此不需要先下载 47.9GB 的三个完整 shard。详细证据见
 `papers/dataset_gates/THE_WELL_ACOUSTIC_GATE.md`。
 
+固定 64/16/32 pilot 也已完整提取为 112 个 64×64 trajectory，约 357MiB；
+逐 case hash、split 统计、泄漏安全 loader 和 1% mask sanity 见
+`papers/dataset_gates/THE_WELL_PILOT_EXTRACTION.md`。
+
 ### Tier 3：CFDBench geometry subsets（P1）
 
 CFDBench 的 cavity/tube/dam/cylinder 都提供 boundary condition、geometry、physical-property 三类变化；插值版约 13.4GB，统一为 64×64，适合快速验证 unseen-geometry completion。[官方仓库](https://github.com/luo-yining/CFDBench)。
