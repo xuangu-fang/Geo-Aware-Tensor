@@ -52,7 +52,7 @@ IDEA → SMOKE → PILOT → SELECTED → FROZEN → CONFIRM → PAPER
 | 里程碑 | 状态 | 完成定义 |
 |---|---|---|
 | M0 POC 与三轮方法迭代 | DONE | A/B 实现、10-seed A 确认、B envelope 去留、共享 phase diagram |
-| M1 数据证据链 | READY | 独立 solver 数据 + 一个公共多几何数据适配 + dataset card |
+| M1 数据证据链 | SMOKE GATES PASSED | 独立 solver 32-case 门禁 + The Well 8-trajectory 公共数据门禁；待 64/16/32 pilot 提取 |
 | M2 Paper A 推断与消融 | PLANNED | structured core/factor posterior、UQ、rank/geometry/core ablation |
 | M3 Paper B 外部泛化 | PLANNED | The Well/自建 wave、source/geometry error、跨网格结果 |
 | M4 论文冻结 | BLOCKED BY M1–M3 | 主表、消融、统计、复杂度、负结果全部冻结 |
@@ -116,4 +116,8 @@ Milestones：
 3. `M3 Paper B submission evidence`
 4. `M4 Reproducible paper freeze`
 
-由于 GitHub CLI 当前尚未认证，labels/milestones/issues 的远端创建应在完成 `gh auth login` 后执行；本文件和 issue 模板已经准备好。
+远端项目管理已同步到 `xuangu-fang/Geo-Aware-Tensor`：draft PR #1、四个
+milestone 和按数据/方法/baseline/消融/确认划分的 issues 已建立。Issue #2
+（独立波动 smoke）完成后关闭；Issue #3（The Well 数据门禁）由固定 revision、
+LFS 校验和与 64/16/32 split manifest 验收。后续实验提交需引用 experiment ID
+与对应 issue，避免在 PR 评论里形成不可检索的隐式实验历史。

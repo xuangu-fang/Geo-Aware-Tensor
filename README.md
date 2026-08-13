@@ -22,9 +22,10 @@ traditional CP/Tucker factors become geometry-aware while their multilinear
 decoder stays explicit. Each track has a full iteration log, frozen multi-seed
 confirmation, paired statistics, figures, negative results, and manifests:
 
-- [Paper A: Geometry-Aware Bayesian CP](papers/paper_a/DRAFT.md) places
-  operator-eigenfunction priors and factor uncertainty inside classical Bayesian
-  CP; its main frozen result uses 2% observations.
+- [Paper A: Operator Geometry-Aware Bayesian Tucker](papers/paper_a/DRAFT.md)
+  places mode operators, an explicit Tucker core, and conditional Bayesian
+  uncertainty inside classical tensor decomposition; its main frozen result
+  uses 2% observations.
 - [Paper B: Geometry-Conditioned Phase Tensor Factorization](papers/paper_b/DRAFT.md)
   uses explicit phase-paired CP factors for 1%-observed fields on unseen
   geometries and a higher query resolution.
@@ -71,6 +72,18 @@ python3 -m venv .venv
 .venv/bin/pip install -e '.[dev]'
 .venv/bin/pytest -q
 ```
+
+The external-data gates need the optional range-reading dependencies:
+
+```bash
+.venv/bin/pip install -e '.[dev,data]'
+.venv/bin/python experiments/build_independent_wave_dataset.py
+.venv/bin/python experiments/gate_the_well_acoustic.py
+```
+
+Generated fields stay under ignored `data/`; compact audits, pinned split
+manifests, checksums, and visual gates are committed under `papers/dataset_gates/`
+and `experiments/dataset_splits/`.
 
 The completed runs used the already provisioned CUDA environment at
 `/home/ubuntu/project/yanjiu/.venv` (PyTorch 2.11 + CUDA 12.8 on an A100). To

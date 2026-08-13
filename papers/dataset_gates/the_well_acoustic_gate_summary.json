@@ -1,0 +1,234 @@
+{
+  "schema_version": 1,
+  "dataset": "polymathic-ai/acoustic_scattering_maze",
+  "revision": "8df383a3223f40f7ce66fe77b4ff4d7006dbc272",
+  "repository_head_at_gate": "8df383a3223f40f7ce66fe77b4ff4d7006dbc272",
+  "license": "cc-by-4.0",
+  "dataset_viewer_supported": false,
+  "range_read_verified": true,
+  "source_format": "HDF5 with contiguous field datasets",
+  "source_shape": {
+    "trajectories_per_shard": 100,
+    "time": 202,
+    "space": [
+      256,
+      256
+    ]
+  },
+  "n_shards": 20,
+  "full_repository_bytes": 319605964800,
+  "minimum_three_full_shards_bytes": 47940894720,
+  "lfs_shards": {
+    "data/test/acoustic_scattering_maze_chunk_18.hdf5": {
+      "bytes": 15980298240,
+      "sha256": "dd7198b4227c902e258426d6dc99ca6bf5a28832abcb6050b0a7df303c8ab248"
+    },
+    "data/test/acoustic_scattering_maze_chunk_19.hdf5": {
+      "bytes": 15980298240,
+      "sha256": "927cc101432e0efe9bfe5808a0a4afb08c8176fb300431f7624e5fe0d8a835ef"
+    },
+    "data/train/acoustic_scattering_maze_chunk_0.hdf5": {
+      "bytes": 15980298240,
+      "sha256": "93694c368e8bb7cec8bf4dc9524820981e4d02a4dc181a011ec3e41d7031c07e"
+    },
+    "data/train/acoustic_scattering_maze_chunk_1.hdf5": {
+      "bytes": 15980298240,
+      "sha256": "92585de6aaf0a57562b4f83b776eec66715d15a52fb84b09de5ee28a3db97ce5"
+    },
+    "data/train/acoustic_scattering_maze_chunk_10.hdf5": {
+      "bytes": 15980298240,
+      "sha256": "448436567a51940ed8bc5127d5465e0272604e4b009ab495373251ed568a2c18"
+    },
+    "data/train/acoustic_scattering_maze_chunk_11.hdf5": {
+      "bytes": 15980298240,
+      "sha256": "79aba95ca7fca3ad8d74970263f2c1a5dd1f36623666b3d3bd6ba594520529bf"
+    },
+    "data/train/acoustic_scattering_maze_chunk_12.hdf5": {
+      "bytes": 15980298240,
+      "sha256": "0f21aaf96fbf1be6699f6e6647c355df0e25f5bb3120768bbc04ead9a0609278"
+    },
+    "data/train/acoustic_scattering_maze_chunk_13.hdf5": {
+      "bytes": 15980298240,
+      "sha256": "5d97d779f880b72caa10bdaffa2f049a1acf31b69ad59ce3596da1d0f3017c63"
+    },
+    "data/train/acoustic_scattering_maze_chunk_14.hdf5": {
+      "bytes": 15980298240,
+      "sha256": "8e7bb146d0f4af87ca0d7d11ae3830402bc084c7451720f4a84627c862e656e4"
+    },
+    "data/train/acoustic_scattering_maze_chunk_15.hdf5": {
+      "bytes": 15980298240,
+      "sha256": "64bc378064b72534d88a2fe59d162599006938f250ce9638bf5f642a95e84a23"
+    },
+    "data/train/acoustic_scattering_maze_chunk_2.hdf5": {
+      "bytes": 15980298240,
+      "sha256": "de777cceebff1a0a1861ae1781e1a2edfdfc5bb805410481cfaf5dc25e6e7490"
+    },
+    "data/train/acoustic_scattering_maze_chunk_3.hdf5": {
+      "bytes": 15980298240,
+      "sha256": "94a7f3155f36078244a2df857861be39a4a2cbd9ebba1690601adc16ff1996b6"
+    },
+    "data/train/acoustic_scattering_maze_chunk_4.hdf5": {
+      "bytes": 15980298240,
+      "sha256": "ebf5e08d3b9c60791a6a8fd3ca9da39587fe5b5100f3416e9f65ce94f024cd3b"
+    },
+    "data/train/acoustic_scattering_maze_chunk_5.hdf5": {
+      "bytes": 15980298240,
+      "sha256": "ff2a462d42006c0be6418faf43b141b757551fd0e769f94dcdcd47edc4813e31"
+    },
+    "data/train/acoustic_scattering_maze_chunk_6.hdf5": {
+      "bytes": 15980298240,
+      "sha256": "7e0d05bf5df449fefd005869c8d10041b6aba1d147fa160cd915475fb23e60e0"
+    },
+    "data/train/acoustic_scattering_maze_chunk_7.hdf5": {
+      "bytes": 15980298240,
+      "sha256": "2d122b10420393649f8612ab677fddd04ff8bf06e14dee51d6f873496effc8b2"
+    },
+    "data/train/acoustic_scattering_maze_chunk_8.hdf5": {
+      "bytes": 15980298240,
+      "sha256": "a857a307c96e34c1d62202e1082f4f60a8c82629b79085ee76817ef8b082e30b"
+    },
+    "data/train/acoustic_scattering_maze_chunk_9.hdf5": {
+      "bytes": 15980298240,
+      "sha256": "3659717ee915394ffc6d9c3c9476bf54d40bfaa02dabc71f0af5b8ce49561270"
+    },
+    "data/valid/acoustic_scattering_maze_chunk_16.hdf5": {
+      "bytes": 15980298240,
+      "sha256": "36cca5d9775479f37d50ed94028d2e9590b369384da204adf1958e5091198ba4"
+    },
+    "data/valid/acoustic_scattering_maze_chunk_17.hdf5": {
+      "bytes": 15980298240,
+      "sha256": "70d471bb96ca25e3fc870c3da6ee2ccabea72656ee947c8ec243a55ad452c48d"
+    }
+  },
+  "gate_sample": {
+    "n_trajectories": 8,
+    "time_indices": [
+      0,
+      40,
+      80,
+      120,
+      160,
+      201
+    ],
+    "resolution": [
+      64,
+      64
+    ],
+    "unique_material_geometries": 8,
+    "all_fields_finite": true,
+    "source_component_count_range": [
+      3,
+      5
+    ],
+    "wall_fraction_range": [
+      0.561767578125,
+      0.6220703125
+    ],
+    "local_npz_sha256": "b780199a70bfdcaf9963ee7e79674678c55423f09600014697970da31517a2c6",
+    "repeat_range_read_checksum_verified": true,
+    "samples": [
+      {
+        "id": "train_0",
+        "split": "train",
+        "shard": "data/train/acoustic_scattering_maze_chunk_0.hdf5",
+        "trajectory_index": 0,
+        "geometry_sha256": "207af46080dcc51a9e9695da87852e69b66c43707c164d89157880ecf361a1e4",
+        "wall_fraction": 0.5810546875,
+        "initial_source_components": 4,
+        "pressure_std": 0.15031050145626068,
+        "finite": true
+      },
+      {
+        "id": "train_1",
+        "split": "train",
+        "shard": "data/train/acoustic_scattering_maze_chunk_0.hdf5",
+        "trajectory_index": 1,
+        "geometry_sha256": "0e167aacaae619145888e870d7f059529b477ed5dd768cfc2e8553abd4dbca48",
+        "wall_fraction": 0.5625,
+        "initial_source_components": 3,
+        "pressure_std": 0.1608189195394516,
+        "finite": true
+      },
+      {
+        "id": "train_2",
+        "split": "train",
+        "shard": "data/train/acoustic_scattering_maze_chunk_0.hdf5",
+        "trajectory_index": 2,
+        "geometry_sha256": "9ff6c8656c8280d3b2b7d4000bf2d9cb0d2d30ac1bf82018f41d4f18d4fe1009",
+        "wall_fraction": 0.56201171875,
+        "initial_source_components": 3,
+        "pressure_std": 0.1829710155725479,
+        "finite": true
+      },
+      {
+        "id": "train_3",
+        "split": "train",
+        "shard": "data/train/acoustic_scattering_maze_chunk_0.hdf5",
+        "trajectory_index": 3,
+        "geometry_sha256": "2c4532c7f1a56840e656686004dfde2e9ff73a56fd49470c52a0d5ce694079e4",
+        "wall_fraction": 0.561767578125,
+        "initial_source_components": 4,
+        "pressure_std": 0.16203461587429047,
+        "finite": true
+      },
+      {
+        "id": "validation_0",
+        "split": "validation",
+        "shard": "data/valid/acoustic_scattering_maze_chunk_16.hdf5",
+        "trajectory_index": 0,
+        "geometry_sha256": "0886082a581dcfd4928bd32b577b5795826820ba95be6651ec10618c535714ad",
+        "wall_fraction": 0.6220703125,
+        "initial_source_components": 3,
+        "pressure_std": 0.1501723974943161,
+        "finite": true
+      },
+      {
+        "id": "validation_1",
+        "split": "validation",
+        "shard": "data/valid/acoustic_scattering_maze_chunk_16.hdf5",
+        "trajectory_index": 1,
+        "geometry_sha256": "8aaa16b3152eaf325913f023805657656b43c823edc7fb7ecf371aa8515c2061",
+        "wall_fraction": 0.582763671875,
+        "initial_source_components": 4,
+        "pressure_std": 0.14745169878005981,
+        "finite": true
+      },
+      {
+        "id": "test_0",
+        "split": "test",
+        "shard": "data/test/acoustic_scattering_maze_chunk_18.hdf5",
+        "trajectory_index": 0,
+        "geometry_sha256": "7e86b774d2e8a93a48013c1c31a9762b01953ef10bfe3fd2edfafdfe58faf87d",
+        "wall_fraction": 0.565185546875,
+        "initial_source_components": 3,
+        "pressure_std": 0.17011423408985138,
+        "finite": true
+      },
+      {
+        "id": "test_1",
+        "split": "test",
+        "shard": "data/test/acoustic_scattering_maze_chunk_18.hdf5",
+        "trajectory_index": 1,
+        "geometry_sha256": "a5ee57e34af1b762b652746f79a823de342eac72939317a970c52fc9f12b661f",
+        "wall_fraction": 0.6220703125,
+        "initial_source_components": 5,
+        "pressure_std": 0.227453351020813,
+        "finite": true
+      }
+    ]
+  },
+  "leakage_contract": {
+    "inputs": [
+      "density",
+      "speed_of_sound",
+      "pressure at t=0",
+      "coordinates",
+      "query time"
+    ],
+    "targets": [
+      "pressure at t>0"
+    ],
+    "forbidden": "No target-time pressure or velocity is used to build geometry or source features."
+  },
+  "subset_manifest": "experiments/dataset_splits/the_well_acoustic_64_16_32.json"
+}

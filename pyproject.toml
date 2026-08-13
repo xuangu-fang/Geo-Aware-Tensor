@@ -17,6 +17,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+data = ["fsspec>=2025.3", "aiohttp>=3.10,<4"]
 
 [project.scripts]
 geo-tensor-poc = "geoaware.cli:main"

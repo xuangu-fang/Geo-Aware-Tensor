@@ -7,6 +7,8 @@
 - [Paper B 中文迭代记录](Paper_B_中文迭代记录.md)：连续几何/相位张量方向的逐轮改动、失败、诊断与最终确认。
 - [下一步研究路线讨论稿](下一步研究路线讨论稿.md)：根据正负信号提出的方法、数据、实验和 formulation 选择，附最小实验与成功判据。
 - [用户反馈后的三轮持续迭代记录](三轮持续迭代记录.md)：operator Bayesian Tucker、phase-envelope 去留、十 seed 确认及共享 phase diagram。
+- [第四轮数据门禁记录](第四轮数据门禁记录.md)：独立波动 solver 与 The Well
+  acoustic maze 的构造、负信号修正、泄漏审计、成本和 pilot 决策。
 
 下一轮执行材料位于上一级目录：
 

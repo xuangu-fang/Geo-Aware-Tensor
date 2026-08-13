@@ -41,9 +41,10 @@
     {
       "id": "B-DATA-R4-WELL-ACOUSTIC-GATE",
       "paper": "B",
-      "status": "IDEA",
+      "status": "SMOKE",
       "primary_metric": "dataset gate",
-      "artifact": "papers/DATASET_SELECTION.md"
+      "result": "8/8 finite; 8 unique material geometries; range-read and 64/16/32 split verified",
+      "artifact": "papers/dataset_gates/the_well_acoustic_gate_summary.json"
     },
     {
       "id": "SHARED-BASELINE-R4-OFFICIAL-HARNESS",

@@ -35,7 +35,7 @@
 
 ### Tier 2：The Well acoustic scattering / maze（P0 公共数据）
 
-The Well 提供统一 HDF5/metadata API；acoustic scattering maze 包含 pressure、velocity、material density 和 sound speed，单轨迹为 201 个 256×256 时间步，2000 trajectories，完整数据约 311GB。它与本项目的“障碍/材料几何 + 波传播”最匹配。[官方 maze 数据卡](https://polymathic-ai.org/the_well/datasets/acoustic_scattering_maze/)，[数据集总览](https://polymathic-ai.org/the_well/datasets_overview/)。
+The Well 提供统一 HDF5/metadata API；acoustic scattering maze 包含 pressure、velocity、material density 和 sound speed。官方文字数据卡记为 201 个 256×256 时间步；我们固定 revision 的实际 HDF5 shape 为 202，2000 trajectories，Hub LFS 实际总量 319.6GB。它与本项目的“障碍/材料几何 + 波传播”最匹配。[官方 maze 数据卡](https://polymathic-ai.org/the_well/datasets/acoustic_scattering_maze/)，[数据集总览](https://polymathic-ai.org/the_well/datasets_overview/)。
 
 首轮不下载全量：
 
@@ -45,6 +45,11 @@ The Well 提供统一 HDF5/metadata API；acoustic scattering maze 包含 pressu
 - source 若不能从 metadata 唯一恢复，则 B 的 source-aligned 模型增加 source-estimation preprocessing，不能使用人工 oracle 标签。
 
 准入 gate：随机抽取 8 trajectories，验证 geometry 确实变化、source/initial condition 可恢复、HDF5 字段和 license 足以发布 split manifest。若 maze geometry 在轨迹间不变化，则改用 `acoustic_scattering` inclusions 或将其降为跨初值而非跨几何实验。
+
+当前 gate 已通过：固定 revision `8df383a...` 上的 8 个材料场 hash 全部不同，
+初始压力可恢复 3–5 个源环组件；Hub Dataset Viewer 不支持该 HDF5，但 HTTP
+range-read 可用，因此不需要先下载 47.9GB 的三个完整 shard。详细证据见
+`papers/dataset_gates/THE_WELL_ACOUSTIC_GATE.md`。
 
 ### Tier 3：CFDBench geometry subsets（P1）
 
