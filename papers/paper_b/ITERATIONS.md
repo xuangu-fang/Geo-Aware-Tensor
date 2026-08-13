@@ -331,3 +331,21 @@ now supported on the aligned moderate-rank benchmark: correct geometry matters
 within an identical tensor architecture, and explicit paired tensorization
 beats a geometry-aware monolithic decoder. T3/T4 remain a prominent boundary:
 on nonseparable moving envelopes, the monolithic decoder is better.
+
+## External audit — The Well early-40 reclassified as negative
+
+The frozen 64-train/16-validation/32-test, 1%-supervision task produced paired
+CP `0.99175±0.00610`, FNO `0.99808±0.00301`, U-Net
+`1.00174±0.00208`, time-scaled persistence `1.00160±0.00276`, and zero
+`1.00640` macro NRMSE. Pairwise seed tests favored paired CP, and we initially
+described this as modest external evidence.
+
+That interpretation was wrong. Approximate explained variance is only 1.64%;
+MSE skill is 2.89% versus zero and 1.96% versus persistence. The predictors are
+all effectively null, so stable ordering among them has no practical meaning.
+The entire early-40 task is now `REJECTED_ABSOLUTE_EFFECTIVENESS`; it cannot
+support the abstract, contribution list, or external-validation claim.
+
+This failure adds a permanent evaluation rule for future external Paper-B
+tasks: first achieve macro NRMSE at most 0.8 and at least 20% MSE skill over the
+strongest trivial baseline; only then inspect pairwise model significance.

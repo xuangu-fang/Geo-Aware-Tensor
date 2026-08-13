@@ -33,7 +33,9 @@ confirmation, paired statistics, figures, negative results, and manifests:
   uses 2% observations.
 - [Paper B: Geometry-Conditioned Phase Tensor Factorization](papers/paper_b/DRAFT.md)
   uses explicit phase-paired CP factors for 1%-observed fields on unseen
-  geometries and a higher query resolution.
+  geometries and a higher query resolution. Its The Well external stress test
+  is rejected because all methods have NRMSE approximately one; only the
+  controlled mechanism evidence is currently positive.
 - [Final delivery overview](papers/FINAL_DELIVERY.md) summarizes the supported
   claims, limitations, evidence, and exact entry points.
 - [Tensor-core contract](papers/TENSOR_CORE_REFOCUS.md) and [iteration ledger](papers/TENSOR_REFOCUS_PROGRESS.md)

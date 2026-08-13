@@ -396,13 +396,13 @@
     }
   },
   "paper_b_path_noise_validation": {
-    "oracle_clean_paired": {
-      "mean": 0.9833517087002596,
-      "sd": 0.0028270790397309418,
+    "naive_noisy_paired": {
+      "mean": 0.9864298130075136,
+      "sd": 0.001477652679921854,
       "values": [
-        0.9801830127835274,
-        0.9856156893074512,
-        0.9842564240098
+        0.9855394437909126,
+        0.9856144860386848,
+        0.9881355091929436
       ]
     },
     "path_marginalized_paired": {
@@ -414,13 +414,13 @@
         0.9848650731146336
       ]
     },
-    "naive_noisy_paired": {
-      "mean": 0.9864298130075136,
-      "sd": 0.001477652679921854,
+    "oracle_clean_paired": {
+      "mean": 0.9833517087002596,
+      "sd": 0.0028270790397309418,
       "values": [
-        0.9855394437909126,
-        0.9856144860386848,
-        0.9881355091929436
+        0.9801830127835274,
+        0.9856156893074512,
+        0.9842564240098
       ]
     }
   },
@@ -452,5 +452,17 @@
     "time_scaled_persistence_mean": 1.001600467786193,
     "zero_std": 0.0,
     "time_scaled_persistence_std": 0.00275590550213058
+  },
+  "paper_b_absolute_effectiveness_gate": {
+    "decision": "REJECTED_ABSOLUTE_EFFECTIVENESS",
+    "reason": "All learned methods have NRMSE approximately one. Statistical pairwise differences do not establish useful reconstruction.",
+    "paired_approx_explained_variance": 0.01643123877054331,
+    "paired_mse_skill_vs_zero": 0.02889288594521655,
+    "paired_mse_skill_vs_time_scaled_persistence": 0.019572036877282928,
+    "future_paper_gate": {
+      "required_macro_nrmse": "<=0.8 on at least one external dataset",
+      "required_mse_skill_vs_best_trivial_baseline": ">=0.2",
+      "note": "Thresholds are frozen after rejecting the early-40 task."
+    }
   }
 }

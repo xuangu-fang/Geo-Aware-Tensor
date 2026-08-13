@@ -61,6 +61,25 @@ def main():
     unet = json.loads((OUT/"the_well_official_unet_confirmation.json").read_text())
     fno = json.loads((OUT/"the_well_official_fno_confirmation.json").read_text())
     sanity = json.loads((OUT/"the_well_sanity_baselines.json").read_text())
+    paired_nrmse = float(fno["test_summary"]["paired_phase_cp_mean"])
+    zero_nrmse = float(sanity["test_summary"]["zero_mean"])
+    persistence_nrmse = float(
+        sanity["test_summary"]["time_scaled_persistence_mean"])
+    absolute_gate = {
+        "decision": "REJECTED_ABSOLUTE_EFFECTIVENESS",
+        "reason": (
+            "All learned methods have NRMSE approximately one. Statistical "
+            "pairwise differences do not establish useful reconstruction."),
+        "paired_approx_explained_variance": 1-paired_nrmse**2,
+        "paired_mse_skill_vs_zero": 1-(paired_nrmse/zero_nrmse)**2,
+        "paired_mse_skill_vs_time_scaled_persistence": (
+            1-(paired_nrmse/persistence_nrmse)**2),
+        "future_paper_gate": {
+            "required_macro_nrmse": "<=0.8 on at least one external dataset",
+            "required_mse_skill_vs_best_trivial_baseline": ">=0.2",
+            "note": "Thresholds are frozen after rejecting the early-40 task.",
+        },
+    }
     payload = {
         "paper_a_block_2pct": {
             "summary": model_summary(block),
@@ -83,6 +102,7 @@ def main():
         "paper_b_unet_confirmation": unet["test_summary"],
         "paper_b_fno_confirmation": fno["test_summary"],
         "paper_b_sanity": sanity["test_summary"],
+        "paper_b_absolute_effectiveness_gate": absolute_gate,
     }
     (OUT/"round7_summary.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
@@ -99,17 +119,21 @@ def main():
         axis.set_xticks(np.arange(4), labels, fontsize=8)
         axis.set_ylabel("Held-out NRMSE"); axis.set_title(title)
     b_labels = ["Paired\nphase CP", "FNO", "U-Net", "Scaled\npersistence", "Zero"]
-    b_values = [fno["test_summary"]["paired_phase_cp_mean"],
-                fno["test_summary"]["official_fno_mean"],
-                unet["test_summary"]["the_well_unet_mean"],
-                sanity["test_summary"]["time_scaled_persistence_mean"],
-                sanity["test_summary"]["zero_mean"]]
+    b_nrmse = [fno["test_summary"]["paired_phase_cp_mean"],
+               fno["test_summary"]["official_fno_mean"],
+               unet["test_summary"]["the_well_unet_mean"],
+               sanity["test_summary"]["time_scaled_persistence_mean"],
+               sanity["test_summary"]["zero_mean"]]
+    zero_reference = sanity["test_summary"]["zero_mean"]
+    b_values = [100*(1-(value/zero_reference)**2) for value in b_nrmse]
     axes[2].bar(np.arange(5), b_values,
                 color=["#2c7fb8", "#f28e2b", "#59a14f", "#bab0ac", "#7f7f7f"])
-    axes[2].axhline(1., color="black", linestyle="--", linewidth=.8)
+    axes[2].axhline(20., color="#d62728", linestyle="--", linewidth=1.,
+                    label="future paper gate")
     axes[2].set_xticks(np.arange(5), b_labels, fontsize=7)
-    axes[2].set_ylabel("Test macro NRMSE"); axes[2].set_title("B: The Well, 1%, early-40")
-    axes[2].set_ylim(.988, 1.008)
+    axes[2].set_ylabel("MSE skill vs zero (%)")
+    axes[2].set_title("B: The Well rejected")
+    axes[2].set_ylim(0., 22.); axes[2].legend(fontsize=7)
     fig.savefig(OUT/"round7_headline.png", dpi=190); plt.close(fig)
 
     def fmt(row): return f"{row['mean']:.3f}±{row['sd']:.3f}"
@@ -127,7 +151,7 @@ def main():
         "| Correct core-IV | Wrong core-IV | Random |",
         "|---:|---:|---:|",
         f"| {fmt(active_s['correct_core_iv'])} | {fmt(active_s['wrong_core_iv'])} | {fmt(active_s['random'])} |",
-        "", "## Paper B：The Well 强/简单基线", "",
+        "", "## Paper B：The Well early-40 绝对有效性门禁（REJECTED）", "",
         "| Method | Test macro NRMSE | Paired wins |",
         "|---|---:|---:|",
         f"| Paired phase CP | {unet['test_summary']['paired_phase_cp_mean']:.5f}±{unet['test_summary']['paired_phase_cp_std']:.5f} | — |",
@@ -135,6 +159,9 @@ def main():
         f"| The Well U-Net | {unet['test_summary']['the_well_unet_mean']:.5f}±{unet['test_summary']['the_well_unet_std']:.5f} | 9/10 |",
         f"| time-scaled persistence | {sanity['test_summary']['time_scaled_persistence_mean']:.5f}±{sanity['test_summary']['time_scaled_persistence_std']:.5f} | descriptive |",
         f"| zero | {sanity['test_summary']['zero_mean']:.5f} | descriptive |",
+        "", f"paired approximate explained variance: {100*absolute_gate['paired_approx_explained_variance']:.2f}%.",
+        f"MSE skill vs zero: {100*absolute_gate['paired_mse_skill_vs_zero']:.2f}%; vs persistence: {100*absolute_gate['paired_mse_skill_vs_time_scaled_persistence']:.2f}%.",
+        "These absolute effects fail the paper gate; pairwise p-values are not treated as positive evidence.",
         "", "完整逐 seed 数值和 paired tests 见 `round7_summary.json`。",
     ]
     (OUT/"ROUND7_TABLES.md").write_text("\n".join(lines)+"\n", encoding="utf-8")
@@ -142,12 +169,16 @@ def main():
         ROOT/"src/geoaware/well_baselines.py",
         ROOT/"experiments/run_the_well_official_unet.py",
         ROOT/"experiments/analyze_the_well_official_unet.py",
+        ROOT/"experiments/analyze_the_well_official_fno.py",
+        ROOT/"experiments/analyze_the_well_early40_confirmation.py",
         ROOT/"experiments/run_the_well_sanity_baselines.py",
         ROOT/"experiments/run_the_well_path_uncertainty.py",
         ROOT/"experiments/run_tensor_core_iv_acquisition.py",
         ROOT/"experiments/analyze_round7.py",
         ROOT/"papers/paper_a/DRAFT_TUCKER.md",
         ROOT/"papers/paper_b/DRAFT.md",
+        ROOT/"papers/EVALUATION_PROTOCOL.md",
+        ROOT/"papers/zh/第七轮发表导向迭代报告.md",
         OUT/"round7_summary.json",
     ]
     manifest = {

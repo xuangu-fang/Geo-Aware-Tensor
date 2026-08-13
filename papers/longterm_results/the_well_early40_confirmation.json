@@ -1,6 +1,6 @@
 {
   "experiment_id": "B-METHOD-R6-WELLMAZE-EARLY40-CONFIRM",
-  "status": "PAPER",
+  "status": "REJECTED",
   "configuration_frozen_before_confirmation": true,
   "selection_seeds": [
     0,
@@ -224,6 +224,12 @@
       "joint_inr": 0.9964341185986996
     }
   ],
+  "absolute_effectiveness": {
+    "decision": "REJECTED_ABSOLUTE_EFFECTIVENESS",
+    "approx_explained_variance": 0.01643123877054331,
+    "mse_skill_vs_zero": 0.02889288594521655,
+    "mse_skill_vs_time_scaled_persistence": 0.019572036877282928
+  },
   "scope_note": "Sparse-supervised cross-geometry early-horizon field regression; not long-horizon forecasting.",
-  "limitation": "Absolute NRMSE remains near one; evidence supports a modest geometric inductive-bias advantage, not solved reconstruction."
+  "limitation": "All methods have NRMSE approximately one. Small paired differences are not evidence of useful reconstruction."
 }

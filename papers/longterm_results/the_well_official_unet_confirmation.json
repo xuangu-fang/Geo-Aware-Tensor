@@ -1,6 +1,7 @@
 {
   "experiment_id": "B-WELL-EARLY40-THE-WELL-UNET-CONFIRMATION",
-  "status": "POSTHOC_BASELINE_CONFIRMATION",
+  "status": "REJECTED_ABSOLUTE_EFFECTIVENESS",
+  "interpretation": "All methods have NRMSE approximately one. The paired p-value is retained for audit only and is not positive paper evidence.",
   "protocol_note": "The paired-phase method was frozen before adding this baseline. The Well 1.2 UNetClassic architecture is locally adapted and retrained under the identical 1% early-40 protocol.",
   "library": {
     "name": "the_well",

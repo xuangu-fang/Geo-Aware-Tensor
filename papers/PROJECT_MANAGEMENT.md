@@ -54,8 +54,8 @@ IDEA → SMOKE → PILOT → SELECTED → FROZEN → CONFIRM → PAPER
 | M0 POC 与三轮方法迭代 | DONE | A/B 实现、10-seed A 确认、B envelope 去留、共享 phase diagram |
 | M1 数据证据链 | DONE | 独立 solver + The Well 112-case block-mean pilot；全量 source/hash/leakage audit 与一 seed harness |
 | M2 Paper A 推断与消融 | CONTROLLED CONFIRMED | 随机 2%、中心 block 缺失、30% 噪声均完成十 seed；core-IV 主动采样拒绝；外部证据仍缺 |
-| M3 Paper B 外部泛化 | BASELINES CONFIRMED | The Well early-40/1% 在 10 seeds 上胜 ordinary CP/INR/FNO/U-Net/persistence；长时与一般 boundary 拒绝 |
-| M4 论文冻结 | WRITING | 方法冻结；canonical drafts、主表、复现 manifest 和 claim 清理进行中 |
+| M3 Paper B 外部泛化 | REJECTED | The Well early-40 所有方法 NRMSE≈1；paired 只解释约 1.6% 方差，微小 paired 差异不构成有效重建 |
+| M4 论文冻结 | BLOCKED-B / WRITING-A | A 进入写作；B 缺少通过绝对效果门槛的外部数据，不可按现有 evidence 投稿 |
 
 ## 5. 下一轮工作包
 
@@ -77,6 +77,7 @@ IDEA → SMOKE → PILOT → SELECTED → FROZEN → CONFIRM → PAPER
 - 输入：多障碍、多源、多材料 wave/Helmholtz 数据。
 - 输出：unseen geometry × unseen resolution × sparse sensors 主表。
 - 晋级条件：paired tensor 在低 mismatch/aligned 子集稳定优于 IP-NF/GINO/TFNO，并用 phase diagram 明确失效边界。
+- **先验绝对门槛（The Well early-40 被拒后冻结）：**外部数据 macro NRMSE ≤0.8，且相对最强 trivial baseline 的 MSE skill ≥20%；未通过时禁止讨论小幅 paired p-value。
 
 ### WP-B2：几何误差和 source 不确定性
 

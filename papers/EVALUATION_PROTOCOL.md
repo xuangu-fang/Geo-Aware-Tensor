@@ -43,6 +43,23 @@ field scale.  Relative high-band error is reported only if that band contains at
 least 1% of the represented target energy.  Results are separated into same
 resolution, cross-resolution, and changed-topology tests.
 
+### Absolute-effect amendment (frozen 2026-08-13)
+
+The Well early-40 exposed a missing gate in the original protocol: all methods
+can have NRMSE approximately one while small paired differences are statistically
+stable. Such comparisons are not positive evidence. For every new external
+Paper-B task, before any pairwise significance is interpreted, the proposed
+method must satisfy both:
+
+- macro NRMSE at most 0.8;
+- at least 20% MSE skill relative to the strongest trivial constant,
+  persistence, or interpolation baseline.
+
+The thresholds were set after rejecting The Well early-40 and apply only to
+future external tasks; they are not retroactively used to select among existing
+results. Failing the gate classifies the whole task as an ineffective stress
+test regardless of parameter efficiency, win count, or p-value.
+
 ## Statistics
 
 Headline tables use at least three independent mask/noise/training seeds.  The

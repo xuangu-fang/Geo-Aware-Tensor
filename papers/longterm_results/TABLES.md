@@ -45,14 +45,16 @@
 
 完整 paired statistics 与逐 seed 数值见 `summary.json`。
 
-## Paper B 官方 FNO baseline（The Well early-40 / 1%）
+## Paper B The Well early-40 / 1%（绝对效果门禁 REJECTED）
 
 | 方法 | 32 test geometry macro NRMSE | 胜场 | 参数量 |
 |---|---:|---:|---:|
-| Paired phase CP | **0.99175±0.00610** | 8/10 | 23,040 |
+| Paired phase CP | 0.99175±0.00610 | 8/10 | 23,040 |
 | Official NeuralOperator 2.0 FNO | 0.99808±0.00301 | 2/10 | 357,473 |
 
-paired 相对改善 `0.63%`；单侧 paired Wilcoxon `p=0.01367`。FNO 架构先在
+paired 相对改善 `0.63%`；单侧 paired Wilcoxon `p=0.01367`。但 paired 的近似
+explained variance 只有 `1.64%`，相对 zero/persistence 的 MSE skill 只有
+`2.89%/1.96%`。因此所有方法基本无效，此处 p-value 不作为论文正证据。FNO 架构先在
 validation 上从 FNO/TFNO 中选择，再固定到已有 confirmation seeds 10--19；逐 seed
 结果、compute 与图见 `the_well_official_fno_confirmation.json/.png`。
 

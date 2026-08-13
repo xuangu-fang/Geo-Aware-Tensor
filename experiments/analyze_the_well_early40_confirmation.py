@@ -22,6 +22,8 @@ def main():
                         default=Path("papers/longterm_results/the_well_early40_confirmation.json"))
     parser.add_argument("--figure", type=Path,
                         default=Path("papers/longterm_results/the_well_early40_confirmation.png"))
+    parser.add_argument("--sanity", type=Path,
+                        default=Path("papers/longterm_results/the_well_sanity_baselines.json"))
     args = parser.parse_args()
     records=[]
     for path in sorted(args.input.glob("*.json"), key=lambda p: int(p.stem.split("_")[-1])):
@@ -47,17 +49,27 @@ def main():
             "one_sided_wilcoxon_statistic":float(statistic),
             "one_sided_wilcoxon_pvalue":float(pvalue),
         }
+    sanity=json.loads(args.sanity.read_text())["test_summary"]
+    zero=float(sanity["zero_mean"])
+    persistence=float(sanity["time_scaled_persistence_mean"])
+    paired_mean=float(summary["paired_phase_cp"]["mean"])
+    absolute_effect={
+        "decision":"REJECTED_ABSOLUTE_EFFECTIVENESS",
+        "approx_explained_variance":1-paired_mean**2,
+        "mse_skill_vs_zero":1-(paired_mean/zero)**2,
+        "mse_skill_vs_time_scaled_persistence":1-(paired_mean/persistence)**2,
+    }
     result={
         "experiment_id":"B-METHOD-R6-WELLMAZE-EARLY40-CONFIRM",
-        "status":"PAPER",
+        "status":"REJECTED",
         "configuration_frozen_before_confirmation":True,
         "selection_seeds":[0,1,2],"confirmation_seeds":list(range(10,20)),
         "test_split_used_only_for_confirmation":True,
         "test_geometries":32,"train_geometries":64,"future_horizon_frames":40,
         "observation_ratio":.01,"summary":summary,"paired_comparisons":comparisons,
-        "records":records,
+        "records":records,"absolute_effectiveness":absolute_effect,
         "scope_note":"Sparse-supervised cross-geometry early-horizon field regression; not long-horizon forecasting.",
-        "limitation":"Absolute NRMSE remains near one; evidence supports a modest geometric inductive-bias advantage, not solved reconstruction."
+        "limitation":"All methods have NRMSE approximately one. Small paired differences are not evidence of useful reconstruction."
     }
     args.output.parent.mkdir(parents=True,exist_ok=True);args.output.write_text(json.dumps(result,indent=2))
 
@@ -67,7 +79,7 @@ def main():
         axis.scatter(x+offset,values[model],s=28,label=model.replace("_"," "))
     axis.axhline(1.,color="black",linestyle="--",linewidth=1,alpha=.6)
     axis.set_xticks(x,[str(record["seed"]) for record in records]);axis.set_xlabel("Fresh confirmation seed")
-    axis.set_ylabel("Test macro NRMSE");axis.set_title("Frozen early-horizon confirmation on 32 test geometries")
+    axis.set_ylabel("Test macro NRMSE");axis.set_title("Rejected early-horizon stress test: all methods near NRMSE 1")
     axis.grid(axis="y",alpha=.25);axis.legend(frameon=False,ncol=2)
     fig.savefig(args.figure,dpi=180);plt.close(fig)
     print(json.dumps({"summary":summary,"paired_comparisons":comparisons},indent=2))

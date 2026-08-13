@@ -4,14 +4,14 @@
 > specialization, not evidence for general irregular-boundary geometry. A bounded
 > irregular-domain operator-spectral alternative was tested and stopped because
 > an SDF/coordinate CP was stronger. This phase branch therefore remains the
-> active Paper-B candidate. On the frozen The Well early-40 protocol it also
-> beats the official NeuralOperator 2.0 FNO over ten test seeds (`0.99175` versus
-> `0.99808`, 8/10 wins, one-sided Wilcoxon `p=0.01367`). See
+> active Paper-B candidate only on controlled data. The frozen The Well
+> early-40 protocol is now classified as a failed external stress test: paired
+> CP obtains `0.99175` NRMSE and all baselines are approximately one. The small
+> paired differences are statistically stable but not practically meaningful. See
 > [`../zh/不规则域几何语义校正.md`](../zh/不规则域几何语义校正.md).
-> The Well 1.2 classic U-Net and observed-only persistence baselines are now
-> included as well. Paired CP obtains `0.99175`, versus `1.00174` for U-Net and
-> `1.00160` for time-scaled persistence. A path-uncertainty extension was tested
-> but did not provide a sufficiently large or stable gain to enter the method.
+> The Well 1.2 classic U-Net and observed-only persistence baselines confirm the
+> absolute failure rather than a positive result. A path-uncertainty extension
+> was also ineffective.
 
 ## Abstract
 
@@ -181,7 +181,7 @@ interactions beyond the compact separable representation. We retain this result
 prominently: tensor regularization is advantageous when the physical field is
 approximately multilinear, not universally.
 
-## 8. External multi-geometry confirmation
+## 8. Failed external multi-geometry stress test
 
 We pin The Well `acoustic_scattering_maze` to revision `8df383a...` and extract
 64 train, 16 validation, and 32 untouched test trajectories at 64×64 using
@@ -190,14 +190,14 @@ We pin The Well `acoustic_scattering_maze` to revision `8df383a...` and extract
 
 The original 201-frame formulation is rejected: paired CP and wrong-distance
 CP are indistinguishable near NRMSE 0.992. A predeclared early causal horizon of
-40 future frames restores the geometry signal. Three selection seeds at 1%, 2%,
+40 future frames creates a small paired ordering. Three selection seeds at 1%, 2%,
 and 5% observations favor paired CP over wrong path, ordinary neural CP, and a
 joint INR in all nine ratio/seed cells. We freeze the lowest ratio (1%) and then
 evaluate seeds 10--19 on all 32 test geometries:
 
 | Model | Test macro NRMSE |
 |---|---:|
-| Paired phase CP | **0.99175 ± 0.00610** |
+| Paired phase CP | 0.99175 ± 0.00610 |
 | Neural CP | 0.99490 ± 0.00456 |
 | Joint INR | 0.99851 ± 0.00417 |
 | Wrong-distance paired CP | 1.00136 ± 0.00685 |
@@ -205,9 +205,11 @@ evaluate seeds 10--19 on all 32 test geometries:
 Paired CP wins 9/10 seeds against wrong distance (one-sided paired Wilcoxon
 `p=0.00488`), 9/10 against neural CP (`p=0.0137`), and 10/10 against the joint
 INR (`p=0.00098`). Relative mean improvements are respectively 0.96%, 0.32%,
-and 0.68%. This is modest external evidence for the geometry/phase inductive
-bias, not a solved benchmark: absolute NRMSE remains near one and the claim is
-restricted to sparse-supervised, cross-geometry early-horizon regression.
+and 0.68%. These comparisons are not positive evidence. Approximate explained
+variance, `1-NRMSE^2`, is only 1.64%; MSE skill is only 2.89%
+relative to zero and 1.96% relative to time-scaled persistence. All methods are
+effectively non-reconstructive on this task, so statistical significance among
+them has no practical paper value.
 
 ### 8.1 Official FNO baseline
 
@@ -219,9 +221,9 @@ frozen and run with the existing fresh seeds 10--19 on 32 test geometries.
 
 Paired phase CP obtains `0.99175±0.00610` macro NRMSE versus
 `0.99808±0.00301` for FNO, wins 8/10 seeds, and gives one-sided paired Wilcoxon
-`p=0.01367`. The relative gain is modest (`0.63%`), but the proposed model uses
-23,040 parameters versus 357,473 for FNO. This supports an efficiency and
-inductive-bias claim, not a large-error-reduction claim.
+`p=0.01367`. The proposed model uses 23,040 parameters versus 357,473 for FNO,
+but parameter efficiency does not rescue an ineffective predictor. We make no
+inductive-bias or external-confirmation claim from this comparison.
 
 ![Official FNO confirmation](../longterm_results/the_well_official_fno_confirmation.png)
 
@@ -239,8 +241,8 @@ Paired phase CP wins 9/10 seeds, gives a one-sided Wilcoxon `p=0.001953`, and
 uses 23,040 parameters versus 7,763,617. A zero predictor obtains `1.00640`.
 An observed-only time-scaled persistence baseline fits one slope and intercept
 per query time from the same 1% training labels and obtains
-`1.00160±0.00276`. These controls show that the small paired-CP gain is not
-explained by a trivial near-zero or persistent solution.
+`1.00160±0.00276`. The paired model improves MSE over this trivial baseline by
+only 1.96%; the controls therefore establish absolute failure, not useful skill.
 
 ![FNO, U-Net and sanity comparison](../longterm_results/round7_headline.png)
 
@@ -249,8 +251,8 @@ explained by a trivial near-zero or persistent solution.
 We add a fixed Gaussian-correlated error with two-grid-cell correlation width
 to the normalized intrinsic-distance map. At 6% path error over three
 validation seeds, clean-path paired CP obtains `0.98335±0.00283`, while the
-noisy-path model obtains `0.98643±0.00148`; it remains better than the
-validation U-Net (`0.99446`) and the Euclidean wrong-path control (`0.99705`).
+noisy-path model obtains `0.98643±0.00148`. Since every value remains near one,
+this only diagnoses a rejected task and is not a robustness result.
 
 We additionally test the posterior mean
 
@@ -262,21 +264,25 @@ We additionally test the posterior mean
 
 using four fixed Gaussian quadrature points. It yields
 `0.98558±0.00079`, only `0.00085` better on average and worse on one of three
-seeds. We therefore retain path marginalization as an exploratory robustness
-result, not a contribution or default component.
+seeds. We therefore reject path marginalization.
 
 ## 9. Limitations
 
 The domain graph and a meaningful source are known. Shortest-path phase is a
 strong physical coordinate and may be inappropriate for unknown, anisotropic,
 or refractive travel metrics. The strongest synthetic benchmark remains much
-easier than The Well. The public confirmation supports only a small
-early-horizon gain; long-horizon scattering remains a documented failure. The
+easier than The Well. Both early- and long-horizon public tests fail in absolute
+reconstruction quality; Paper B currently has no external confirmation. The
 current source-set minimum distance also collapses multiple rings to one scalar.
 FNO and U-Net baselines are complete under our frozen regression protocol, but
 this is not the full-supervision next-step task used by The Well's public
 leaderboard. Multi-source behavior and longer-horizon reflections remain open;
 we do not add path-impedance or envelope modules without a new predeclared task.
+
+A future external task must first achieve macro NRMSE at most 0.8 and at least
+20% MSE skill over the strongest trivial baseline. These thresholds were frozen
+after rejecting early-40; pairwise significance is considered only after the
+absolute gate passes.
 
 ## 10. Reproduction
 

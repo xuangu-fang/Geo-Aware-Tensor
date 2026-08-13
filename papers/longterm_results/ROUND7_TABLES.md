@@ -13,7 +13,7 @@
 |---:|---:|---:|
 | 0.206±0.014 | 0.330±0.256 | 0.137±0.010 |
 
-## Paper B：The Well 强/简单基线
+## Paper B：The Well early-40 绝对有效性门禁（REJECTED）
 
 | Method | Test macro NRMSE | Paired wins |
 |---|---:|---:|
@@ -22,5 +22,9 @@
 | The Well U-Net | 1.00174±0.00208 | 9/10 |
 | time-scaled persistence | 1.00160±0.00276 | descriptive |
 | zero | 1.00640 | descriptive |
+
+paired approximate explained variance: 1.64%.
+MSE skill vs zero: 2.89%; vs persistence: 1.96%.
+These absolute effects fail the paper gate; pairwise p-values are not treated as positive evidence.
 
 完整逐 seed 数值和 paired tests 见 `round7_summary.json`。

@@ -36,7 +36,10 @@ def main():
         (ROOT/"the_well_official_unet_selection.json").read_text())
     result = {
         "experiment_id": "B-WELL-EARLY40-THE-WELL-UNET-CONFIRMATION",
-        "status": "POSTHOC_BASELINE_CONFIRMATION",
+        "status": "REJECTED_ABSOLUTE_EFFECTIVENESS",
+        "interpretation": (
+            "All methods have NRMSE approximately one. The paired p-value is "
+            "retained for audit only and is not positive paper evidence."),
         "protocol_note": (
             "The paired-phase method was frozen before adding this baseline. "
             "The Well 1.2 UNetClassic architecture is locally adapted and retrained "
@@ -79,7 +82,7 @@ def main():
     axis.axhline(1., color="black", linewidth=.8, linestyle="--")
     axis.set_xticks(x, [str(row["seed"]) for row in rows])
     axis.set_xlabel("Fresh confirmation seed"); axis.set_ylabel("Test macro NRMSE")
-    axis.set_title("The Well early-40, 1% sparse supervision, 32 test geometries")
+    axis.set_title("Rejected The Well early-40 stress test: all methods near NRMSE 1")
     axis.legend()
     axis.text(.01, .02, f"paired wins {result['test_summary']['paired_wins']}/{len(rows)}, "
               f"one-sided Wilcoxon p={p_value:.4g}", transform=axis.transAxes,

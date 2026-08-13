@@ -1,6 +1,7 @@
 {
   "experiment_id": "B-WELL-EARLY40-OFFICIAL-FNO-CONFIRMATION",
-  "status": "POSTHOC_BASELINE_CONFIRMATION",
+  "status": "REJECTED_ABSOLUTE_EFFECTIVENESS",
+  "interpretation": "All methods have NRMSE approximately one. The paired p-value is retained for audit only and is not positive paper evidence.",
   "important_protocol_note": "Paired-phase configuration and its seeds were frozen before FNO was added; FNO architecture was selected on validation and test seeds match the existing confirmation.",
   "library": {
     "name": "neuraloperator",

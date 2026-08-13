@@ -12,7 +12,7 @@
 | R8 | 低 observation ratio 的定义不现实 | 中 | 高 | 同时报告 entries、sensor count、trajectory/fiber masks | OPEN |
 | R9 | test leakage：geometry、normalization、rank、calibration | 中 | 致命 | split manifest；fit-time data access audit；frozen seeds | PARTIAL |
 | R10 | seed 或 metric 选择导致 p-hacking | 中 | 高 | pilot/selection/confirm 分离；primary metric；全 seed paired differences | PARTIAL |
-| R11 | B 只在人工 aligned regime 有效 | 高 | 高 | 外部 wave data；mismatch phase diagram；明确 scope，不宣称通用 SOTA | MITIGATED：The Well modest confirmation + long-horizon failure |
+| R11 | B 只在人工 aligned regime 有效 | 高 | 高 | 外部 wave data先通过绝对效果门槛；再看 paired significance | OPEN：The Well early-40 NRMSE≈1，已拒绝 |
 | R12 | phase-envelope 负结果削弱故事 | 低 | 低 | 将其作为边界证据；不塞入主模型 | CLOSED |
 | R13 | operator construction 依赖手工 domain expertise | 中 | 高 | known/estimated/perturbed operator；构造时间和敏感性 | OPEN |
 | R14 | 与 graph-regularized tensor/BPTF/GINO/TFNO 新颖性重叠 | 高 | 高 | related-work 对照；同时证明显式 operator factors、Bayesian core 和 geometry causal ablation | OPEN |

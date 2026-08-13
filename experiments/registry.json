@@ -94,20 +94,22 @@
     {
       "id": "B-METHOD-R6-WELLMAZE-EARLY40-SELECTION",
       "paper": "B",
-      "status": "FROZEN",
+      "status": "REJECTED",
       "primary_metric": "unseen-validation-geometry macro NRMSE",
       "seeds": [0, 1, 2],
       "result": "1% paired 0.9775+/-0.0026; all 9 ratio/seed cells favor paired over three controls",
-      "artifact": "papers/longterm_results/the_well_early40_selection.json"
+      "artifact": "papers/longterm_results/the_well_early40_selection.json",
+      "reopen_condition": "Selection by pairwise ordering is insufficient; a new external task must pass the frozen absolute-effect gate."
     },
     {
       "id": "B-METHOD-R6-WELLMAZE-EARLY40-CONFIRM",
       "paper": "B",
-      "status": "PAPER",
+      "status": "REJECTED",
       "primary_metric": "32-test-geometry macro NRMSE",
       "seeds": [10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
-      "result": "paired 0.99175+/-0.00610 vs wrong 1.00136, neural CP 0.99490, joint INR 0.99851",
-      "artifact": "papers/longterm_results/the_well_early40_confirmation.json"
+      "result": "paired 0.99175+/-0.00610; all methods approximately NRMSE 1 and reconstruction is ineffective",
+      "artifact": "papers/longterm_results/the_well_early40_confirmation.json",
+      "reopen_condition": "A new external task reaches NRMSE <=0.8 and at least 20% MSE skill over the best trivial baseline before pairwise significance is considered."
     },
     {
       "id": "SHARED-METHOD-R7-IRREGULAR-BOUNDARY-GO-NOGO",
@@ -122,29 +124,32 @@
     {
       "id": "B-BASELINE-R7-WELLMAZE-EARLY40-OFFICIAL-FNO-CONFIRM",
       "paper": "B",
-      "status": "PAPER",
+      "status": "REJECTED",
       "primary_metric": "32-test-geometry macro NRMSE",
       "seeds": [10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
       "result": "paired 0.99175+/-0.00610 vs official FNO 0.99808+/-0.00301; 8/10 wins; p=0.01367",
-      "artifact": "papers/longterm_results/the_well_official_fno_confirmation.json"
+      "artifact": "papers/longterm_results/the_well_official_fno_confirmation.json",
+      "reopen_condition": "The task first passes the absolute effectiveness gate; small differences among ineffective methods are not evidence."
     },
     {
       "id": "B-BASELINE-R7-WELLMAZE-EARLY40-UNET-CONFIRM",
       "paper": "B",
-      "status": "PAPER",
+      "status": "REJECTED",
       "primary_metric": "32-test-geometry macro NRMSE",
       "seeds": [10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
       "result": "paired 0.99175+/-0.00610 vs The Well U-Net 1.00174+/-0.00208; 9/10 wins; p=0.001953",
-      "artifact": "papers/longterm_results/the_well_official_unet_confirmation.json"
+      "artifact": "papers/longterm_results/the_well_official_unet_confirmation.json",
+      "reopen_condition": "The task first passes the absolute effectiveness gate; small differences among ineffective methods are not evidence."
     },
     {
       "id": "B-BASELINE-R7-WELLMAZE-EARLY40-SANITY",
       "paper": "B",
-      "status": "PAPER",
+      "status": "REJECTED",
       "primary_metric": "32-test-geometry macro NRMSE",
       "seeds": [10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
       "result": "time-scaled persistence 1.00160+/-0.00276; zero 1.00640",
-      "artifact": "papers/longterm_results/the_well_sanity_baselines.json"
+      "artifact": "papers/longterm_results/the_well_sanity_baselines.json",
+      "reopen_condition": "The proposed method must materially outperform the best trivial predictor in absolute MSE skill."
     },
     {
       "id": "B-METHOD-R7-WELLMAZE-PATH-UNCERTAINTY",

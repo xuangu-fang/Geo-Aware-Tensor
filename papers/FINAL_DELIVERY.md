@@ -1,5 +1,12 @@
 # Final tensor-refocused two-paper delivery
 
+> **2026-08-13 absolute-effect correction:** Paper B's The Well early-40 result
+> is rejected, not a public confirmation. Paired CP has NRMSE 0.99175, only
+> about 1.64% approximate explained variance and 1.96% MSE skill over
+> time-scaled persistence. Small paired p-values among near-null predictors are
+> not evidence of useful reconstruction. Paper B currently has controlled
+> mechanism evidence only.
+
 ## Post-feedback three-round extension
 
 Paper A has been extended from a CP-only model to operator-spectral Bayesian
@@ -45,7 +52,7 @@ uncertainty ranking are better. Periodic-sector missingness, Tucker-format
 mismatch, and public Active Matter point recovery are mixed or negative.
 Automatic rank determination failed and is not claimed.
 
-Start at [Paper A draft](paper_a/DRAFT.md), [tensor audit](paper_a/TENSOR_REFOCUS.md),
+Start at [Paper A draft](paper_a/DRAFT_TUCKER.md), [tensor audit](paper_a/TENSOR_REFOCUS.md),
 [T1--T4 log](paper_a/TENSOR_ITERATIONS.md), [tables](paper_a/tensor_results/TABLES.md),
 and [artifact manifest](paper_a/tensor_results/MANIFEST.json).
 
@@ -100,4 +107,4 @@ PYTHONPATH=src /home/ubuntu/project/yanjiu/.venv/bin/python -m pytest -q
 PYTHONPATH=src /home/ubuntu/project/yanjiu/.venv/bin/python -m compileall -q src experiments
 ```
 
-The final code audit reports 11 passing tests and successful compilation.
+The current code audit reports 21 passing tests and successful compilation.
