@@ -1,0 +1,21 @@
+{
+  "sha256": {
+    "src/geoaware/bayes_data.py": "1cb061eb16ee671ba5977e02d6c513fe6a68a7f0dce6a70f59a85845c200d359",
+    "src/geoaware/bayes_models.py": "7ba4ec0af506da527db09c7af974c47387e229bd0591778c7dbf27f6c4905b8a",
+    "experiments/run_paper_a.py": "417110120e69fe03337a1820276d4c436efb995295d6d6ee6de8061949fcda84",
+    "experiments/run_paper_a_real.py": "8b152115332ccb00d998c4f02b8778496222e43bcf2fe18c525cff0b6afb8d54",
+    "experiments/analyze_paper_a.py": "1f2b72f74906b1427a90a0bacffea93e398e2e112dfdc34d64ebdcebead199c8",
+    "papers/EVALUATION_PROTOCOL.md": "6b8d18c0baffda414216d73b30d9ba2ba3b79442d4ac7eff15d2558fe902ae98"
+  },
+  "result_bytes": {
+    "paper_a_round1": "203866",
+    "paper_a_round2": "779405",
+    "paper_a_round3_static_heterogeneous": "779494",
+    "paper_a_round3_active_heterogeneous": "2783078",
+    "paper_a_round3_sensor_spectral": "530820",
+    "paper_a_round3_real_active": "79512",
+    "paper_a_confirm_matched": "193627",
+    "paper_a_confirm_heterogeneous": "97043",
+    "paper_a_confirm_sensor_spectral": "275489"
+  }
+}

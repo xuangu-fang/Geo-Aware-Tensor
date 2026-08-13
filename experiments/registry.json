@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "status_definitions": [
+    "IDEA",
+    "SMOKE",
+    "PILOT",
+    "SELECTED",
+    "FROZEN",
+    "CONFIRM",
+    "PAPER",
+    "REJECTED"
+  ],
+  "experiments": [
+    {
+      "id": "A-METHOD-R3-OPTUCKER-02-RANDOM-CONFIRM",
+      "paper": "A",
+      "status": "PAPER",
+      "primary_metric": "held-out NRMSE",
+      "seeds": [10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+      "result": "0.125+/-0.015",
+      "artifact": "papers/longterm_results/summary.json"
+    },
+    {
+      "id": "B-METHOD-R2-ENVELOPE-02-RANDOM-Q2",
+      "paper": "B",
+      "status": "REJECTED",
+      "primary_metric": "unseen-geometry NRMSE",
+      "seeds": [0, 1, 2],
+      "result": "0.644+/-0.118 vs IP-NF 0.624+/-0.027",
+      "artifact": "papers/longterm_results/summary.json",
+      "reopen_condition": "A new explicit envelope parameterization beats IP-NF on independent data without a joint residual bypass."
+    },
+    {
+      "id": "A-DATA-R4-INDEPENDENT-WAVE-GATE",
+      "paper": "A",
+      "status": "IDEA",
+      "primary_metric": "dataset gate",
+      "artifact": "papers/DATASET_SELECTION.md"
+    },
+    {
+      "id": "B-DATA-R4-WELL-ACOUSTIC-GATE",
+      "paper": "B",
+      "status": "IDEA",
+      "primary_metric": "dataset gate",
+      "artifact": "papers/DATASET_SELECTION.md"
+    },
+    {
+      "id": "SHARED-BASELINE-R4-OFFICIAL-HARNESS",
+      "paper": "shared",
+      "status": "IDEA",
+      "primary_metric": "sanity and parity checks",
+      "artifact": "papers/NEXT_ROUND_PAPER_PLAN.md"
+    }
+  ]
+}

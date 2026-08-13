@@ -1,0 +1,47 @@
+name: Dataset gate
+description: Audit a new public or generated dataset before model sweeps
+title: "[DATA] "
+labels: ["data", "idea"]
+body:
+  - type: input
+    id: dataset
+    attributes:
+      label: Dataset, version, and source
+    validations:
+      required: true
+  - type: textarea
+    id: tensor
+    attributes:
+      label: Physical tensor semantics
+      description: Name every mode and explain why the tensorization is meaningful.
+    validations:
+      required: true
+  - type: textarea
+    id: geometry
+    attributes:
+      label: Geometry/operator/source metadata
+      description: State what is known, estimated, missing, or potentially leaky.
+    validations:
+      required: true
+  - type: textarea
+    id: split
+    attributes:
+      label: Proposed train/validation/test split
+      description: Include unseen geometry/source/resolution criteria.
+    validations:
+      required: true
+  - type: textarea
+    id: storage
+    attributes:
+      label: License, storage, and reproducible subset
+    validations:
+      required: true
+  - type: checkboxes
+    id: gate
+    attributes:
+      label: Gate checklist
+      options:
+        - label: Target and geometry metadata are stored separately.
+        - label: A correct/wrong/no-geometry comparison is possible.
+        - label: A fixed public subset manifest can be published.
+        - label: The license permits the intended use and redistribution of metadata/splits.

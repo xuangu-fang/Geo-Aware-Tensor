@@ -1,0 +1,106 @@
+"""Explicit multiway tensor benchmarks for the Paper-A refocus."""
+
+from __future__ import annotations
+
+import math
+import torch
+
+from .bases import BasisSpec, basis_on_grid
+from .data import FieldDataset
+
+
+def operator_cp_tensor(shape: tuple[int,int,int]=(20,28,36),seed: int=701) -> FieldDataset:
+    """Mostly-low-rank tensor with independent mode geometry and mild mismatch."""
+    specs=(BasisSpec("neumann",7,"time-interval"),
+           BasisSpec("dirichlet",8,"bounded-range"),
+           BasisSpec("periodic",7,"angle-circle"))
+    bases=[basis_on_grid(n,s)[0] for n,s in zip(shape,specs)]
+    g=torch.Generator().manual_seed(seed); rank=4
+    coeff=[]
+    for b in bases:
+        c=torch.randn(b.shape[1],rank,generator=g)
+        decay=torch.arange(1,b.shape[1]+1).float().pow(-1.15)[:,None]
+        coeff.append(c*decay)
+    factors=[]
+    for b,c in zip(bases,coeff):
+        f=b@c; f/=f.square().mean(0,keepdim=True).sqrt(); factors.append(f)
+    amp=torch.tensor([1.15,-.80,.52,.30])
+    values=torch.einsum("tr,xr,yr,r->txy",*factors,amp)
+    # Mild off-model local interaction: not itself a CP draw from the learner.
+    t=torch.linspace(0,1,shape[0])[:,None,None]
+    x=torch.linspace(0,1,shape[1])[None,:,None]
+    a=2*math.pi*torch.arange(shape[2])[None,None,:]/shape[2]
+    residual=.13*torch.exp(-((t-.63)/.12)**2-((x-.74)/.10)**2)*torch.cos(5*a+4*t)
+    values=(values+residual); values=(values-values.mean())/values.std()
+    return FieldDataset("operator_cp_tensor",values.float(),("time","range","angle"),specs,
+                        (False,False,True),"generated:geoaware.tensor_data.operator_cp_tensor",
+                        "Rank-4 operator-factor tensor with a mild localized off-model interaction.")
+
+
+def operator_tucker_tensor(shape: tuple[int,int,int]=(20,28,36),seed: int=1701) -> FieldDataset:
+    """Low multilinear-rank Tucker field that is not a low CP-rank generator."""
+    specs=(BasisSpec("neumann",7,"time-interval"),
+           BasisSpec("dirichlet",8,"bounded-range"),
+           BasisSpec("periodic",7,"angle-circle"))
+    bases=[basis_on_grid(n,s)[0] for n,s in zip(shape,specs)]
+    ranks=(4,5,5); g=torch.Generator().manual_seed(seed); factors=[]
+    for b,r in zip(bases,ranks):
+        c=torch.randn(b.shape[1],r,generator=g)/torch.arange(1,b.shape[1]+1).float()[:,None].pow(.9)
+        q=torch.linalg.qr(b@c,mode="reduced").Q*math.sqrt(b.shape[0]); factors.append(q)
+    core=torch.randn(*ranks,generator=g)
+    core*=torch.linspace(1,.3,ranks[0])[:,None,None]
+    core*=torch.linspace(1,.25,ranks[1])[None,:,None]
+    core*=torch.linspace(1,.25,ranks[2])[None,None,:]
+    values=torch.einsum("abc,ta,xb,yc->txy",core,*factors)
+    values=(values-values.mean())/values.std()
+    return FieldDataset("operator_tucker_tensor",values.float(),("time","range","angle"),specs,
+                        (False,False,True),"generated:geoaware.tensor_data.operator_tucker_tensor",
+                        "Operator-factor Tucker tensor with multilinear rank (4,5,5).")
+
+
+def operator_mixed_tensor(mismatch: float, shape: tuple[int,int,int]=(20,28,36),
+                          seed: int=701) -> FieldDataset:
+    """Continuous CP-to-dense-Tucker format-mismatch benchmark.
+
+    ``mismatch=0`` is the mildly off-model CP task; ``mismatch=1`` is an
+    independent dense-core Tucker task.  Intermediate values are normalized
+    mixtures and provide a controlled approximation-error axis.
+    """
+    if not 0 <= mismatch <= 1:
+        raise ValueError("mismatch must lie in [0, 1]")
+    cp = operator_cp_tensor(shape, seed)
+    tucker = operator_tucker_tensor(shape, seed + 1000)
+    values = (1 - mismatch) * cp.values + mismatch * tucker.values
+    values = (values - values.mean()) / values.std().clamp_min(1e-8)
+    return FieldDataset(
+        f"operator_mixed_{mismatch:.2f}", values.float(), cp.mode_names,
+        cp.basis_specs, cp.periodic,
+        "generated:geoaware.tensor_data.operator_mixed_tensor",
+        f"Normalized CP/Tucker mixture with format mismatch {mismatch:.2f}.")
+
+
+def explicit_mode_bases(data: FieldDataset, kind: str="correct", seed: int=919) -> tuple[list[torch.Tensor],list[torch.Tensor]]:
+    basis=[]; eig=[]
+    for n,spec in zip(data.shape,data.basis_specs):
+        p,e=basis_on_grid(n,spec)
+        if kind=="correct": pass
+        elif kind=="permuted":
+            gen=torch.Generator().manual_seed(seed+n+len(basis)*1009)
+            p=p[torch.randperm(n,generator=gen)]
+        elif kind=="discrete":
+            p=torch.eye(n); e=torch.zeros(n)
+        else: raise ValueError(kind)
+        basis.append(p); eig.append(e)
+    return basis,eig
+
+
+def flat_product_features(data: FieldDataset,max_features: int=512,
+                          kind: str="correct") -> tuple[torch.Tensor,torch.Tensor]:
+    basis,eigs=explicit_mode_bases(data,kind)
+    combos=torch.cartesian_prod(*[torch.arange(b.shape[1]) for b in basis])
+    joint=sum(eigs[m][combos[:,m]] for m in range(len(basis)))
+    keep=torch.argsort(joint)[:min(max_features,len(joint))]; combos=combos[keep]; joint=joint[keep]
+    indices=data.flat_indices(); phi=torch.ones(len(indices),len(combos))
+    for m,b in enumerate(basis): phi*=b[indices[:,m]][:,combos[:,m]]
+    phi/=phi.square().mean(0,keepdim=True).sqrt().clamp_min(1e-8)
+    return phi,joint

@@ -1,0 +1,71 @@
+name: Experiment
+description: Register a dataset, method, baseline, ablation, or confirmation run
+title: "[EXP] "
+labels: ["evaluation", "idea"]
+body:
+  - type: input
+    id: experiment_id
+    attributes:
+      label: Experiment ID
+      description: Follow papers/PROJECT_MANAGEMENT.md.
+      placeholder: A-METHOD-R4-WELLMAZE-01-SENSORS-BLOCKPOST
+    validations:
+      required: true
+  - type: dropdown
+    id: paper
+    attributes:
+      label: Workstream
+      options: [Paper A, Paper B, Shared]
+    validations:
+      required: true
+  - type: textarea
+    id: hypothesis
+    attributes:
+      label: Falsifiable hypothesis
+      description: State the expected paired comparison and why it matters.
+    validations:
+      required: true
+  - type: textarea
+    id: data
+    attributes:
+      label: Dataset and split
+      description: Include version, split manifest, observation ratio/mask, noise, and seeds.
+    validations:
+      required: true
+  - type: textarea
+    id: models
+    attributes:
+      label: Proposed model and causal baselines
+      description: Explain the question controlled by each baseline.
+    validations:
+      required: true
+  - type: input
+    id: primary_metric
+    attributes:
+      label: Primary metric
+      placeholder: held-out NRMSE
+    validations:
+      required: true
+  - type: textarea
+    id: gate
+    attributes:
+      label: Success and failure gate
+      description: Predeclare the threshold before running confirmation seeds.
+    validations:
+      required: true
+  - type: checkboxes
+    id: leakage
+    attributes:
+      label: Leakage and fairness checklist
+      options:
+        - label: Test targets are inaccessible during fitting, selection, calibration, and geometry construction.
+          required: true
+        - label: Models share masks/noise within seed and use comparable tuning budgets.
+          required: true
+        - label: Pilot, selection, and confirmation seeds are disjoint.
+          required: true
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Expected artifacts
+      placeholder: config, per-seed JSON, aggregate table, figure, failure examples

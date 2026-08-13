@@ -1,0 +1,9 @@
+{
+  "src/geoaware/tensor_bayes.py": "5b4e182d19874bfddc4103cdfe7d7e68565023e5614ae8f6d1943ce851a8c249",
+  "src/geoaware/tensor_data.py": "eaa55610b68a80b4514677956cfdcf25188c99bba13bb18553ecabdf3760fcc5",
+  "experiments/run_tensor_bayes.py": "b2e42bce57c4ce250579e7db2e247cffd62a8e54592a52390c5fe471e4a82601",
+  "experiments/analyze_tensor_bayes.py": "20ef7452326ba9f0e87cf274cd85b735543b069f40dbbbe89b3962933c1f6701",
+  "papers/paper_a/DRAFT.md": "1bb655a12371ce0c6dd9280f2e43c7d75e8f0a9a05dc825055a606e443e55a44",
+  "papers/paper_a/TENSOR_REFOCUS.md": "aeb6f6bbec44d3481b14f67766c1c801655032f4e89a8120a4b8cb088428eba1",
+  "papers/paper_a/TENSOR_ITERATIONS.md": "3850ffe55ac298833697312283ba43a99bc8fe3414c6ce30081e9cce8efd4e70"
+}

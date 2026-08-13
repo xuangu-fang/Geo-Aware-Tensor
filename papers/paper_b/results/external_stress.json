@@ -1,0 +1,491 @@
+{
+  "protocol": "locked public-data stress test; held-out NRMSE; 5% random observations",
+  "aggregate_rows": [
+    {
+      "dataset": "active_matter",
+      "mask": "random",
+      "ratio": 0.05,
+      "model": "bayesian_spectral_tensor",
+      "seeds": 3,
+      "parameters": 384,
+      "nrmse_mean": 1.0135974884033203,
+      "nrmse_std": 0.006901072487810554,
+      "relative_l2_mean": 0.003422025047863523,
+      "relative_l2_std": 2.6420880456681424e-05,
+      "rmse_mean": 0.0034220941985646882,
+      "rmse_std": 2.642446800046491e-05,
+      "mae_mean": 0.0012523843130717676,
+      "mae_std": 4.3340669833302935e-05,
+      "observed_rmse_mean": 0.003228086202094952,
+      "observed_rmse_std": 8.01104420531831e-05,
+      "coverage_95_mean": 0.8376614252726237,
+      "coverage_95_std": 0.006838693484731448,
+      "gaussian_nll_mean": 7.9292863210042315,
+      "gaussian_nll_std": 0.7525683446535935,
+      "uncertainty_error_spearman_mean": 0.13698452214399973,
+      "uncertainty_error_spearman_std": 0.004249109850201724
+    },
+    {
+      "dataset": "active_matter",
+      "mask": "random",
+      "ratio": 0.05,
+      "model": "cp",
+      "seeds": 3,
+      "parameters": 1360,
+      "nrmse_mean": 0.6871077219645182,
+      "nrmse_std": 0.36500594259943314,
+      "relative_l2_mean": 0.002319924533367157,
+      "relative_l2_std": 0.0012321668973014083,
+      "rmse_mean": 0.002319987902107338,
+      "rmse_std": 0.0012322039856582268,
+      "mae_mean": 0.0008778794241758684,
+      "mae_std": 0.0003246105698874614,
+      "observed_rmse_mean": 0.0016182672309999664,
+      "observed_rmse_std": 0.0008923114838909503
+    },
+    {
+      "dataset": "active_matter",
+      "mask": "random",
+      "ratio": 0.05,
+      "model": "geo_nft",
+      "seeds": 3,
+      "parameters": 6155,
+      "nrmse_mean": 0.12178501238425572,
+      "nrmse_std": 0.0029345703425871336,
+      "relative_l2_mean": 0.00041116742067970335,
+      "relative_l2_std": 1.0224694437524067e-05,
+      "rmse_mean": 0.0004111722713181128,
+      "rmse_std": 1.0225395608448455e-05,
+      "mae_mean": 0.000276504559830452,
+      "mae_std": 3.7859392662505493e-06,
+      "observed_rmse_mean": 0.00047010244452394545,
+      "observed_rmse_std": 1.1726549320253089e-05
+    },
+    {
+      "dataset": "active_matter",
+      "mask": "random",
+      "ratio": 0.05,
+      "model": "inr",
+      "seeds": 3,
+      "parameters": 8641,
+      "nrmse_mean": 0.5600817998250326,
+      "nrmse_std": 0.05040114236576702,
+      "relative_l2_mean": 0.0018907767565300067,
+      "relative_l2_std": 0.00016808452741520858,
+      "rmse_mean": 0.0018908015917986631,
+      "rmse_std": 0.00016808273563061497,
+      "mae_mean": 0.0011627047788351774,
+      "mae_std": 0.00015180711225564746,
+      "observed_rmse_mean": 7.305535109480843e-05,
+      "observed_rmse_std": 5.798017703922147e-06
+    },
+    {
+      "dataset": "active_matter",
+      "mask": "random",
+      "ratio": 0.05,
+      "model": "neural_cp",
+      "seeds": 3,
+      "parameters": 14432,
+      "nrmse_mean": 0.8209424813588461,
+      "nrmse_std": 0.16739409728246962,
+      "relative_l2_mean": 0.0027715498581528664,
+      "relative_l2_std": 0.0005646331685591903,
+      "rmse_mean": 0.0027716231221954026,
+      "rmse_std": 0.0005646471214599639,
+      "mae_mean": 0.0009789087149935465,
+      "mae_std": 0.00017867985576021006,
+      "observed_rmse_mean": 0.0023161467785636583,
+      "observed_rmse_std": 0.0006405438763256388
+    },
+    {
+      "dataset": "active_matter",
+      "mask": "random",
+      "ratio": 0.05,
+      "model": "spectral_cp",
+      "seeds": 3,
+      "parameters": 496,
+      "nrmse_mean": 0.24518016477425894,
+      "nrmse_std": 0.004941952415791788,
+      "relative_l2_mean": 0.0008277530044627687,
+      "relative_l2_std": 1.6266521557133395e-05,
+      "rmse_mean": 0.0008277648206179341,
+      "rmse_std": 1.626598246697651e-05,
+      "mae_mean": 0.00043881057839219767,
+      "mae_std": 1.7140240263328586e-05,
+      "observed_rmse_mean": 0.0008106263121590018,
+      "observed_rmse_std": 1.3405168548703233e-05
+    },
+    {
+      "dataset": "realpde_cylinder",
+      "mask": "random",
+      "ratio": 0.05,
+      "model": "bayesian_spectral_tensor",
+      "seeds": 3,
+      "parameters": 384,
+      "nrmse_mean": 0.5023995439211527,
+      "nrmse_std": 0.0006946592948452388,
+      "relative_l2_mean": 0.05151541034380595,
+      "relative_l2_std": 5.75084573521356e-05,
+      "rmse_mean": 0.00648833562930425,
+      "rmse_std": 6.836537093886875e-06,
+      "mae_mean": 0.004277077658722798,
+      "mae_std": 8.968762362180435e-06,
+      "observed_rmse_mean": 0.006077420897781849,
+      "observed_rmse_std": 9.045386065285687e-05,
+      "coverage_95_mean": 0.7077350417772929,
+      "coverage_95_std": 0.0010977733511878009,
+      "gaussian_nll_mean": -1.5150404771169026,
+      "gaussian_nll_std": 0.09901093615911016,
+      "uncertainty_error_spearman_mean": -0.11859158178170522,
+      "uncertainty_error_spearman_std": 0.014247264340318528
+    },
+    {
+      "dataset": "realpde_cylinder",
+      "mask": "random",
+      "ratio": 0.05,
+      "model": "cp",
+      "seeds": 3,
+      "parameters": 1160,
+      "nrmse_mean": 0.46494831641515094,
+      "nrmse_std": 0.019783773169346635,
+      "relative_l2_mean": 0.047676059106985726,
+      "relative_l2_std": 0.002058814139642965,
+      "rmse_mean": 0.006004781772692998,
+      "rmse_std": 0.0002596274036916651,
+      "mae_mean": 0.0038301024275521436,
+      "mae_std": 0.00028327520791757003,
+      "observed_rmse_mean": 0.005385653426249822,
+      "observed_rmse_std": 0.00030660317601764666
+    },
+    {
+      "dataset": "realpde_cylinder",
+      "mask": "random",
+      "ratio": 0.05,
+      "model": "geo_nft",
+      "seeds": 3,
+      "parameters": 5435,
+      "nrmse_mean": 0.37877028187115985,
+      "nrmse_std": 0.02491646321588235,
+      "relative_l2_mean": 0.03883984684944153,
+      "relative_l2_std": 0.0025829599357647336,
+      "rmse_mean": 0.004891856883962949,
+      "rmse_std": 0.00032529500604333887,
+      "mae_mean": 0.002902005954335133,
+      "mae_std": 0.0001449956363927007,
+      "observed_rmse_mean": 0.003537872883801659,
+      "observed_rmse_std": 0.0001588878557761415
+    },
+    {
+      "dataset": "realpde_cylinder",
+      "mask": "random",
+      "ratio": 0.05,
+      "model": "inr",
+      "seeds": 3,
+      "parameters": 8641,
+      "nrmse_mean": 0.5299347440401713,
+      "nrmse_std": 0.01636881558700084,
+      "relative_l2_mean": 0.05433811619877815,
+      "relative_l2_std": 0.0016426863205430083,
+      "rmse_mean": 0.006843857932835817,
+      "rmse_std": 0.00020703827141782048,
+      "mae_mean": 0.004680718450496594,
+      "mae_std": 0.000150464900640411,
+      "observed_rmse_mean": 4.608558469954005e-06,
+      "observed_rmse_std": 6.033542415393751e-06
+    },
+    {
+      "dataset": "realpde_cylinder",
+      "mask": "random",
+      "ratio": 0.05,
+      "model": "neural_cp",
+      "seeds": 3,
+      "parameters": 14432,
+      "nrmse_mean": 0.415229598681132,
+      "nrmse_std": 0.0019580938307345954,
+      "relative_l2_mean": 0.04257705559333166,
+      "relative_l2_std": 0.00019031504381195654,
+      "rmse_mean": 0.005362559109926224,
+      "rmse_std": 2.3616589290244256e-05,
+      "mae_mean": 0.0031337149751683078,
+      "mae_std": 3.098582486354831e-05,
+      "observed_rmse_mean": 0.0051955605546633405,
+      "observed_rmse_std": 7.304732312181287e-05
+    },
+    {
+      "dataset": "realpde_cylinder",
+      "mask": "random",
+      "ratio": 0.05,
+      "model": "spectral_cp",
+      "seeds": 3,
+      "parameters": 416,
+      "nrmse_mean": 0.4496877094109853,
+      "nrmse_std": 0.001002667272825317,
+      "relative_l2_mean": 0.046110354363918304,
+      "relative_l2_std": 7.458736576818177e-05,
+      "rmse_mean": 0.005807575769722462,
+      "rmse_std": 9.593573697585141e-06,
+      "mae_mean": 0.0035039708018302917,
+      "mae_std": 2.5266997368136567e-05,
+      "observed_rmse_mean": 0.005552064161747694,
+      "observed_rmse_std": 7.911843936904642e-05
+    }
+  ],
+  "raw_inventory": {
+    "active": [
+      {
+        "file": "runs/final_active/active_matter_random_r0.05_s0_bayesian_spectral_tensor.json",
+        "model": "bayesian_spectral_tensor",
+        "seed": 0,
+        "nrmse": 1.0199623107910156,
+        "rmse": 0.003448168747127056
+      },
+      {
+        "file": "runs/final_active/active_matter_random_r0.05_s0_cp.json",
+        "model": "cp",
+        "seed": 0,
+        "nrmse": 0.802192211151123,
+        "rmse": 0.002711957087740302
+      },
+      {
+        "file": "runs/final_active/active_matter_random_r0.05_s0_geo_nft.json",
+        "model": "geo_nft",
+        "seed": 0,
+        "nrmse": 0.12417294830083847,
+        "rmse": 0.00041978928493335843
+      },
+      {
+        "file": "runs/final_active/active_matter_random_r0.05_s0_inr.json",
+        "model": "inr",
+        "seed": 0,
+        "nrmse": 0.5019616484642029,
+        "rmse": 0.0016969728749245405
+      },
+      {
+        "file": "runs/final_active/active_matter_random_r0.05_s0_neural_cp.json",
+        "model": "neural_cp",
+        "seed": 0,
+        "nrmse": 0.7978443503379822,
+        "rmse": 0.0026972582563757896
+      },
+      {
+        "file": "runs/final_active/active_matter_random_r0.05_s0_spectral_cp.json",
+        "model": "spectral_cp",
+        "seed": 0,
+        "nrmse": 0.24222564697265625,
+        "rmse": 0.0008188879583030939
+      },
+      {
+        "file": "runs/final_active/active_matter_random_r0.05_s1_bayesian_spectral_tensor.json",
+        "model": "bayesian_spectral_tensor",
+        "seed": 1,
+        "nrmse": 1.0062627792358398,
+        "rmse": 0.0033953331876546144
+      },
+      {
+        "file": "runs/final_active/active_matter_random_r0.05_s1_cp.json",
+        "model": "cp",
+        "seed": 1,
+        "nrmse": 0.27843016386032104,
+        "rmse": 0.0009394794469699264
+      },
+      {
+        "file": "runs/final_active/active_matter_random_r0.05_s1_geo_nft.json",
+        "model": "geo_nft",
+        "seed": 1,
+        "nrmse": 0.1185089722275734,
+        "rmse": 0.00039987312629818916
+      },
+      {
+        "file": "runs/final_active/active_matter_random_r0.05_s1_inr.json",
+        "model": "inr",
+        "seed": 1,
+        "nrmse": 0.5865320563316345,
+        "rmse": 0.001979077234864235
+      },
+      {
+        "file": "runs/final_active/active_matter_random_r0.05_s1_neural_cp.json",
+        "model": "neural_cp",
+        "seed": 1,
+        "nrmse": 0.9986861348152161,
+        "rmse": 0.0033697679173201323
+      },
+      {
+        "file": "runs/final_active/active_matter_random_r0.05_s1_spectral_cp.json",
+        "model": "spectral_cp",
+        "seed": 1,
+        "nrmse": 0.2508854269981384,
+        "rmse": 0.0008465379360131919
+      },
+      {
+        "file": "runs/final_active/active_matter_random_r0.05_s2_bayesian_spectral_tensor.json",
+        "model": "bayesian_spectral_tensor",
+        "seed": 2,
+        "nrmse": 1.0145673751831055,
+        "rmse": 0.0034227806609123945
+      },
+      {
+        "file": "runs/final_active/active_matter_random_r0.05_s2_cp.json",
+        "model": "cp",
+        "seed": 2,
+        "nrmse": 0.9807007908821106,
+        "rmse": 0.003308527171611786
+      },
+      {
+        "file": "runs/final_active/active_matter_random_r0.05_s2_geo_nft.json",
+        "model": "geo_nft",
+        "seed": 2,
+        "nrmse": 0.12267311662435532,
+        "rmse": 0.00041385440272279084
+      },
+      {
+        "file": "runs/final_active/active_matter_random_r0.05_s2_inr.json",
+        "model": "inr",
+        "seed": 2,
+        "nrmse": 0.5917516946792603,
+        "rmse": 0.001996354665607214
+      },
+      {
+        "file": "runs/final_active/active_matter_random_r0.05_s2_neural_cp.json",
+        "model": "neural_cp",
+        "seed": 2,
+        "nrmse": 0.6662969589233398,
+        "rmse": 0.0022478431928902864
+      },
+      {
+        "file": "runs/final_active/active_matter_random_r0.05_s2_spectral_cp.json",
+        "model": "spectral_cp",
+        "seed": 2,
+        "nrmse": 0.24242942035198212,
+        "rmse": 0.0008178685675375164
+      }
+    ],
+    "realpde": [
+      {
+        "file": "runs/final_realpde/realpde_cylinder_random_r0.05_s0_bayesian_spectral_tensor.json",
+        "model": "bayesian_spectral_tensor",
+        "seed": 0,
+        "nrmse": 0.5017962455749512,
+        "rmse": 0.006486576050519943
+      },
+      {
+        "file": "runs/final_realpde/realpde_cylinder_random_r0.05_s0_cp.json",
+        "model": "cp",
+        "seed": 0,
+        "nrmse": 0.48541784286499023,
+        "rmse": 0.006274857092648745
+      },
+      {
+        "file": "runs/final_realpde/realpde_cylinder_random_r0.05_s0_geo_nft.json",
+        "model": "geo_nft",
+        "seed": 0,
+        "nrmse": 0.4016662538051605,
+        "rmse": 0.0051922244019806385
+      },
+      {
+        "file": "runs/final_realpde/realpde_cylinder_random_r0.05_s0_inr.json",
+        "model": "inr",
+        "seed": 0,
+        "nrmse": 0.5169431567192078,
+        "rmse": 0.0066823759116232395
+      },
+      {
+        "file": "runs/final_realpde/realpde_cylinder_random_r0.05_s0_neural_cp.json",
+        "model": "neural_cp",
+        "seed": 0,
+        "nrmse": 0.4139222800731659,
+        "rmse": 0.005350654479116201
+      },
+      {
+        "file": "runs/final_realpde/realpde_cylinder_random_r0.05_s0_spectral_cp.json",
+        "model": "spectral_cp",
+        "seed": 0,
+        "nrmse": 0.4488702118396759,
+        "rmse": 0.005802416242659092
+      },
+      {
+        "file": "runs/final_realpde/realpde_cylinder_random_r0.05_s1_bayesian_spectral_tensor.json",
+        "model": "bayesian_spectral_tensor",
+        "seed": 1,
+        "nrmse": 0.5022433996200562,
+        "rmse": 0.006482550874352455
+      },
+      {
+        "file": "runs/final_realpde/realpde_cylinder_random_r0.05_s1_cp.json",
+        "model": "cp",
+        "seed": 1,
+        "nrmse": 0.4634968638420105,
+        "rmse": 0.005982442293316126
+      },
+      {
+        "file": "runs/final_realpde/realpde_cylinder_random_r0.05_s1_geo_nft.json",
+        "model": "geo_nft",
+        "seed": 1,
+        "nrmse": 0.3522338569164276,
+        "rmse": 0.00454634940251708
+      },
+      {
+        "file": "runs/final_realpde/realpde_cylinder_random_r0.05_s1_inr.json",
+        "model": "inr",
+        "seed": 1,
+        "nrmse": 0.5483196973800659,
+        "rmse": 0.007077266927808523
+      },
+      {
+        "file": "runs/final_realpde/realpde_cylinder_random_r0.05_s1_neural_cp.json",
+        "model": "neural_cp",
+        "seed": 1,
+        "nrmse": 0.41428565979003906,
+        "rmse": 0.005347263999283314
+      },
+      {
+        "file": "runs/final_realpde/realpde_cylinder_random_r0.05_s1_spectral_cp.json",
+        "model": "spectral_cp",
+        "seed": 1,
+        "nrmse": 0.45080646872520447,
+        "rmse": 0.005818645004183054
+      },
+      {
+        "file": "runs/final_realpde/realpde_cylinder_random_r0.05_s2_bayesian_spectral_tensor.json",
+        "model": "bayesian_spectral_tensor",
+        "seed": 2,
+        "nrmse": 0.5031589865684509,
+        "rmse": 0.006495879963040352
+      },
+      {
+        "file": "runs/final_realpde/realpde_cylinder_random_r0.05_s2_cp.json",
+        "model": "cp",
+        "seed": 2,
+        "nrmse": 0.44593024253845215,
+        "rmse": 0.005757045932114124
+      },
+      {
+        "file": "runs/final_realpde/realpde_cylinder_random_r0.05_s2_geo_nft.json",
+        "model": "geo_nft",
+        "seed": 2,
+        "nrmse": 0.3824107348918915,
+        "rmse": 0.0049369968473911285
+      },
+      {
+        "file": "runs/final_realpde/realpde_cylinder_random_r0.05_s2_inr.json",
+        "model": "inr",
+        "seed": 2,
+        "nrmse": 0.5245413780212402,
+        "rmse": 0.006771930959075689
+      },
+      {
+        "file": "runs/final_realpde/realpde_cylinder_random_r0.05_s2_neural_cp.json",
+        "model": "neural_cp",
+        "seed": 2,
+        "nrmse": 0.41748085618019104,
+        "rmse": 0.005389758851379156
+      },
+      {
+        "file": "runs/final_realpde/realpde_cylinder_random_r0.05_s2_spectral_cp.json",
+        "model": "spectral_cp",
+        "seed": 2,
+        "nrmse": 0.44938644766807556,
+        "rmse": 0.005801666062325239
+      }
+    ]
+  }
+}
