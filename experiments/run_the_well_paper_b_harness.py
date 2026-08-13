@@ -56,9 +56,13 @@ def source_distances(inputs: dict[str, np.ndarray]) -> tuple[np.ndarray, np.ndar
     return intrinsic.astype(np.float32), euclidean.astype(np.float32)
 
 
-def case_features(path: Path) -> tuple[dict[str, np.ndarray], np.ndarray, np.ndarray,
-                                      np.ndarray, np.ndarray]:
+def case_features(path: Path, time_limit: int | None = None
+                  ) -> tuple[dict[str, np.ndarray], np.ndarray, np.ndarray,
+                             np.ndarray, np.ndarray]:
     inputs, target = load_the_well_case(path)
+    if time_limit is not None:
+        target = target[:time_limit]
+        inputs["query_times"] = inputs["query_times"][:time_limit]
     intrinsic, euclidean = source_distances(inputs)
     density = np.log10(np.maximum(inputs["density"], 1.)) / 6.
     initial_scale = np.std(inputs["initial_pressure"])+1e-6
@@ -148,15 +152,21 @@ def main():
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--steps", type=int, default=500)
     parser.add_argument("--batch-size", type=int, default=8192)
+    parser.add_argument("--time-limit", type=int,
+                        help="Use the first N future frames as a fixed causal horizon.")
+    parser.add_argument("--evaluation-split", choices=["validation", "test"],
+                        default="validation")
+    parser.add_argument("--evaluation-cases", type=int, default=2)
     parser.add_argument("--output", type=Path,
                         default=Path("papers/longterm_results/the_well_paper_b_harness.json"))
     args = parser.parse_args()
     np.random.seed(args.seed); torch.manual_seed(args.seed); torch.cuda.manual_seed_all(args.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    train_cases = [case_features(args.data/"train"/f"trajectory_{i:03d}.npz")
+    train_cases = [case_features(args.data/"train"/f"trajectory_{i:03d}.npz", args.time_limit)
                    for i in range(args.train_cases)]
-    validation_cases = [case_features(args.data/"validation"/f"trajectory_{i:03d}.npz")
-                        for i in range(2)]
+    evaluation_cases = [case_features(
+        args.data/args.evaluation_split/f"trajectory_{i:03d}.npz", args.time_limit)
+        for i in range(args.evaluation_cases)]
     training_batches = []
     for case_index, (inputs, target, descriptor, spatial, euclidean) in enumerate(train_cases):
         mask = fixed_random_mask(target.shape, args.ratio, args.seed+case_index)
@@ -188,7 +198,7 @@ def main():
             optimizer.zero_grad(set_to_none=True); loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 5.); optimizer.step()
         model.eval(); case_metrics=[]
-        for case in validation_cases:
+        for case in evaluation_cases:
             prediction = evaluate(model, case, device, wrong=name == "wrong_distance_cp")
             target = torch.from_numpy(case[1])
             error = prediction-target
@@ -201,16 +211,19 @@ def main():
             "parameters": sum(parameter.numel() for parameter in model.parameters()),
             "elapsed_seconds": time.perf_counter()-started,
             "peak_gpu_bytes": int(torch.cuda.max_memory_allocated()) if torch.cuda.is_available() else 0,
-            "validation_macro_nrmse": float(np.mean([x["nrmse_std"] for x in case_metrics])),
-            "validation_macro_vrmse": float(np.mean([x["vrmse"] for x in case_metrics])),
+            "evaluation_macro_nrmse": float(np.mean([x["nrmse_std"] for x in case_metrics])),
+            "evaluation_macro_vrmse": float(np.mean([x["vrmse"] for x in case_metrics])),
             "case_metrics": case_metrics,
         })
-        print(f"{name}: validation macro NRMSE={rows[-1]['validation_macro_nrmse']:.4f}", flush=True)
+        print(f"{name}: {args.evaluation_split} macro NRMSE="
+              f"{rows[-1]['evaluation_macro_nrmse']:.4f}", flush=True)
         del model
         if torch.cuda.is_available(): torch.cuda.empty_cache()
     payload = {
         "experiment_id": "B-METHOD-R5-WELLMAZE-01-RANDOM-HARNESS",
-        "status": "SMOKE", "data_split": "8 train trajectories; 2 validation; test untouched",
+        "status": "SMOKE",
+        "data_split": (f"{args.train_cases} train trajectories; "
+                       f"{args.evaluation_cases} {args.evaluation_split} trajectories"),
         "config": vars(args), "target_normalizer": float(normalizer), "rows": rows}
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(payload, indent=2, default=str))

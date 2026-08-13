@@ -1,0 +1,80 @@
+{
+  "experiment_id": "A-METHOD-R6-WELLMAZE-GRAPHMODE-01-RANDOM",
+  "status": "SMOKE",
+  "config": {
+    "data": "data/the_well_acoustic_64x64",
+    "train_cases": 8,
+    "validation_cases": 2,
+    "ratio": 0.01,
+    "seed": 0,
+    "steps": 500,
+    "graph_modes": 64,
+    "time_modes": 40,
+    "output": "papers/longterm_results/the_well_graphmode_path_a.json"
+  },
+  "basis_seconds": 1.814136965200305,
+  "max_operator_symmetry_error": 0.0,
+  "max_graph_eigen_residual": 1.0901521809650325e-07,
+  "flat_eigen_residual": 1.0901745757452154e-10,
+  "observed": 82330,
+  "realized_ratio": 0.010000048585199005,
+  "tensor_semantics": [
+    "instance/source",
+    "time",
+    "geometry-specific graph spectral mode"
+  ],
+  "rows": [
+    {
+      "model": "graph_tucker",
+      "parameters": 1700,
+      "validation_macro_nrmse": 1.010589361190796,
+      "case_nrmse": [
+        1.0101078748703003,
+        1.0110708475112915
+      ],
+      "elapsed_seconds": 3.847560645081103,
+      "peak_gpu_bytes": 826792448,
+      "posterior_noise": 0.9723093152112638,
+      "posterior_alpha": 0.10925929550417329
+    },
+    {
+      "model": "wrong_graph_tucker",
+      "parameters": 1700,
+      "validation_macro_nrmse": 1.0009351968765259,
+      "case_nrmse": [
+        1.0007168054580688,
+        1.001153588294983
+      ],
+      "elapsed_seconds": 2.247509588021785,
+      "peak_gpu_bytes": 826792448,
+      "posterior_noise": 0.9810227037049098,
+      "posterior_alpha": 0.06329054676043815
+    },
+    {
+      "model": "flat_graph_tucker",
+      "parameters": 1700,
+      "validation_macro_nrmse": 1.0011918544769287,
+      "case_nrmse": [
+        1.0008949041366577,
+        1.0014888048171997
+      ],
+      "elapsed_seconds": 2.232288273051381,
+      "peak_gpu_bytes": 826792448,
+      "posterior_noise": 0.9828166401781795,
+      "posterior_alpha": 0.054094603088777865
+    },
+    {
+      "model": "graph_cp",
+      "parameters": 1725,
+      "validation_macro_nrmse": 0.999999463558197,
+      "case_nrmse": [
+        0.9999994039535522,
+        0.9999995231628418
+      ],
+      "elapsed_seconds": 1.6408770810812712,
+      "peak_gpu_bytes": 126862336,
+      "posterior_noise": 0.9999939245542854,
+      "posterior_alpha": 100000.0
+    }
+  ]
+}

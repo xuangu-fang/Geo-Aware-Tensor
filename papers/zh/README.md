@@ -11,6 +11,8 @@
   acoustic maze 的构造、负信号修正、泄漏审计、成本和 pilot 决策。
 - [第五轮真实数据方法门禁](第五轮真实数据方法门禁.md)：The Well 上 A/B 的
   单 seed harness、拒绝原因，以及下一 formulation 的最小改造。
+- [第六轮算子与因果时域重构](第六轮算子与因果时域重构.md)：Paper A 完整图谱
+  负结果、Paper B early-horizon selection 与冻结 test confirmation。
 
 下一轮执行材料位于上一级目录：
 

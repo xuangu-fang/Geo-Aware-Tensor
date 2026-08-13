@@ -168,16 +168,46 @@ interactions beyond the compact separable representation. We retain this result
 prominently: tensor regularization is advantageous when the physical field is
 approximately multilinear, not universally.
 
-## 8. Limitations
+## 8. External multi-geometry confirmation
+
+We pin The Well `acoustic_scattering_maze` to revision `8df383a...` and extract
+64 train, 16 validation, and 32 untouched test trajectories at 64×64 using
+4×4 block-mean anti-aliasing. Static density and sound speed define geometry;
+`pressure(t=0)` defines the source set; no future pressure enters features.
+
+The original 201-frame formulation is rejected: paired CP and wrong-distance
+CP are indistinguishable near NRMSE 0.992. A predeclared early causal horizon of
+40 future frames restores the geometry signal. Three selection seeds at 1%, 2%,
+and 5% observations favor paired CP over wrong path, ordinary neural CP, and a
+joint INR in all nine ratio/seed cells. We freeze the lowest ratio (1%) and then
+evaluate seeds 10--19 on all 32 test geometries:
+
+| Model | Test macro NRMSE |
+|---|---:|
+| Paired phase CP | **0.99175 ± 0.00610** |
+| Neural CP | 0.99490 ± 0.00456 |
+| Joint INR | 0.99851 ± 0.00417 |
+| Wrong-distance paired CP | 1.00136 ± 0.00685 |
+
+Paired CP wins 9/10 seeds against wrong distance (one-sided paired Wilcoxon
+`p=0.00488`), 9/10 against neural CP (`p=0.0137`), and 10/10 against the joint
+INR (`p=0.00098`). Relative mean improvements are respectively 0.96%, 0.32%,
+and 0.68%. This is modest external evidence for the geometry/phase inductive
+bias, not a solved benchmark: absolute NRMSE remains near one and the claim is
+restricted to sparse-supervised, cross-geometry early-horizon regression.
+
+## 9. Limitations
 
 The domain graph and a meaningful source are known. Shortest-path phase is a
 strong physical coordinate and may be inappropriate for unknown, anisotropic,
-or refractive travel metrics. The main benchmark is synthetic though generated
-independently; public Active Matter and cylinder-PIV results remain only external
-scope tests because they lack source travel metadata. A real multi-geometry
-wave/scattering dataset is needed before submission.
+or refractive travel metrics. The strongest synthetic benchmark remains much
+easier than The Well. The public confirmation supports only a small
+early-horizon gain; long-horizon scattering remains a documented failure. The
+current source-set minimum distance also collapses multiple rings to one scalar.
+Multi-source path-impedance factors and strong official neural-operator
+baselines remain necessary before submission.
 
-## 9. Reproduction
+## 10. Reproduction
 
 ```bash
 export PYTHONPATH=src

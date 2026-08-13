@@ -1,0 +1,315 @@
+{
+  "experiment_id": "B-METHOD-R6-WELLMAZE-EARLY40-SELECTION",
+  "status": "SELECTED",
+  "selection_only": true,
+  "test_split_used": false,
+  "fixed_horizon_future_frames": 40,
+  "observation_ratios": [
+    0.01,
+    0.02,
+    0.05
+  ],
+  "records": [
+    {
+      "ratio": 0.01,
+      "seed": 0,
+      "paired_phase_cp": 0.9745382368564606,
+      "wrong_distance_cp": 0.9900268614292145,
+      "neural_cp": 0.978534609079361,
+      "joint_inr": 0.9878609478473663
+    },
+    {
+      "ratio": 0.01,
+      "seed": 1,
+      "paired_phase_cp": 0.9796463847160339,
+      "wrong_distance_cp": 0.9854313731193542,
+      "neural_cp": 0.9801474511623383,
+      "joint_inr": 0.9869081377983093
+    },
+    {
+      "ratio": 0.01,
+      "seed": 2,
+      "paired_phase_cp": 0.9781813025474548,
+      "wrong_distance_cp": 0.991911768913269,
+      "neural_cp": 0.9793947637081146,
+      "joint_inr": 0.9892762005329132
+    },
+    {
+      "ratio": 0.02,
+      "seed": 0,
+      "paired_phase_cp": 0.9763063788414001,
+      "wrong_distance_cp": 0.9927644729614258,
+      "neural_cp": 0.9780213534832001,
+      "joint_inr": 0.9895948171615601
+    },
+    {
+      "ratio": 0.02,
+      "seed": 1,
+      "paired_phase_cp": 0.9762839674949646,
+      "wrong_distance_cp": 0.9854767322540283,
+      "neural_cp": 0.981915146112442,
+      "joint_inr": 0.9876943230628967
+    },
+    {
+      "ratio": 0.02,
+      "seed": 2,
+      "paired_phase_cp": 0.9791153371334076,
+      "wrong_distance_cp": 0.9865328669548035,
+      "neural_cp": 0.982220858335495,
+      "joint_inr": 0.9895611703395844
+    },
+    {
+      "ratio": 0.05,
+      "seed": 0,
+      "paired_phase_cp": 0.9824747145175934,
+      "wrong_distance_cp": 0.9863654375076294,
+      "neural_cp": 0.9894412755966187,
+      "joint_inr": 0.9844315052032471
+    },
+    {
+      "ratio": 0.05,
+      "seed": 1,
+      "paired_phase_cp": 0.9788004159927368,
+      "wrong_distance_cp": 0.9868417978286743,
+      "neural_cp": 0.9808969795703888,
+      "joint_inr": 0.9865026772022247
+    },
+    {
+      "ratio": 0.05,
+      "seed": 2,
+      "paired_phase_cp": 0.9843270778656006,
+      "wrong_distance_cp": 0.9859210550785065,
+      "neural_cp": 0.988600492477417,
+      "joint_inr": 0.9878041744232178
+    }
+  ],
+  "summary": {
+    "0.01": {
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "models": {
+        "paired_phase_cp": {
+          "mean": 0.9774553080399832,
+          "std": 0.0026303221584960492,
+          "values": [
+            0.9745382368564606,
+            0.9796463847160339,
+            0.9781813025474548
+          ]
+        },
+        "wrong_distance_cp": {
+          "mean": 0.9891233344872793,
+          "std": 0.0033333396335431,
+          "values": [
+            0.9900268614292145,
+            0.9854313731193542,
+            0.991911768913269
+          ]
+        },
+        "neural_cp": {
+          "mean": 0.9793589413166046,
+          "std": 0.0008070175518263262,
+          "values": [
+            0.978534609079361,
+            0.9801474511623383,
+            0.9793947637081146
+          ]
+        },
+        "joint_inr": {
+          "mean": 0.9880150953928629,
+          "std": 0.0011915332047794048,
+          "values": [
+            0.9878609478473663,
+            0.9869081377983093,
+            0.9892762005329132
+          ]
+        }
+      },
+      "paired_differences": {
+        "wrong_distance_cp": {
+          "nrmse_difference_baseline_minus_paired": [
+            0.015488624572753906,
+            0.0057849884033203125,
+            0.013730466365814209
+          ],
+          "relative_improvement_mean": 0.011785863895347672,
+          "all_seeds_favor_paired": true
+        },
+        "neural_cp": {
+          "nrmse_difference_baseline_minus_paired": [
+            0.003996372222900391,
+            0.0005010664463043213,
+            0.00121346116065979
+          ],
+          "relative_improvement_mean": 0.0019447479743351448,
+          "all_seeds_favor_paired": true
+        },
+        "joint_inr": {
+          "nrmse_difference_baseline_minus_paired": [
+            0.013322710990905762,
+            0.007261753082275391,
+            0.011094897985458374
+          ],
+          "relative_improvement_mean": 0.010686558227533982,
+          "all_seeds_favor_paired": true
+        }
+      }
+    },
+    "0.02": {
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "models": {
+        "paired_phase_cp": {
+          "mean": 0.9772352278232574,
+          "std": 0.0016282609835948315,
+          "values": [
+            0.9763063788414001,
+            0.9762839674949646,
+            0.9791153371334076
+          ]
+        },
+        "wrong_distance_cp": {
+          "mean": 0.9882580240567526,
+          "std": 0.003938263122795182,
+          "values": [
+            0.9927644729614258,
+            0.9854767322540283,
+            0.9865328669548035
+          ]
+        },
+        "neural_cp": {
+          "mean": 0.980719119310379,
+          "std": 0.002341328754052261,
+          "values": [
+            0.9780213534832001,
+            0.981915146112442,
+            0.982220858335495
+          ]
+        },
+        "joint_inr": {
+          "mean": 0.988950103521347,
+          "std": 0.0010876678937187276,
+          "values": [
+            0.9895948171615601,
+            0.9876943230628967,
+            0.9895611703395844
+          ]
+        }
+      },
+      "paired_differences": {
+        "wrong_distance_cp": {
+          "nrmse_difference_baseline_minus_paired": [
+            0.016458094120025635,
+            0.00919276475906372,
+            0.007417529821395874
+          ],
+          "relative_improvement_mean": 0.011141690878389033,
+          "all_seeds_favor_paired": true
+        },
+        "neural_cp": {
+          "nrmse_difference_baseline_minus_paired": [
+            0.0017149746417999268,
+            0.005631178617477417,
+            0.0031055212020874023
+          ],
+          "relative_improvement_mean": 0.0035500473212662204,
+          "all_seeds_favor_paired": true
+        },
+        "joint_inr": {
+          "nrmse_difference_baseline_minus_paired": [
+            0.013288438320159912,
+            0.011410355567932129,
+            0.010445833206176758
+          ],
+          "relative_improvement_mean": 0.011845567886882536,
+          "all_seeds_favor_paired": true
+        }
+      }
+    },
+    "0.05": {
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "models": {
+        "paired_phase_cp": {
+          "mean": 0.9818674027919769,
+          "std": 0.002812937701637728,
+          "values": [
+            0.9824747145175934,
+            0.9788004159927368,
+            0.9843270778656006
+          ]
+        },
+        "wrong_distance_cp": {
+          "mean": 0.9863760968049368,
+          "std": 0.00046046391656782076,
+          "values": [
+            0.9863654375076294,
+            0.9868417978286743,
+            0.9859210550785065
+          ]
+        },
+        "neural_cp": {
+          "mean": 0.9863129158814748,
+          "std": 0.004709140437244216,
+          "values": [
+            0.9894412755966187,
+            0.9808969795703888,
+            0.988600492477417
+          ]
+        },
+        "joint_inr": {
+          "mean": 0.9862461189428965,
+          "std": 0.0017009088812033957,
+          "values": [
+            0.9844315052032471,
+            0.9865026772022247,
+            0.9878041744232178
+          ]
+        }
+      },
+      "paired_differences": {
+        "wrong_distance_cp": {
+          "nrmse_difference_baseline_minus_paired": [
+            0.0038907229900360107,
+            0.0080413818359375,
+            0.0015939772129058838
+          ],
+          "relative_improvement_mean": 0.004569948859418928,
+          "all_seeds_favor_paired": true
+        },
+        "neural_cp": {
+          "nrmse_difference_baseline_minus_paired": [
+            0.0069665610790252686,
+            0.0020965635776519775,
+            0.004273414611816406
+          ],
+          "relative_improvement_mean": 0.004500329823520293,
+          "all_seeds_favor_paired": true
+        },
+        "joint_inr": {
+          "nrmse_difference_baseline_minus_paired": [
+            0.0019567906856536865,
+            0.007702261209487915,
+            0.0034770965576171875
+          ],
+          "relative_improvement_mean": 0.0044384688106559765,
+          "all_seeds_favor_paired": true
+        }
+      }
+    }
+  },
+  "freeze_candidate": {
+    "ratio": 0.01,
+    "reason": "lowest tested observation ratio and all three paired comparisons favor the method",
+    "required_next_step": "freeze config, then evaluate fresh confirmation seeds and untouched test split"
+  }
+}

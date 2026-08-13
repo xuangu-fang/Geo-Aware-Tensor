@@ -80,6 +80,34 @@
       "result": "paired 0.9923 vs wrong-distance 0.9924, neural CP 0.9939, joint INR 0.9941",
       "artifact": "papers/longterm_results/the_well_paper_b_harness_train64.json",
       "reopen_condition": "Represent multiple source rings and path impedance in a causal-window formulation."
+    },
+    {
+      "id": "A-METHOD-R6-WELLMAZE-GRAPHMODE-01-RANDOM",
+      "paper": "A",
+      "status": "REJECTED",
+      "primary_metric": "validation held-out NRMSE",
+      "seeds": [0],
+      "result": "full material graph 1.000; channel graph 1.011; correct geometry did not beat controls",
+      "artifact": "papers/longterm_results/the_well_graphmode_a.json",
+      "reopen_condition": "Use localized operator bandpass/wavelet factors rather than only the lowest global eigenmodes."
+    },
+    {
+      "id": "B-METHOD-R6-WELLMAZE-EARLY40-SELECTION",
+      "paper": "B",
+      "status": "FROZEN",
+      "primary_metric": "unseen-validation-geometry macro NRMSE",
+      "seeds": [0, 1, 2],
+      "result": "1% paired 0.9775+/-0.0026; all 9 ratio/seed cells favor paired over three controls",
+      "artifact": "papers/longterm_results/the_well_early40_selection.json"
+    },
+    {
+      "id": "B-METHOD-R6-WELLMAZE-EARLY40-CONFIRM",
+      "paper": "B",
+      "status": "PAPER",
+      "primary_metric": "32-test-geometry macro NRMSE",
+      "seeds": [10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+      "result": "paired 0.99175+/-0.00610 vs wrong 1.00136, neural CP 0.99490, joint INR 0.99851",
+      "artifact": "papers/longterm_results/the_well_early40_confirmation.json"
     }
   ]
 }

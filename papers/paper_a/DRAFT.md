@@ -236,6 +236,23 @@ future work.
 - Public-data evidence is a single stress-test trajectory and is negative for
   point reconstruction.
 
+### 6.1 External maze operator gate
+
+We additionally pinned and range-extracted a 64/16/32 trajectory subset of The
+Well acoustic-scattering maze. This gate is negative but informative. An
+axis-averaged separable material operator overfits 1% observations: operator
+Tucker obtains 1.309 held-out NRMSE, compared with 1.328 for wrong geometry,
+1.489 for a flat operator, and 1.312 for parameter-matched CP. Replacing the
+separable modes by a complete 2-D material graph resolves topology and numerical
+validity (maximum eigen residual `1.12e-6`) but not representation: the lowest
+global modes collapse to approximately zero prediction. Restricting the graph
+to propagating maze paths also fails (correct Tucker 1.011).
+
+This prevents an unsupported public-data claim. The operator is not merely a
+regularizer: its spectral dictionary must cover localized wave bands. The next
+Paper-A formulation is therefore a localized graph-wavelet/operator-bandpass
+Tucker, not a higher-rank repetition of the rejected low-frequency model.
+
 ## 7. Reproducibility
 
 The four iteration records and exact commands are in
