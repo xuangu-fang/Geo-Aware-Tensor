@@ -40,7 +40,7 @@ The Well 提供统一 HDF5/metadata API；acoustic scattering maze 包含 pressu
 首轮不下载全量：
 
 - 固定 64 train / 16 validation / 32 test trajectories；
-- 时间 stride 4，空间先用 64²，再做 128² evaluation；
+- 时间保留全部 202 帧，空间先用 4×4 block mean 抗混叠到 64²，再做 128² evaluation；
 - geometry/material mask 从 density/sound-speed field 构造；
 - source 若不能从 metadata 唯一恢复，则 B 的 source-aligned 模型增加 source-estimation preprocessing，不能使用人工 oracle 标签。
 
@@ -52,6 +52,8 @@ range-read 可用，因此不需要先下载 47.9GB 的三个完整 shard。详�
 `papers/dataset_gates/THE_WELL_ACOUSTIC_GATE.md`。
 
 固定 64/16/32 pilot 也已完整提取为 112 个 64×64 trajectory，约 357MiB；
+一次全量 source audit 发现 stride-4 会漏掉一个小源，因此最终协议改为 4×4
+block mean，并确认 112/112 的 `pressure(t=0)` 均保留非零源；
 逐 case hash、split 统计、泄漏安全 loader 和 1% mask sanity 见
 `papers/dataset_gates/THE_WELL_PILOT_EXTRACTION.md`。
 

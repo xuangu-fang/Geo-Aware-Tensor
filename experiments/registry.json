@@ -58,8 +58,28 @@
       "paper": "shared",
       "status": "PILOT",
       "primary_metric": "dataset extraction and loader gate",
-      "result": "112/112 pinned trajectories; 374781856 local bytes; leakage-safe loader verified",
+      "result": "112/112 block-mean trajectories; 374816800 local bytes; all initial sources preserved",
       "artifact": "papers/dataset_gates/the_well_pilot_extraction_summary.json"
+    },
+    {
+      "id": "A-METHOD-R5-WELLMAZE-01-RANDOM-HARNESS",
+      "paper": "A",
+      "status": "REJECTED",
+      "primary_metric": "validation held-out NRMSE",
+      "seeds": [0],
+      "result": "operator Tucker 1.309 vs wrong 1.328, flat 1.489, matched CP 1.312",
+      "artifact": "papers/longterm_results/the_well_paper_a_harness.json",
+      "reopen_condition": "Use a full 2D maze graph mode instead of separable x/y averaged operators."
+    },
+    {
+      "id": "B-METHOD-R5-WELLMAZE-01-RANDOM-HARNESS",
+      "paper": "B",
+      "status": "REJECTED",
+      "primary_metric": "unseen-validation-geometry macro NRMSE",
+      "seeds": [0],
+      "result": "paired 0.9923 vs wrong-distance 0.9924, neural CP 0.9939, joint INR 0.9941",
+      "artifact": "papers/longterm_results/the_well_paper_b_harness_train64.json",
+      "reopen_condition": "Represent multiple source rings and path impedance in a causal-window formulation."
     }
   ]
 }

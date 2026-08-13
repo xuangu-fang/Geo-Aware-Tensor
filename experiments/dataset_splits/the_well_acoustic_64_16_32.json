@@ -39,6 +39,6 @@
   "spatial_protocol": {
     "pilot_resolution": [64, 64],
     "source_resolution": [256, 256],
-    "downsampling": "stride-4 point sampling, fixed before model selection"
+    "downsampling": "4x4 block mean anti-aliasing, fixed before model selection"
   }
 }

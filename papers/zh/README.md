@@ -9,6 +9,8 @@
 - [用户反馈后的三轮持续迭代记录](三轮持续迭代记录.md)：operator Bayesian Tucker、phase-envelope 去留、十 seed 确认及共享 phase diagram。
 - [第四轮数据门禁记录](第四轮数据门禁记录.md)：独立波动 solver 与 The Well
   acoustic maze 的构造、负信号修正、泄漏审计、成本和 pilot 决策。
+- [第五轮真实数据方法门禁](第五轮真实数据方法门禁.md)：The Well 上 A/B 的
+  单 seed harness、拒绝原因，以及下一 formulation 的最小改造。
 
 下一轮执行材料位于上一级目录：
 

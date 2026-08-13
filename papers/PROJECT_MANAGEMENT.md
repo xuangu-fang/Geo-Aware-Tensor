@@ -52,9 +52,9 @@ IDEA → SMOKE → PILOT → SELECTED → FROZEN → CONFIRM → PAPER
 | 里程碑 | 状态 | 完成定义 |
 |---|---|---|
 | M0 POC 与三轮方法迭代 | DONE | A/B 实现、10-seed A 确认、B envelope 去留、共享 phase diagram |
-| M1 数据证据链 | PILOT DATA READY | 独立 solver 32-case 门禁 + The Well 8-trajectory 门禁及 64/16/32 完整提取；待一 seed 模型 harness |
-| M2 Paper A 推断与消融 | PLANNED | structured core/factor posterior、UQ、rank/geometry/core ablation |
-| M3 Paper B 外部泛化 | PLANNED | The Well/自建 wave、source/geometry error、跨网格结果 |
+| M1 数据证据链 | DONE | 独立 solver + The Well 112-case block-mean pilot；全量 source/hash/leakage audit 与一 seed harness |
+| M2 Paper A 推断与消融 | REFORMULATE | The Well 可分离 x/y operator 被拒绝；改为完整 2D graph-mode Tucker，再做 structured posterior |
+| M3 Paper B 外部泛化 | REFORMULATE | 单源距离 paired phase 在多源 maze 上因果差异不足；改为 multi-source/path-impedance causal window |
 | M4 论文冻结 | BLOCKED BY M1–M3 | 主表、消融、统计、复杂度、负结果全部冻结 |
 
 ## 5. 下一轮工作包

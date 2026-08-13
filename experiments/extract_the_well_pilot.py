@@ -12,10 +12,12 @@ import fsspec
 import h5py
 import numpy as np
 
-from geoaware.the_well_pilot import load_the_well_case, sanity_baselines
+from geoaware.the_well_pilot import (block_mean_256_to_64, load_the_well_case,
+                                     sanity_baselines)
 
 
 REPO = "polymathic-ai/acoustic_scattering_maze"
+DOWNSAMPLING = "4x4 block mean"
 
 
 def sha256(path: Path) -> str:
@@ -28,12 +30,12 @@ def sha256(path: Path) -> str:
 
 def save_case(path: Path, handle: h5py.File, trajectory: int,
               revision: str, source_shard: str):
-    pressure = handle["t0_fields/pressure"][trajectory][:, ::4, ::4]
-    density = handle["t0_fields/density"][trajectory][::4, ::4]
-    speed = handle["t0_fields/speed_of_sound"][trajectory][::4, ::4]
+    pressure = block_mean_256_to_64(handle["t0_fields/pressure"][trajectory][:])
+    density = block_mean_256_to_64(handle["t0_fields/density"][trajectory])
+    speed = block_mean_256_to_64(handle["t0_fields/speed_of_sound"][trajectory])
     times = handle["dimensions/time"][:]
-    x = handle["dimensions/x"][:][::4]
-    y = handle["dimensions/y"][:][::4]
+    x = handle["dimensions/x"][:].reshape(64, 4).mean(1)
+    y = handle["dimensions/y"][:].reshape(64, 4).mean(1)
     if pressure.shape != (202, 64, 64):
         raise RuntimeError(f"unexpected pressure shape {pressure.shape}")
     arrays = (pressure, density, speed, times, x, y)
@@ -47,7 +49,8 @@ def save_case(path: Path, handle: h5py.File, trajectory: int,
                  speed_of_sound=speed.astype(np.float32),
                  times=times.astype(np.float32), x=x.astype(np.float32),
                  y=y.astype(np.float32), trajectory_index=np.int32(trajectory),
-                 revision=np.asarray(revision), source_shard=np.asarray(source_shard))
+                 revision=np.asarray(revision), source_shard=np.asarray(source_shard),
+                 downsampling=np.asarray(DOWNSAMPLING))
     temporary.replace(path)
 
 
@@ -57,13 +60,15 @@ def case_record(path: Path, split: str, trajectory: int, source_shard: str,
         stored_revision = str(payload["revision"].item())
         stored_shard = str(payload["source_shard"].item())
         stored_trajectory = int(payload["trajectory_index"])
+        stored_downsampling = str(payload["downsampling"].item())
     if (stored_revision != revision or stored_shard != source_shard
-            or stored_trajectory != trajectory):
+            or stored_trajectory != trajectory or stored_downsampling != DOWNSAMPLING):
         raise RuntimeError(f"stale or mismatched extracted case: {path}")
     inputs, targets = load_the_well_case(path)
     if targets.shape != (201, 64, 64) or not np.isfinite(targets).all():
         raise RuntimeError(f"invalid extracted target: {path}")
     baseline = sanity_baselines(inputs, targets, observation_ratio=.01, seed=0)
+    initial_abs_max = float(np.max(np.abs(inputs["initial_pressure"])))
     return {
         "file": str(path),
         "split": split,
@@ -74,6 +79,8 @@ def case_record(path: Path, split: str, trajectory: int, source_shard: str,
         "pressure_mean": float(targets.mean()),
         "pressure_std": float(targets.std()),
         "density_wall_fraction": float(np.mean(inputs["density"] > 1e5)),
+        "initial_pressure_abs_max": initial_abs_max,
+        "initial_source_nonzero": initial_abs_max > 0.,
         "sanity_baselines": baseline,
     }
 
@@ -104,7 +111,12 @@ def main():
             with h5py.File(remote, "r") as handle:
                 for trajectory in range(start, stop):
                     path = args.output/split/f"trajectory_{trajectory:03d}.npz"
-                    if not path.exists():
+                    refresh = not path.exists()
+                    if not refresh:
+                        with np.load(path) as payload:
+                            refresh = ("downsampling" not in payload.files or
+                                       str(payload["downsampling"].item()) != DOWNSAMPLING)
+                    if refresh:
                         save_case(path, handle, trajectory, revision, shard)
                         newly_extracted += 1
                     records.append(case_record(path, split, trajectory, shard, revision))
@@ -146,12 +158,17 @@ def main():
         "elapsed_seconds": time.monotonic()-started,
         "extraction_file_mtime_span_seconds": max(mtimes)-min(mtimes),
         "local_bytes": sum(r["bytes"] for r in records),
+        "downsampling": DOWNSAMPLING,
         "dataset_manifest_sha256": dataset_digest,
         "repeat_audit_checksum_verified": bool(
             previous and previous.get("dataset_manifest_sha256") == dataset_digest),
         "split_isolation_verified": all(
             r["source_shard"] == manifest["selections"][r["split"]]["file"]
             for r in records),
+        "all_initial_sources_nonzero": all(r["initial_source_nonzero"] for r in records),
+        "initial_pressure_abs_max_range": [
+            min(r["initial_pressure_abs_max"] for r in records),
+            max(r["initial_pressure_abs_max"] for r in records)],
         "target_pressure_stats": split_stats,
         "one_seed_sanity_mean": {
             name: float(np.mean([r["sanity_baselines"][name] for r in records if r["split"] == "test"]))

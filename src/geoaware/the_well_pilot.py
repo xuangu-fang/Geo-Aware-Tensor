@@ -6,6 +6,14 @@ from pathlib import Path
 import numpy as np
 
 
+def block_mean_256_to_64(array: np.ndarray) -> np.ndarray:
+    """Anti-aliased reduction over the final two spatial axes."""
+    if array.shape[-2:] != (256, 256):
+        raise ValueError(f"expected 256x256 spatial axes, got {array.shape[-2:]}")
+    reshaped = array.reshape(*array.shape[:-2], 64, 4, 64, 4)
+    return reshaped.mean(axis=(-3, -1))
+
+
 def load_the_well_case(path: Path) -> tuple[dict[str, np.ndarray], np.ndarray]:
     """Return model inputs and future-pressure targets as separate objects."""
     with np.load(path) as payload:

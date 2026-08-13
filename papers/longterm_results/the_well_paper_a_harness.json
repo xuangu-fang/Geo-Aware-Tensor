@@ -1,0 +1,129 @@
+{
+  "experiment_id": "A-METHOD-R5-WELLMAZE-01-RANDOM-HARNESS",
+  "status": "SMOKE",
+  "config": {
+    "data": "data/the_well_acoustic_64x64/validation/trajectory_000.npz",
+    "wrong_data": "data/the_well_acoustic_64x64/validation/trajectory_001.npz",
+    "ratio": 0.01,
+    "seed": 0,
+    "steps": 600,
+    "output": "papers/longterm_results/the_well_paper_a_harness.json",
+    "spectral_modes": [
+      40,
+      32,
+      32
+    ],
+    "tucker_ranks": [
+      6,
+      10,
+      10
+    ],
+    "cp_rank": 14
+  },
+  "data_split": "validation only",
+  "shape": [
+    201,
+    64,
+    64
+  ],
+  "observed": 8233,
+  "realized_ratio": 0.010000048205256462,
+  "rows": [
+    {
+      "model": "operator_tucker",
+      "parameters": 1480,
+      "elapsed_seconds": 5.045951335225254,
+      "peak_gpu_bytes": 146592256,
+      "effective_rank": [
+        6,
+        10,
+        10
+      ],
+      "held_out_metrics": {
+        "rmse": 0.15342888236045837,
+        "nrmse_std": 1.3087584972381592,
+        "vrmse": 1.302735686302185,
+        "coverage95": 0.9043681025505066,
+        "width95": 0.4302118420600891
+      },
+      "observed_metrics": {
+        "rmse": 0.07990209013223648,
+        "nrmse_std": 0.6853768229484558,
+        "vrmse": 0.6837560534477234,
+        "coverage95": 0.9664763808250427,
+        "width95": 0.42541640996932983
+      }
+    },
+    {
+      "model": "wrong_operator_tucker",
+      "parameters": 1480,
+      "elapsed_seconds": 3.293971200939268,
+      "peak_gpu_bytes": 145780736,
+      "effective_rank": [
+        6,
+        10,
+        10
+      ],
+      "held_out_metrics": {
+        "rmse": 0.1557217538356781,
+        "nrmse_std": 1.3283169269561768,
+        "vrmse": 1.3222039937973022,
+        "coverage95": 0.8939468264579773,
+        "width95": 0.41851648688316345
+      },
+      "observed_metrics": {
+        "rmse": 0.07845645397901535,
+        "nrmse_std": 0.6729766130447388,
+        "vrmse": 0.6713851690292358,
+        "coverage95": 0.9675695300102234,
+        "width95": 0.413295716047287
+      }
+    },
+    {
+      "model": "flat_operator_tucker",
+      "parameters": 1480,
+      "elapsed_seconds": 3.2969901049509645,
+      "peak_gpu_bytes": 146592256,
+      "effective_rank": [
+        6,
+        10,
+        10
+      ],
+      "held_out_metrics": {
+        "rmse": 0.17455662786960602,
+        "nrmse_std": 1.4889795780181885,
+        "vrmse": 1.4821274280548096,
+        "coverage95": 0.8732993602752686,
+        "width95": 0.3897744417190552
+      },
+      "observed_metrics": {
+        "rmse": 0.07282324135303497,
+        "nrmse_std": 0.6246565580368042,
+        "vrmse": 0.6231793761253357,
+        "coverage95": 0.9672051668167114,
+        "width95": 0.383713036775589
+      }
+    },
+    {
+      "model": "operator_cp",
+      "parameters": 1470,
+      "elapsed_seconds": 3.0073699662461877,
+      "peak_gpu_bytes": 38209536,
+      "effective_rank": 14,
+      "held_out_metrics": {
+        "rmse": 0.1537708193063736,
+        "nrmse_std": 1.3116753101348877,
+        "vrmse": 1.3056390285491943,
+        "coverage95": 0.8552737832069397,
+        "width95": 0.34278175234794617
+      },
+      "observed_metrics": {
+        "rmse": 0.07401840388774872,
+        "nrmse_std": 0.6349082589149475,
+        "vrmse": 0.6334068775177002,
+        "coverage95": 0.9505648016929626,
+        "width95": 0.3427060544490814
+      }
+    }
+  ]
+}

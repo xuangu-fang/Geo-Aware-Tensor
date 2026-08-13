@@ -162,10 +162,16 @@ class OperatorBayesianCP(nn.Module):
             alpha.fill_(1.)
         precision=beta*(z.T@z)+torch.diag(alpha)+1e-8*eye
         cov=torch.linalg.inv(precision); mean=beta*(cov@z.T@yd)
-        # LOO residuals calibrate one scalar using observed values only.
-        k=z@torch.diag(1/alpha)@z.T+torch.eye(len(z),device=z.device,dtype=z.dtype)/beta
-        kinv=torch.linalg.inv(k); a=kinv@yd; kd=kinv.diagonal().clamp_min(1e-10)
-        absz=(a/kd).abs()/(1/kd).sqrt(); calibration=float(torch.quantile(absz,.95)/1.96)
+        # Analytic Bayesian-linear leverage gives LOO calibration without an
+        # O(n_obs^2) kernel matrix.  This matters on public fields where even a
+        # 1% mask contains thousands of values.
+        fitted=z@mean
+        predictive_var=((z@cov)*z).sum(1)
+        leverage=(beta*predictive_var).clamp(max=.999)
+        loo_resid=(yd-fitted)/(1-leverage).clamp_min(1e-4)
+        loo_std=torch.sqrt(1/beta+predictive_var)
+        absz=loo_resid.abs()/loo_std.clamp_min(1e-8)
+        calibration=float(torch.quantile(absz,.95)/1.96)
         calibration=max(.5,min(4.,calibration))
         self._posterior={"mean":mean.float(),"cov":cov.float(),"alpha":alpha.float(),
                          "noise":float(beta.rsqrt()),"calibration":calibration}

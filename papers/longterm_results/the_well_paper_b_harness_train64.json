@@ -1,0 +1,89 @@
+{
+  "experiment_id": "B-METHOD-R5-WELLMAZE-01-RANDOM-HARNESS",
+  "status": "SMOKE",
+  "data_split": "8 train trajectories; 2 validation; test untouched",
+  "config": {
+    "data": "data/the_well_acoustic_64x64",
+    "train_cases": 64,
+    "ratio": 0.01,
+    "seed": 0,
+    "steps": 500,
+    "batch_size": 8192,
+    "output": "papers/longterm_results/the_well_paper_b_harness_train64.json"
+  },
+  "target_normalizer": 0.11143568158149719,
+  "rows": [
+    {
+      "model": "paired_phase_cp",
+      "parameters": 23040,
+      "elapsed_seconds": 3.6203815639019012,
+      "peak_gpu_bytes": 118644224,
+      "validation_macro_nrmse": 0.9922811090946198,
+      "validation_macro_vrmse": 0.9879049956798553,
+      "case_metrics": [
+        {
+          "nrmse_std": 0.9919434189796448,
+          "vrmse": 0.9874033331871033
+        },
+        {
+          "nrmse_std": 0.9926187992095947,
+          "vrmse": 0.9884066581726074
+        }
+      ]
+    },
+    {
+      "model": "wrong_distance_cp",
+      "parameters": 23040,
+      "elapsed_seconds": 3.430223961826414,
+      "peak_gpu_bytes": 118644224,
+      "validation_macro_nrmse": 0.9924458563327789,
+      "validation_macro_vrmse": 0.9880689084529877,
+      "case_metrics": [
+        {
+          "nrmse_std": 0.992846667766571,
+          "vrmse": 0.98830246925354
+        },
+        {
+          "nrmse_std": 0.9920450448989868,
+          "vrmse": 0.9878353476524353
+        }
+      ]
+    },
+    {
+      "model": "neural_cp",
+      "parameters": 23552,
+      "elapsed_seconds": 3.0174035038799047,
+      "peak_gpu_bytes": 72514048,
+      "validation_macro_nrmse": 0.9938521981239319,
+      "validation_macro_vrmse": 0.9894692301750183,
+      "case_metrics": [
+        {
+          "nrmse_std": 0.9929130673408508,
+          "vrmse": 0.9883685111999512
+        },
+        {
+          "nrmse_std": 0.9947913289070129,
+          "vrmse": 0.9905699491500854
+        }
+      ]
+    },
+    {
+      "model": "joint_inr",
+      "parameters": 11713,
+      "elapsed_seconds": 2.111794417258352,
+      "peak_gpu_bytes": 82539008,
+      "validation_macro_nrmse": 0.9941238462924957,
+      "validation_macro_vrmse": 0.9897396862506866,
+      "case_metrics": [
+        {
+          "nrmse_std": 0.9934821724891663,
+          "vrmse": 0.988935112953186
+        },
+        {
+          "nrmse_std": 0.9947655200958252,
+          "vrmse": 0.9905442595481873
+        }
+      ]
+    }
+  ]
+}

@@ -16,7 +16,7 @@ from geoaware.neural_tensor import (
 )
 from geoaware.tensor_bayes import OperatorBayesianCP, OperatorBayesianTucker
 from geoaware.tensor_data import explicit_mode_bases, operator_cp_tensor, operator_tucker_tensor
-from geoaware.the_well_pilot import fixed_random_mask, nrmse_on_mask
+from geoaware.the_well_pilot import block_mean_256_to_64, fixed_random_mask, nrmse_on_mask
 from geoaware.independent_wave_solver import (
     WaveGeometrySpec,
     build_wave_domain,
@@ -165,3 +165,12 @@ def test_the_well_mask_is_exact_deterministic_and_metric_held_out():
     prediction = target.copy()
     prediction[~first] = 0.
     assert np.isclose(nrmse_on_mask(target, prediction, ~first), 1.)
+
+
+def test_the_well_block_mean_preserves_small_off_stride_source():
+    field = np.zeros((256, 256), dtype=np.float32)
+    field[55, 57] = 4.
+    reduced = block_mean_256_to_64(field)
+    assert reduced.shape == (64, 64)
+    assert np.isclose(reduced.sum(), .25)
+    assert float(reduced.max()) > 0.
