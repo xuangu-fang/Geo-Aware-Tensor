@@ -53,9 +53,9 @@ def main():
         },
         "test_summary": {
             "paired_phase_cp_mean": float(paired.mean()),
-            "paired_phase_cp_std": float(paired.std()),
+            "paired_phase_cp_std": float(paired.std(ddof=1)),
             "official_fno_mean": float(fno.mean()),
-            "official_fno_std": float(fno.std()),
+            "official_fno_std": float(fno.std(ddof=1)),
             "paired_wins": int(np.sum(paired < fno)),
             "seeds": len(rows),
             "paired_minus_fno_mean": float(np.mean(paired-fno)),

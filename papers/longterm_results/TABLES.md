@@ -49,8 +49,8 @@
 
 | 方法 | 32 test geometry macro NRMSE | 胜场 | 参数量 |
 |---|---:|---:|---:|
-| Paired phase CP | **0.99175±0.00579** | 8/10 | 23,040 |
-| Official NeuralOperator 2.0 FNO | 0.99808±0.00286 | 2/10 | 357,473 |
+| Paired phase CP | **0.99175±0.00610** | 8/10 | 23,040 |
+| Official NeuralOperator 2.0 FNO | 0.99808±0.00301 | 2/10 | 357,473 |
 
 paired 相对改善 `0.63%`；单侧 paired Wilcoxon `p=0.01367`。FNO 架构先在
 validation 上从 FNO/TFNO 中选择，再固定到已有 confirmation seeds 10--19；逐 seed

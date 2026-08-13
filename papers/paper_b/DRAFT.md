@@ -213,8 +213,8 @@ initial pressure and query time; its loss reads only the same sparse targets.
 FNO/TFNO architecture selection used 16 validation geometries. FNO was then
 frozen and run with the existing fresh seeds 10--19 on 32 test geometries.
 
-Paired phase CP obtains `0.99175±0.00579` macro NRMSE versus
-`0.99808±0.00286` for FNO, wins 8/10 seeds, and gives one-sided paired Wilcoxon
+Paired phase CP obtains `0.99175±0.00610` macro NRMSE versus
+`0.99808±0.00301` for FNO, wins 8/10 seeds, and gives one-sided paired Wilcoxon
 `p=0.01367`. The relative gain is modest (`0.63%`), but the proposed model uses
 23,040 parameters versus 357,473 for FNO. This supports an efficiency and
 inductive-bias claim, not a large-error-reduction claim.

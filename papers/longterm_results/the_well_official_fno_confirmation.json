@@ -12,9 +12,9 @@
   },
   "test_summary": {
     "paired_phase_cp_mean": 0.9917503522709012,
-    "paired_phase_cp_std": 0.005788551740036001,
+    "paired_phase_cp_std": 0.006101669284081549,
     "official_fno_mean": 0.9980823474004865,
-    "official_fno_std": 0.0028582115675100184,
+    "official_fno_std": 0.0030128195293239253,
     "paired_wins": 8,
     "seeds": 10,
     "paired_minus_fno_mean": -0.006331995129585266,

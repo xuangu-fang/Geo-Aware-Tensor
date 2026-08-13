@@ -125,7 +125,7 @@
       "status": "PAPER",
       "primary_metric": "32-test-geometry macro NRMSE",
       "seeds": [10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
-      "result": "paired 0.99175+/-0.00579 vs official FNO 0.99808+/-0.00286; 8/10 wins; p=0.01367",
+      "result": "paired 0.99175+/-0.00610 vs official FNO 0.99808+/-0.00301; 8/10 wins; p=0.01367",
       "artifact": "papers/longterm_results/the_well_official_fno_confirmation.json"
     }
   ]
