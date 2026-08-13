@@ -1,0 +1,107 @@
+{
+  "experiment_id": "B-IRREGULAR-BOUNDARY-SMOKE-01",
+  "status": "SMOKE_VALIDATION_ONLY",
+  "config": {
+    "data": "data/irregular_boundary_wave",
+    "split": "experiments/dataset_splits/irregular_boundary_wave_smoke.json",
+    "ratio": 0.01,
+    "seed": 0,
+    "steps": 400,
+    "batch_size": 4096,
+    "output": "papers/longterm_results/irregular_boundary_paper_b_smoke.json"
+  },
+  "train_cases": [
+    "l_shape_r24_s0",
+    "l_shape_r24_s1",
+    "u_notch_r24_s0",
+    "u_notch_r24_s1",
+    "wavy_three_lobe_r24_s0",
+    "wavy_three_lobe_r24_s1",
+    "dumbbell_r24_s0",
+    "dumbbell_r24_s1"
+  ],
+  "validation_cases": [
+    "slanted_channel_r32_s0",
+    "slanted_channel_r32_s1"
+  ],
+  "test_geometries_read": [],
+  "target_normalizer": 0.064970463514328,
+  "rows": [
+    {
+      "model": "paired_phase_cp",
+      "parameters": 23040,
+      "validation_macro_nrmse": 1.0908488035202026,
+      "validation_boundary_nrmse": 1.186835527420044,
+      "case_metrics": [
+        {
+          "case": "slanted_channel_r32_s0",
+          "nrmse": 1.0953412055969238,
+          "boundary_nrmse": 1.191063404083252
+        },
+        {
+          "case": "slanted_channel_r32_s1",
+          "nrmse": 1.0863564014434814,
+          "boundary_nrmse": 1.182607650756836
+        }
+      ],
+      "elapsed_seconds": 2.092946609016508
+    },
+    {
+      "model": "wrong_distance_cp",
+      "parameters": 23040,
+      "validation_macro_nrmse": 1.0366085767745972,
+      "validation_boundary_nrmse": 1.1373515129089355,
+      "case_metrics": [
+        {
+          "case": "slanted_channel_r32_s0",
+          "nrmse": 1.0106920003890991,
+          "boundary_nrmse": 1.1108249425888062
+        },
+        {
+          "case": "slanted_channel_r32_s1",
+          "nrmse": 1.0625251531600952,
+          "boundary_nrmse": 1.163878083229065
+        }
+      ],
+      "elapsed_seconds": 1.7098235990852118
+    },
+    {
+      "model": "neural_cp",
+      "parameters": 23552,
+      "validation_macro_nrmse": 1.1660740375518799,
+      "validation_boundary_nrmse": 1.1354594230651855,
+      "case_metrics": [
+        {
+          "case": "slanted_channel_r32_s0",
+          "nrmse": 1.2209692001342773,
+          "boundary_nrmse": 1.1021349430084229
+        },
+        {
+          "case": "slanted_channel_r32_s1",
+          "nrmse": 1.1111788749694824,
+          "boundary_nrmse": 1.1687839031219482
+        }
+      ],
+      "elapsed_seconds": 1.6098278020508587
+    },
+    {
+      "model": "joint_inr",
+      "parameters": 11713,
+      "validation_macro_nrmse": 1.0371779203414917,
+      "validation_boundary_nrmse": 1.0048989355564117,
+      "case_metrics": [
+        {
+          "case": "slanted_channel_r32_s0",
+          "nrmse": 1.032784342765808,
+          "boundary_nrmse": 0.9967628121376038
+        },
+        {
+          "case": "slanted_channel_r32_s1",
+          "nrmse": 1.0415714979171753,
+          "boundary_nrmse": 1.0130350589752197
+        }
+      ],
+      "elapsed_seconds": 0.9944552970118821
+    }
+  ]
+}

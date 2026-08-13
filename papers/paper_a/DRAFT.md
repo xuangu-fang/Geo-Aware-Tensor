@@ -1,5 +1,13 @@
 # Geometry-Aware Bayesian CP: Operator Priors for Sparse Tensor Completion
 
+> **Status note (2026-08-13):** This is the earlier CP-centered manuscript and
+> is retained as an evidence ledger, not the current canonical story. The active
+> Paper-A candidate is operator-defined **Bayesian Tucker on irregular domains**.
+> A first high-frequency irregular-boundary wave smoke did not achieve NRMSE
+> below one, so the next pre-registered gate uses smooth elliptic/heat tensors
+> before any localized-basis extension. See
+> [`../zh/不规则域几何语义校正.md`](../zh/不规则域几何语义校正.md).
+
 ## Abstract
 
 Classical Bayesian CP completion shares information across the modes of a

@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "dataset": "irregular_boundary_wave",
+  "status": "SMOKE_ONLY",
+  "grouping_rule": "all resolutions and sources of one geometry stay in one split",
+  "train_geometries": [
+    "l_shape",
+    "u_notch",
+    "wavy_three_lobe",
+    "dumbbell"
+  ],
+  "validation_geometries": [
+    "slanted_channel"
+  ],
+  "test_geometries": [
+    "wavy_with_hole"
+  ],
+  "test_access_rule": "read only after configuration is frozen on validation",
+  "ratios": [0.01, 0.02, 0.05],
+  "selection_seeds": [0, 1, 2],
+  "confirmation_seeds": [10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+}

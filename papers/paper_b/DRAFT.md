@@ -1,5 +1,14 @@
 # Geometry-Conditioned Phase Tensor Factorization for Sparse Fields on Changing Domains
 
+> **Status note (2026-08-13):** The phase-paired method is now treated as a
+> propagation-path specialization, not as evidence for general irregular-boundary
+> geometry. On the first unseen irregular-outer-boundary gate, correct geodesic
+> phase did not beat the Euclidean control. The boundary-geometry Paper-B
+> candidate therefore returns to the original proposal's minimal
+> operator-spectral neural functional factor; this draft remains the phase-branch
+> evidence ledger. See
+> [`../zh/不规则域几何语义校正.md`](../zh/不规则域几何语义校正.md).
+
 ## Abstract
 
 Functional neural tensor decompositions replace discrete factor tables with

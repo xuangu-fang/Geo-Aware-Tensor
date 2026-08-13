@@ -1,0 +1,249 @@
+{
+  "experiment_id": "A-IRREGULAR-BOUNDARY-SMOKE-01",
+  "status": "SMOKE",
+  "config": {
+    "data": "data/irregular_boundary_wave",
+    "ratio": 0.01,
+    "seed": 0,
+    "steps": 200,
+    "space_modes": 32,
+    "output": "papers/longterm_results/irregular_boundary_paper_a_smoke.json"
+  },
+  "geometry_count": 6,
+  "summary": {
+    "correct_cp": {
+      "macro_nrmse": 1.1078016360600789,
+      "macro_boundary_nrmse": 1.1679943005243938
+    },
+    "correct_tucker": {
+      "macro_nrmse": 1.550692657629649,
+      "macro_boundary_nrmse": 1.6756953001022339
+    },
+    "topology_erased_tucker": {
+      "macro_nrmse": 1.6041983366012573,
+      "macro_boundary_nrmse": 1.7143097122510274
+    },
+    "wrong_boundary_tucker": {
+      "macro_nrmse": 1.8188406229019165,
+      "macro_boundary_nrmse": 1.6883609890937805
+    }
+  },
+  "rows": [
+    {
+      "geometry": "dumbbell",
+      "model": "correct_tucker",
+      "n_nodes": 236,
+      "parameters": 476,
+      "held_nrmse": 1.1343687772750854,
+      "boundary_nrmse": 1.1875780820846558,
+      "elapsed_seconds": 3.1823744866997004
+    },
+    {
+      "geometry": "dumbbell",
+      "model": "wrong_boundary_tucker",
+      "n_nodes": 236,
+      "parameters": 476,
+      "held_nrmse": 1.2795711755752563,
+      "boundary_nrmse": 1.272482991218567,
+      "elapsed_seconds": 0.9590872577391565
+    },
+    {
+      "geometry": "dumbbell",
+      "model": "topology_erased_tucker",
+      "n_nodes": 236,
+      "parameters": 476,
+      "held_nrmse": 1.289211630821228,
+      "boundary_nrmse": 1.3157627582550049,
+      "elapsed_seconds": 0.9981981692835689
+    },
+    {
+      "geometry": "dumbbell",
+      "model": "correct_cp",
+      "n_nodes": 236,
+      "parameters": 440,
+      "held_nrmse": 1.0222927331924438,
+      "boundary_nrmse": 1.0330450534820557,
+      "elapsed_seconds": 1.0479807923547924
+    },
+    {
+      "geometry": "l_shape",
+      "model": "correct_tucker",
+      "n_nodes": 363,
+      "parameters": 476,
+      "held_nrmse": 1.7072198390960693,
+      "boundary_nrmse": 1.813140630722046,
+      "elapsed_seconds": 0.9575563310645521
+    },
+    {
+      "geometry": "l_shape",
+      "model": "wrong_boundary_tucker",
+      "n_nodes": 363,
+      "parameters": 476,
+      "held_nrmse": 1.6913982629776,
+      "boundary_nrmse": 1.647836685180664,
+      "elapsed_seconds": 0.9603818068280816
+    },
+    {
+      "geometry": "l_shape",
+      "model": "topology_erased_tucker",
+      "n_nodes": 363,
+      "parameters": 476,
+      "held_nrmse": 1.6884779930114746,
+      "boundary_nrmse": 1.8710110187530518,
+      "elapsed_seconds": 0.9353735181502998
+    },
+    {
+      "geometry": "l_shape",
+      "model": "correct_cp",
+      "n_nodes": 363,
+      "parameters": 440,
+      "held_nrmse": 1.1088556051254272,
+      "boundary_nrmse": 1.1782089471817017,
+      "elapsed_seconds": 0.9757619071751833
+    },
+    {
+      "geometry": "slanted_channel",
+      "model": "correct_tucker",
+      "n_nodes": 325,
+      "parameters": 476,
+      "held_nrmse": 1.6339985132217407,
+      "boundary_nrmse": 1.847062587738037,
+      "elapsed_seconds": 0.9338945122435689
+    },
+    {
+      "geometry": "slanted_channel",
+      "model": "wrong_boundary_tucker",
+      "n_nodes": 325,
+      "parameters": 476,
+      "held_nrmse": 1.951403260231018,
+      "boundary_nrmse": 1.7322739362716675,
+      "elapsed_seconds": 0.9492891202680767
+    },
+    {
+      "geometry": "slanted_channel",
+      "model": "topology_erased_tucker",
+      "n_nodes": 325,
+      "parameters": 476,
+      "held_nrmse": 1.7626906633377075,
+      "boundary_nrmse": 1.8788586854934692,
+      "elapsed_seconds": 0.9253595238551497
+    },
+    {
+      "geometry": "slanted_channel",
+      "model": "correct_cp",
+      "n_nodes": 325,
+      "parameters": 440,
+      "held_nrmse": 1.1517871618270874,
+      "boundary_nrmse": 1.2593706846237183,
+      "elapsed_seconds": 0.9856452778913081
+    },
+    {
+      "geometry": "u_notch",
+      "model": "correct_tucker",
+      "n_nodes": 412,
+      "parameters": 476,
+      "held_nrmse": 1.8073234558105469,
+      "boundary_nrmse": 2.0081896781921387,
+      "elapsed_seconds": 0.9338935511186719
+    },
+    {
+      "geometry": "u_notch",
+      "model": "wrong_boundary_tucker",
+      "n_nodes": 412,
+      "parameters": 476,
+      "held_nrmse": 1.8853708505630493,
+      "boundary_nrmse": 1.738286018371582,
+      "elapsed_seconds": 1.0867205769754946
+    },
+    {
+      "geometry": "u_notch",
+      "model": "topology_erased_tucker",
+      "n_nodes": 412,
+      "parameters": 476,
+      "held_nrmse": 1.7140718698501587,
+      "boundary_nrmse": 1.904381513595581,
+      "elapsed_seconds": 0.9796919869259
+    },
+    {
+      "geometry": "u_notch",
+      "model": "correct_cp",
+      "n_nodes": 412,
+      "parameters": 440,
+      "held_nrmse": 1.0994373559951782,
+      "boundary_nrmse": 1.1493152379989624,
+      "elapsed_seconds": 0.9858096078969538
+    },
+    {
+      "geometry": "wavy_three_lobe",
+      "model": "correct_tucker",
+      "n_nodes": 284,
+      "parameters": 476,
+      "held_nrmse": 1.5414191484451294,
+      "boundary_nrmse": 1.6508554220199585,
+      "elapsed_seconds": 0.9407830499112606
+    },
+    {
+      "geometry": "wavy_three_lobe",
+      "model": "wrong_boundary_tucker",
+      "n_nodes": 284,
+      "parameters": 476,
+      "held_nrmse": 1.8070602416992188,
+      "boundary_nrmse": 1.5911778211593628,
+      "elapsed_seconds": 0.9441417278721929
+    },
+    {
+      "geometry": "wavy_three_lobe",
+      "model": "topology_erased_tucker",
+      "n_nodes": 284,
+      "parameters": 476,
+      "held_nrmse": 1.6189115047454834,
+      "boundary_nrmse": 1.8084876537322998,
+      "elapsed_seconds": 0.9328051279298961
+    },
+    {
+      "geometry": "wavy_three_lobe",
+      "model": "correct_cp",
+      "n_nodes": 284,
+      "parameters": 440,
+      "held_nrmse": 1.1529344320297241,
+      "boundary_nrmse": 1.2271034717559814,
+      "elapsed_seconds": 0.9688413538970053
+    },
+    {
+      "geometry": "wavy_with_hole",
+      "model": "correct_tucker",
+      "n_nodes": 288,
+      "parameters": 476,
+      "held_nrmse": 1.4798262119293213,
+      "boundary_nrmse": 1.5473453998565674,
+      "elapsed_seconds": 0.9271850343793631
+    },
+    {
+      "geometry": "wavy_with_hole",
+      "model": "wrong_boundary_tucker",
+      "n_nodes": 288,
+      "parameters": 476,
+      "held_nrmse": 2.2982399463653564,
+      "boundary_nrmse": 2.14810848236084,
+      "elapsed_seconds": 0.9407058320939541
+    },
+    {
+      "geometry": "wavy_with_hole",
+      "model": "topology_erased_tucker",
+      "n_nodes": 288,
+      "parameters": 476,
+      "held_nrmse": 1.5518263578414917,
+      "boundary_nrmse": 1.5073566436767578,
+      "elapsed_seconds": 0.9625305538065732
+    },
+    {
+      "geometry": "wavy_with_hole",
+      "model": "correct_cp",
+      "n_nodes": 288,
+      "parameters": 440,
+      "held_nrmse": 1.1115025281906128,
+      "boundary_nrmse": 1.1609224081039429,
+      "elapsed_seconds": 1.0345309311524034
+    }
+  ]
+}

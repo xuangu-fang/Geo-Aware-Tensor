@@ -1,0 +1,24 @@
+{
+  "n_cases": 24,
+  "n_geometries": 6,
+  "resolutions": [
+    24,
+    32
+  ],
+  "all_finite_non_degenerate": true,
+  "all_sources_inside": true,
+  "max_operator_symmetry_error": 0.0,
+  "min_operator_eigenvalue": -3.956496317635699e-14,
+  "node_count_range": [
+    236,
+    772
+  ],
+  "boundary_node_count_range": [
+    52,
+    146
+  ],
+  "late_energy_fraction_range": [
+    0.4860142767429352,
+    0.5074855089187622
+  ]
+}
