@@ -32,6 +32,17 @@ PYTHONPATH=.python-packages:src python3 experiments/paper_b_tensor_run.py --help
 
 # Three-round aggregation and phase diagrams
 PYTHONPATH=.python-packages:src python3 experiments/analyze_longterm_iterations.py
+
+# Completed irregular-boundary NO-GO gates
+PYTHONPATH=.python-packages:src python3 experiments/build_irregular_elliptic_dataset.py
+PYTHONPATH=.python-packages:src python3 experiments/run_irregular_elliptic_paper_a.py
+PYTHONPATH=.python-packages:src python3 experiments/run_irregular_elliptic_paper_b.py
+
+# Official NeuralOperator 2.0 FNO/TFNO baseline and frozen aggregation
+PYTHONPATH=src /home/ubuntu/project/yanjiu/.venv/bin/python \
+  experiments/run_the_well_official_fno.py --help
+PYTHONPATH=src /home/ubuntu/project/yanjiu/.venv/bin/python \
+  experiments/analyze_the_well_official_fno.py
 ```
 
 ## Required output

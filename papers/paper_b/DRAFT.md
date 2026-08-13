@@ -1,12 +1,12 @@
 # Geometry-Conditioned Phase Tensor Factorization for Sparse Fields on Changing Domains
 
-> **Status note (2026-08-13):** The phase-paired method is now treated as a
-> propagation-path specialization, not as evidence for general irregular-boundary
-> geometry. On the first unseen irregular-outer-boundary gate, correct geodesic
-> phase did not beat the Euclidean control. The boundary-geometry Paper-B
-> candidate therefore returns to the original proposal's minimal
-> operator-spectral neural functional factor; this draft remains the phase-branch
-> evidence ledger. See
+> **Status note (2026-08-13):** The phase-paired method is a propagation-path
+> specialization, not evidence for general irregular-boundary geometry. A bounded
+> irregular-domain operator-spectral alternative was tested and stopped because
+> an SDF/coordinate CP was stronger. This phase branch therefore remains the
+> active Paper-B candidate. On the frozen The Well early-40 protocol it also
+> beats the official NeuralOperator 2.0 FNO over ten test seeds (`0.99175` versus
+> `0.99808`, 8/10 wins, one-sided Wilcoxon `p=0.01367`). See
 > [`../zh/不规则域几何语义校正.md`](../zh/不规则域几何语义校正.md).
 
 ## Abstract
@@ -204,6 +204,22 @@ INR (`p=0.00098`). Relative mean improvements are respectively 0.96%, 0.32%,
 and 0.68%. This is modest external evidence for the geometry/phase inductive
 bias, not a solved benchmark: absolute NRMSE remains near one and the claim is
 restricted to sparse-supervised, cross-geometry early-horizon regression.
+
+### 8.1 Official FNO baseline
+
+We added the official `neuraloperator==2.0.0` FNO under the identical 64-train,
+40-frame and 1%-supervision protocol. Its inputs are known density, sound speed,
+initial pressure and query time; its loss reads only the same sparse targets.
+FNO/TFNO architecture selection used 16 validation geometries. FNO was then
+frozen and run with the existing fresh seeds 10--19 on 32 test geometries.
+
+Paired phase CP obtains `0.99175±0.00579` macro NRMSE versus
+`0.99808±0.00286` for FNO, wins 8/10 seeds, and gives one-sided paired Wilcoxon
+`p=0.01367`. The relative gain is modest (`0.63%`), but the proposed model uses
+23,040 parameters versus 357,473 for FNO. This supports an efficiency and
+inductive-bias claim, not a large-error-reduction claim.
+
+![Official FNO confirmation](../longterm_results/the_well_official_fno_confirmation.png)
 
 ## 9. Limitations
 

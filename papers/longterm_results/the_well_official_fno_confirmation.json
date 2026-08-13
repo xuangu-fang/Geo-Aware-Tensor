@@ -1,0 +1,86 @@
+{
+  "experiment_id": "B-WELL-EARLY40-OFFICIAL-FNO-CONFIRMATION",
+  "status": "POSTHOC_BASELINE_CONFIRMATION",
+  "important_protocol_note": "Paired-phase configuration and its seeds were frozen before FNO was added; FNO architecture was selected on validation and test seeds match the existing confirmation.",
+  "library": {
+    "name": "neuraloperator",
+    "version": "2.0.0"
+  },
+  "validation_seed0": {
+    "paired_phase_cp": 0.9801830127835274,
+    "official_fno": 0.9894164614379406
+  },
+  "test_summary": {
+    "paired_phase_cp_mean": 0.9917503522709012,
+    "paired_phase_cp_std": 0.005788551740036001,
+    "official_fno_mean": 0.9980823474004865,
+    "official_fno_std": 0.0028582115675100184,
+    "paired_wins": 8,
+    "seeds": 10,
+    "paired_minus_fno_mean": -0.006331995129585266,
+    "relative_improvement_percent": 0.6344161026469407,
+    "one_sided_wilcoxon_statistic": 6.0,
+    "one_sided_wilcoxon_p": 0.013671875
+  },
+  "efficiency_seed0_validation": {
+    "paired_parameters": 23040,
+    "fno_parameters": 357473,
+    "parameter_ratio_fno_over_paired": 15.515321180555556,
+    "paired_elapsed_seconds": 3.1790879061445594,
+    "fno_elapsed_seconds": 8.777977647259831,
+    "paired_peak_gpu_bytes": 118644224,
+    "fno_peak_gpu_bytes": 171641344
+  },
+  "rows": [
+    {
+      "seed": 10,
+      "paired_phase_cp": 0.9933983031660318,
+      "official_fno": 0.9949514269828796
+    },
+    {
+      "seed": 11,
+      "paired_phase_cp": 1.0068312957882881,
+      "official_fno": 1.000405503436923
+    },
+    {
+      "seed": 12,
+      "paired_phase_cp": 0.9920195657759905,
+      "official_fno": 0.995439637452364
+    },
+    {
+      "seed": 13,
+      "paired_phase_cp": 0.9855354111641645,
+      "official_fno": 1.0000536739826202
+    },
+    {
+      "seed": 14,
+      "paired_phase_cp": 0.9935442917048931,
+      "official_fno": 0.9930668119341135
+    },
+    {
+      "seed": 15,
+      "paired_phase_cp": 0.9845819566398859,
+      "official_fno": 1.0000550542026758
+    },
+    {
+      "seed": 16,
+      "paired_phase_cp": 0.9890719093382359,
+      "official_fno": 0.9954949542880058
+    },
+    {
+      "seed": 17,
+      "paired_phase_cp": 0.9897792115807533,
+      "official_fno": 1.0018676742911339
+    },
+    {
+      "seed": 18,
+      "paired_phase_cp": 0.9917402751743793,
+      "official_fno": 0.9996242187917233
+    },
+    {
+      "seed": 19,
+      "paired_phase_cp": 0.9910013023763895,
+      "official_fno": 0.9998645186424255
+    }
+  ]
+}

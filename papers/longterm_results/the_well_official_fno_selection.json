@@ -1,0 +1,170 @@
+{
+  "experiment_id": "B-WELL-EARLY40-OFFICIAL-FNO-VALIDATION",
+  "status": "SELECTION",
+  "library": {
+    "name": "neuraloperator",
+    "version": "2.0.0"
+  },
+  "config": {
+    "data": "data/the_well_acoustic_64x64",
+    "model": "fno",
+    "train_cases": 64,
+    "evaluation_split": "validation",
+    "evaluation_cases": 16,
+    "horizon": 40,
+    "ratio": 0.01,
+    "seed": 0,
+    "steps": 500,
+    "batch_size": 8,
+    "hidden_channels": 32,
+    "modes": 12,
+    "output": "papers/longterm_results/the_well_official_fno_selection.json"
+  },
+  "training_values_read": 104832,
+  "realized_ratio": 0.009997558780014515,
+  "target_scale_from_observed_only": 0.11898544430732727,
+  "parameters": 357473,
+  "elapsed_seconds": 8.777977647259831,
+  "peak_gpu_bytes": 171641344,
+  "evaluation_macro_nrmse": 0.9894164614379406,
+  "evaluation_macro_vrmse": 0.9829223640263081,
+  "case_metrics": [
+    {
+      "case": "trajectory_000",
+      "nrmse_std": 0.9912530779838562,
+      "vrmse": 0.9841679334640503
+    },
+    {
+      "case": "trajectory_001",
+      "nrmse_std": 0.9863507747650146,
+      "vrmse": 0.9803927540779114
+    },
+    {
+      "case": "trajectory_002",
+      "nrmse_std": 1.0261240005493164,
+      "vrmse": 1.0240246057510376
+    },
+    {
+      "case": "trajectory_003",
+      "nrmse_std": 0.9894927740097046,
+      "vrmse": 0.9804335832595825
+    },
+    {
+      "case": "trajectory_004",
+      "nrmse_std": 0.9969717264175415,
+      "vrmse": 0.9934990406036377
+    },
+    {
+      "case": "trajectory_005",
+      "nrmse_std": 0.9635303616523743,
+      "vrmse": 0.9547463655471802
+    },
+    {
+      "case": "trajectory_006",
+      "nrmse_std": 0.989608883857727,
+      "vrmse": 0.9826260209083557
+    },
+    {
+      "case": "trajectory_007",
+      "nrmse_std": 0.9944739937782288,
+      "vrmse": 0.9889773726463318
+    },
+    {
+      "case": "trajectory_008",
+      "nrmse_std": 0.9851926565170288,
+      "vrmse": 0.9834123253822327
+    },
+    {
+      "case": "trajectory_009",
+      "nrmse_std": 0.9903897643089294,
+      "vrmse": 0.9805383682250977
+    },
+    {
+      "case": "trajectory_010",
+      "nrmse_std": 0.9893597364425659,
+      "vrmse": 0.9816854000091553
+    },
+    {
+      "case": "trajectory_011",
+      "nrmse_std": 0.989158034324646,
+      "vrmse": 0.9814847111701965
+    },
+    {
+      "case": "trajectory_012",
+      "nrmse_std": 0.986660361289978,
+      "vrmse": 0.9793239235877991
+    },
+    {
+      "case": "trajectory_013",
+      "nrmse_std": 0.9788253903388977,
+      "vrmse": 0.9712206125259399
+    },
+    {
+      "case": "trajectory_014",
+      "nrmse_std": 0.982621431350708,
+      "vrmse": 0.977775514125824
+    },
+    {
+      "case": "trajectory_015",
+      "nrmse_std": 0.9906504154205322,
+      "vrmse": 0.9824492931365967
+    }
+  ],
+  "history": [
+    {
+      "step": 0,
+      "loss": 0.8814595937728882,
+      "learning_rate": 0.001999980260856137
+    },
+    {
+      "step": 50,
+      "loss": 0.7566972374916077,
+      "learning_rate": 0.0019490961449902934
+    },
+    {
+      "step": 100,
+      "loss": 1.2620056867599487,
+      "learning_rate": 0.0018053078857111196
+    },
+    {
+      "step": 150,
+      "loss": 1.0292644500732422,
+      "learning_rate": 0.0015826904796685738
+    },
+    {
+      "step": 200,
+      "loss": 1.9327870607376099,
+      "learning_rate": 0.0013030352696327722
+    },
+    {
+      "step": 250,
+      "loss": 1.1670104265213013,
+      "learning_rate": 0.0009937168560344395
+    },
+    {
+      "step": 300,
+      "loss": 0.5351685285568237,
+      "learning_rate": 0.0006850134803446938
+    },
+    {
+      "step": 350,
+      "loss": 1.4804543256759644,
+      "learning_rate": 0.0004071431798389401
+    },
+    {
+      "step": 400,
+      "loss": 0.8988025188446045,
+      "learning_rate": 0.00018730583556690578
+    },
+    {
+      "step": 450,
+      "loss": 1.0530911684036255,
+      "learning_rate": 4.702065848278118e-05
+    },
+    {
+      "step": 499,
+      "loss": 1.4420262575149536,
+      "learning_rate": 0.0
+    }
+  ]
+}

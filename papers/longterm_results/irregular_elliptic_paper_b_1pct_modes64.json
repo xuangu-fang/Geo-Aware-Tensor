@@ -1,0 +1,82 @@
+{
+  "experiment_id": "B-IRREGULAR-ELLIPTIC-1BP-SEED0",
+  "status": "VALIDATION_GATE_TEST_UNREAD",
+  "config": {
+    "data": "data/irregular_boundary_elliptic",
+    "split": "experiments/dataset_splits/irregular_boundary_wave_smoke.json",
+    "ratio": 0.01,
+    "seed": 0,
+    "steps": 700,
+    "batch_size": 2048,
+    "modes": 64,
+    "output": "papers/longterm_results/irregular_elliptic_paper_b_1pct_modes64.json"
+  },
+  "train_geometries": [
+    "l_shape",
+    "u_notch",
+    "wavy_three_lobe",
+    "dumbbell"
+  ],
+  "validation_geometries": [
+    "slanted_channel"
+  ],
+  "test_geometries_read": [],
+  "rows": [
+    {
+      "model": "operator_spectral_cp",
+      "parameters": 18080,
+      "validation_macro_nrmse": 0.2768230438232422,
+      "validation_boundary_nrmse": 0.28437212109565735,
+      "case_metrics": [
+        {
+          "case": "slanted_channel_r32",
+          "nrmse": 0.2768230438232422,
+          "boundary_nrmse": 0.28437212109565735
+        }
+      ],
+      "elapsed_seconds": 4.28737258259207
+    },
+    {
+      "model": "wrong_boundary_spectral_cp",
+      "parameters": 18080,
+      "validation_macro_nrmse": 1.0233134031295776,
+      "validation_boundary_nrmse": 1.0243017673492432,
+      "case_metrics": [
+        {
+          "case": "slanted_channel_r32",
+          "nrmse": 1.0233134031295776,
+          "boundary_nrmse": 1.0243017673492432
+        }
+      ],
+      "elapsed_seconds": 3.9001209340058267
+    },
+    {
+      "model": "topology_erased_spectral_cp",
+      "parameters": 18080,
+      "validation_macro_nrmse": 0.29211246967315674,
+      "validation_boundary_nrmse": 0.3015400171279907,
+      "case_metrics": [
+        {
+          "case": "slanted_channel_r32",
+          "nrmse": 0.29211246967315674,
+          "boundary_nrmse": 0.3015400171279907
+        }
+      ],
+      "elapsed_seconds": 3.7519754599779844
+    },
+    {
+      "model": "sdf_coordinate_cp",
+      "parameters": 18400,
+      "validation_macro_nrmse": 0.18117567896842957,
+      "validation_boundary_nrmse": 0.2254762053489685,
+      "case_metrics": [
+        {
+          "case": "slanted_channel_r32",
+          "nrmse": 0.18117567896842957,
+          "boundary_nrmse": 0.2254762053489685
+        }
+      ],
+      "elapsed_seconds": 3.143576296977699
+    }
+  ]
+}

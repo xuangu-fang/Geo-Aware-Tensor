@@ -15,6 +15,8 @@ from typing import Iterable
 
 import numpy as np
 from scipy import ndimage
+import scipy.sparse as sp
+import scipy.sparse.linalg as spla
 
 from .independent_wave_solver import (
     WaveDomain,
@@ -180,6 +182,117 @@ def generate_irregular_dataset(
         "schema_version": 1,
         "purpose": "irregular outer-boundary geometry gate",
         "boundary_condition": "reflecting zero-flux on every outer and hole boundary",
+        "cases": cases,
+    }
+    (output/"manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    return manifest
+
+
+def simulate_screened_elliptic(
+    domain: WaveDomain,
+    source_anchors: Iterable[tuple[float, float]] = (
+        (-.60, -.36), (-.60, .36), (.56, -.40), (.56, .40)),
+    diffusivities: np.ndarray | None = None,
+) -> tuple[np.ndarray, dict]:
+    """Solve a smooth family of screened elliptic fields on one domain.
+
+    The weighted physics operator differs from the unweighted geometry
+    operator exposed to the learner. This keeps the gate favorable to boundary
+    geometry without making the learner basis identical to the simulator.
+    """
+    coords = domain.coordinates.astype(np.float64)
+    anchors = np.asarray(list(source_anchors), dtype=np.float64)
+    parameters = (np.geomspace(.025, .32, 14) if diffusivities is None
+                  else np.asarray(diffusivities, dtype=np.float64))
+    source_nodes = np.asarray([
+        int(np.argmin(np.sum((coords-anchor)**2, axis=1))) for anchor in anchors],
+        dtype=np.int32)
+    sources = coords[source_nodes]
+    boundary_distance = domain.signed_distance.astype(np.float64)
+    reaction = (.22 + .07*(1+np.sin(2.1*coords[:, 0])*np.cos(1.7*coords[:, 1]))
+                + .04*np.exp(-boundary_distance/.16))
+    profiles = []
+    for source in sources:
+        profile = np.exp(-np.sum((coords-source)**2, axis=1)/(2*.11**2))
+        profile /= np.sqrt(np.mean(profile**2))+1e-12
+        profiles.append(profile)
+    fields = np.empty((len(sources), len(parameters), len(coords)), dtype=np.float32)
+    residuals = []
+    for parameter_index, diffusivity in enumerate(parameters):
+        # A small parameter-dependent reaction prevents exact simultaneous
+        # diagonalization in the unweighted geometry basis.
+        phase = 2*np.pi*parameter_index/max(1, len(parameters)-1)
+        local_reaction = reaction*(1+.10*np.sin(phase+1.3*coords[:, 0]))
+        matrix = sp.diags(local_reaction) + diffusivity*domain.wave_operator
+        factor = spla.factorized(matrix.tocsc())
+        for source_index, profile in enumerate(profiles):
+            forcing = profile*(1+.08*np.cos(phase+source_index))
+            # Weak boundary-localized forcing makes concavities and holes
+            # relevant without creating a high-frequency target.
+            forcing += .10*np.exp(-boundary_distance/.12)*np.cos(
+                (1+source_index%3)*np.arctan2(coords[:, 1], coords[:, 0])+phase)
+            solution = factor(forcing)
+            fields[source_index, parameter_index] = solution.astype(np.float32)
+            residuals.append(float(np.linalg.norm(matrix@solution-forcing)
+                                   /(np.linalg.norm(forcing)+1e-12)))
+    return fields, {
+        "source_anchors": anchors.tolist(),
+        "source_nodes": source_nodes.tolist(),
+        "source_xy_discrete": sources.tolist(),
+        "diffusivities": parameters.tolist(),
+        "equation": "(diag(reaction)+diffusivity*weighted_laplacian) u = forcing",
+        "boundary_condition": "reflecting zero-flux on every outer and hole boundary",
+        "max_relative_linear_residual": max(residuals),
+    }
+
+
+def generate_irregular_elliptic_dataset(
+    output: Path,
+    specs: Iterable[IrregularBoundarySpec] | None = None,
+    resolutions: Iterable[int] = (24, 32),
+) -> dict:
+    specs = list(default_irregular_specs() if specs is None else specs)
+    resolutions = list(resolutions)
+    output.mkdir(parents=True, exist_ok=True)
+    cases = []
+    for spec in specs:
+        for resolution in resolutions:
+            domain = build_irregular_domain(spec, resolution)
+            fields, simulation = simulate_screened_elliptic(domain)
+            name = f"{spec.name}_r{resolution}.npz"
+            path = output/name
+            payload = {
+                "coordinates": domain.coordinates,
+                "grid_indices": domain.grid_indices,
+                "fluid_mask": domain.fluid_mask.astype(np.uint8),
+                "boundary_mask": boundary_mask(domain).astype(np.uint8),
+                "boundary_distance": domain.signed_distance,
+                "material_speed": domain.material_speed,
+                "undirected_edges": domain.undirected_edges,
+                "source_nodes": np.asarray(simulation["source_nodes"], dtype=np.int32),
+                "source_xy": np.asarray(simulation["source_xy_discrete"], dtype=np.float32),
+                "diffusivities": np.asarray(simulation["diffusivities"], dtype=np.float32),
+                "field": fields,
+                **_sparse_payload("geometry_operator", domain.geometry_operator),
+                **_sparse_payload("physics_operator", domain.wave_operator),
+            }
+            np.savez_compressed(path, **payload)
+            cases.append({
+                "file": name,
+                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                "geometry": asdict(spec),
+                "resolution": resolution,
+                "n_nodes": len(domain.coordinates),
+                "n_boundary_nodes": int(boundary_mask(domain).sum()),
+                "tensor_shape": list(fields.shape),
+                "simulation": simulation,
+                "field_std": float(fields.std()),
+                "field_abs_max": float(np.abs(fields).max()),
+            })
+    manifest = {
+        "schema_version": 1,
+        "purpose": "method-matched smooth irregular-boundary tensor gate",
+        "tensor_semantics": ["source", "diffusivity", "irregular-domain node"],
         "cases": cases,
     }
     (output/"manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")

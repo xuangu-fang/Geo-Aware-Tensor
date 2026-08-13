@@ -4,6 +4,7 @@ from geoaware.irregular_domain_solver import (
     boundary_mask,
     build_irregular_domain,
     default_irregular_specs,
+    simulate_screened_elliptic,
 )
 
 
@@ -27,3 +28,14 @@ def test_irregular_domain_operator_is_symmetric_psd():
     values = np.linalg.eigvalsh(operator.toarray())
     assert values[0] > -1e-8
     assert values[-1] > 1
+
+
+def test_screened_elliptic_tensor_is_finite_and_solved_accurately():
+    domain = build_irregular_domain(default_irregular_specs()[0], resolution=18)
+    field, metadata = simulate_screened_elliptic(
+        domain, source_anchors=((-0.5, -0.3), (0.45, -0.35)),
+        diffusivities=np.asarray([.04, .16]))
+    assert field.shape == (2, 2, len(domain.coordinates))
+    assert np.isfinite(field).all()
+    assert float(field.std()) > 1e-4
+    assert metadata["max_relative_linear_residual"] < 1e-8

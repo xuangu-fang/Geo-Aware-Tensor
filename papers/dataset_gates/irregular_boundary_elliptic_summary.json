@@ -1,0 +1,23 @@
+{
+  "n_cases": 12,
+  "n_geometries": 6,
+  "resolutions": [
+    24,
+    32
+  ],
+  "tensor_semantics": [
+    "source",
+    "diffusivity",
+    "irregular-domain node"
+  ],
+  "all_finite": true,
+  "field_std_range": [
+    0.843481719493866,
+    0.9569932818412781
+  ],
+  "node_count_range": [
+    236,
+    772
+  ],
+  "max_relative_linear_residual": 2.9681332136785874e-14
+}

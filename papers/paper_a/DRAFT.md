@@ -2,10 +2,11 @@
 
 > **Status note (2026-08-13):** This is the earlier CP-centered manuscript and
 > is retained as an evidence ledger, not the current canonical story. The active
-> Paper-A candidate is operator-defined **Bayesian Tucker on irregular domains**.
-> A first high-frequency irregular-boundary wave smoke did not achieve NRMSE
-> below one, so the next pre-registered gate uses smooth elliptic/heat tensors
-> before any localized-basis extension. See
+> Paper-A candidate remains the controlled operator-defined Bayesian Tucker
+> result. A bounded irregular-domain investigation was completed and stopped:
+> correct operator CP beat wrong/bounding-box operator controls, but a simple
+> coordinate functional CP was far stronger (`0.180` versus `0.668` macro NRMSE).
+> Irregular boundary is therefore a negative appendix, not the main claim. See
 > [`../zh/不规则域几何语义校正.md`](../zh/不规则域几何语义校正.md).
 
 ## Abstract

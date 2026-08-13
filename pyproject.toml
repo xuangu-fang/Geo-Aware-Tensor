@@ -19,6 +19,7 @@ dependencies = [
 dev = ["pytest>=8.0"]
 data = ["fsspec>=2025.3", "aiohttp>=3.10,<4"]
 docs = ["Markdown>=3.7,<4", "weasyprint>=62,<69"]
+operator-baselines = ["neuraloperator==2.0.0"]
 
 [project.scripts]
 geo-tensor-poc = "geoaware.cli:main"

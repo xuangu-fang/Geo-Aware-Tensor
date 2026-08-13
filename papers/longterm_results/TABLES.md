@@ -44,3 +44,24 @@
 | 0.02 | 1 | 0.835 | 0.574 | 0.696 | 0.609 |
 
 完整 paired statistics 与逐 seed 数值见 `summary.json`。
+
+## Paper B 官方 FNO baseline（The Well early-40 / 1%）
+
+| 方法 | 32 test geometry macro NRMSE | 胜场 | 参数量 |
+|---|---:|---:|---:|
+| Paired phase CP | **0.99175±0.00579** | 8/10 | 23,040 |
+| Official NeuralOperator 2.0 FNO | 0.99808±0.00286 | 2/10 | 357,473 |
+
+paired 相对改善 `0.63%`；单侧 paired Wilcoxon `p=0.01367`。FNO 架构先在
+validation 上从 FNO/TFNO 中选择，再固定到已有 confirmation seeds 10--19；逐 seed
+结果、compute 与图见 `the_well_official_fno_confirmation.json/.png`。
+
+## 不规则边界分支最终 NO-GO
+
+| Gate | Proposed/operator 方法 | 最强简单 baseline | 决策 |
+|---|---:|---:|---|
+| Paper A elliptic 1% | operator CP 0.668 | coordinate CP **0.180** | 附录 |
+| Paper B unseen-domain elliptic | operator-spectral CP 0.278 | SDF CP **0.181** | 附录 |
+
+correct operator 均优于 wrong/bbox operator，但没有优于普通 coordinate/SDF functional
+CP，因此不再投入 boundary-specific method tuning。

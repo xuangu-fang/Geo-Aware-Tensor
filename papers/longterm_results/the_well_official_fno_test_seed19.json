@@ -1,0 +1,250 @@
+{
+  "experiment_id": "B-WELL-EARLY40-OFFICIAL-FNO-TEST",
+  "status": "POSTHOC_CONFIRMATION",
+  "library": {
+    "name": "neuraloperator",
+    "version": "2.0.0"
+  },
+  "config": {
+    "data": "data/the_well_acoustic_64x64",
+    "model": "fno",
+    "train_cases": 64,
+    "evaluation_split": "test",
+    "evaluation_cases": 32,
+    "horizon": 40,
+    "ratio": 0.01,
+    "seed": 19,
+    "steps": 500,
+    "batch_size": 8,
+    "hidden_channels": 32,
+    "modes": 12,
+    "output": "papers/longterm_results/the_well_official_fno_test_seed19.json"
+  },
+  "training_values_read": 104832,
+  "realized_ratio": 0.009997558780014515,
+  "target_scale_from_observed_only": 0.11828695982694626,
+  "parameters": 357473,
+  "elapsed_seconds": 28.890750776976347,
+  "peak_gpu_bytes": 171641344,
+  "evaluation_macro_nrmse": 0.9998645186424255,
+  "evaluation_macro_vrmse": 0.9935842733830214,
+  "case_metrics": [
+    {
+      "case": "trajectory_000",
+      "nrmse_std": 0.9843447208404541,
+      "vrmse": 0.9790198802947998
+    },
+    {
+      "case": "trajectory_001",
+      "nrmse_std": 0.9912688136100769,
+      "vrmse": 0.9796362519264221
+    },
+    {
+      "case": "trajectory_002",
+      "nrmse_std": 0.9887232184410095,
+      "vrmse": 0.9840843081474304
+    },
+    {
+      "case": "trajectory_003",
+      "nrmse_std": 0.995117723941803,
+      "vrmse": 0.9897682070732117
+    },
+    {
+      "case": "trajectory_004",
+      "nrmse_std": 1.0151125192642212,
+      "vrmse": 1.0143547058105469
+    },
+    {
+      "case": "trajectory_005",
+      "nrmse_std": 0.9809982180595398,
+      "vrmse": 0.9713127017021179
+    },
+    {
+      "case": "trajectory_006",
+      "nrmse_std": 0.9795899391174316,
+      "vrmse": 0.9712408781051636
+    },
+    {
+      "case": "trajectory_007",
+      "nrmse_std": 0.9795918464660645,
+      "vrmse": 0.9729436635971069
+    },
+    {
+      "case": "trajectory_008",
+      "nrmse_std": 1.0542606115341187,
+      "vrmse": 1.0529788732528687
+    },
+    {
+      "case": "trajectory_009",
+      "nrmse_std": 1.0893142223358154,
+      "vrmse": 1.0884697437286377
+    },
+    {
+      "case": "trajectory_010",
+      "nrmse_std": 0.9858869910240173,
+      "vrmse": 0.9797435998916626
+    },
+    {
+      "case": "trajectory_011",
+      "nrmse_std": 0.9937995076179504,
+      "vrmse": 0.9823110103607178
+    },
+    {
+      "case": "trajectory_012",
+      "nrmse_std": 0.994850754737854,
+      "vrmse": 0.9912624955177307
+    },
+    {
+      "case": "trajectory_013",
+      "nrmse_std": 1.010296106338501,
+      "vrmse": 1.0058549642562866
+    },
+    {
+      "case": "trajectory_014",
+      "nrmse_std": 1.0000971555709839,
+      "vrmse": 0.9956181645393372
+    },
+    {
+      "case": "trajectory_015",
+      "nrmse_std": 0.9884480237960815,
+      "vrmse": 0.9799345135688782
+    },
+    {
+      "case": "trajectory_016",
+      "nrmse_std": 0.9955881834030151,
+      "vrmse": 0.9858877062797546
+    },
+    {
+      "case": "trajectory_017",
+      "nrmse_std": 0.9889734983444214,
+      "vrmse": 0.9848213195800781
+    },
+    {
+      "case": "trajectory_018",
+      "nrmse_std": 0.956688642501831,
+      "vrmse": 0.9371411204338074
+    },
+    {
+      "case": "trajectory_019",
+      "nrmse_std": 0.9966959953308105,
+      "vrmse": 0.986958384513855
+    },
+    {
+      "case": "trajectory_020",
+      "nrmse_std": 0.9986264109611511,
+      "vrmse": 0.9958965182304382
+    },
+    {
+      "case": "trajectory_021",
+      "nrmse_std": 1.0019145011901855,
+      "vrmse": 0.9959317445755005
+    },
+    {
+      "case": "trajectory_022",
+      "nrmse_std": 0.9948328733444214,
+      "vrmse": 0.9876919388771057
+    },
+    {
+      "case": "trajectory_023",
+      "nrmse_std": 0.9941694140434265,
+      "vrmse": 0.9875311255455017
+    },
+    {
+      "case": "trajectory_024",
+      "nrmse_std": 0.9998684525489807,
+      "vrmse": 0.9941194653511047
+    },
+    {
+      "case": "trajectory_025",
+      "nrmse_std": 0.9994744658470154,
+      "vrmse": 0.9940844178199768
+    },
+    {
+      "case": "trajectory_026",
+      "nrmse_std": 1.0018969774246216,
+      "vrmse": 0.9961233139038086
+    },
+    {
+      "case": "trajectory_027",
+      "nrmse_std": 1.0071355104446411,
+      "vrmse": 1.0033488273620605
+    },
+    {
+      "case": "trajectory_028",
+      "nrmse_std": 0.9974278211593628,
+      "vrmse": 0.9898530840873718
+    },
+    {
+      "case": "trajectory_029",
+      "nrmse_std": 0.9989619851112366,
+      "vrmse": 0.9958177208900452
+    },
+    {
+      "case": "trajectory_030",
+      "nrmse_std": 0.9965351223945618,
+      "vrmse": 0.9870268702507019
+    },
+    {
+      "case": "trajectory_031",
+      "nrmse_std": 1.0351743698120117,
+      "vrmse": 1.0339292287826538
+    }
+  ],
+  "history": [
+    {
+      "step": 0,
+      "loss": 1.3153725862503052,
+      "learning_rate": 0.001999980260856137
+    },
+    {
+      "step": 50,
+      "loss": 1.3771252632141113,
+      "learning_rate": 0.0019490961449902934
+    },
+    {
+      "step": 100,
+      "loss": 1.2217308282852173,
+      "learning_rate": 0.0018053078857111196
+    },
+    {
+      "step": 150,
+      "loss": 1.2912867069244385,
+      "learning_rate": 0.0015826904796685738
+    },
+    {
+      "step": 200,
+      "loss": 1.545251727104187,
+      "learning_rate": 0.0013030352696327722
+    },
+    {
+      "step": 250,
+      "loss": 0.6997949481010437,
+      "learning_rate": 0.0009937168560344395
+    },
+    {
+      "step": 300,
+      "loss": 0.20721407234668732,
+      "learning_rate": 0.0006850134803446938
+    },
+    {
+      "step": 350,
+      "loss": 0.7979028820991516,
+      "learning_rate": 0.0004071431798389401
+    },
+    {
+      "step": 400,
+      "loss": 0.9370808005332947,
+      "learning_rate": 0.00018730583556690578
+    },
+    {
+      "step": 450,
+      "loss": 2.0046937465667725,
+      "learning_rate": 4.702065848278118e-05
+    },
+    {
+      "step": 499,
+      "loss": 1.4746721982955933,
+      "learning_rate": 0.0
+    }
+  ]
+}
