@@ -1,9 +1,14 @@
-# Geo-Aware Tensor POC
+# Physics-Informed Tensor Learning Hub
 
-> 2026-08-15 更新：当前的四方向定位、优先级、共享接口与两个新 POC 结果，
-> 统一记录在 [`papers/four_tracks/README.md`](papers/four_tracks/README.md)。
-> 原 Paper A/B 均保留；新增 domain-kernel GP functional Tucker 与
-> SDF-conditioned neural functional Tucker 两条线。
+> 本仓库现在是中心 research hub。三条活跃方法线已经迁移到独立仓库；这里追踪它们的证据、共享数据/baseline 协议与跨方向 roadmap，并保留迁移前历史结果。
+
+| Track | Repository | Core question |
+|---|---|---|
+| 1. Operator-prior tensor | [xuangu-fang/operator-prior-tensor](https://github.com/xuangu-fang/operator-prior-tensor) | operator factor space 何时改善稀疏恢复，何时因失配反转？ |
+| 3. Operator-spectral FunBaT | [xuangu-fang/operator-spectral-funbat](https://github.com/xuangu-fang/operator-spectral-funbat) | PDE 联合谱能否分离成不同 functional tensor modes 的自适应 GP kernels？ |
+| 4. Functional operator completion | [xuangu-fang/functional-operator-completion](https://github.com/xuangu-fang/functional-operator-completion) | 低秩连续张量能否补全未运行的 simulation combinations？ |
+
+中心仓库职责、repo registry、共享 baseline discipline 和当前优先级见 [`RESEARCH_HUB.md`](RESEARCH_HUB.md)。`papers/four_tracks/` 与下文代码作为迁移前 provenance 保留；新的方法迭代只进入三个独立仓库。
 
 ## 中文研究文档
 
