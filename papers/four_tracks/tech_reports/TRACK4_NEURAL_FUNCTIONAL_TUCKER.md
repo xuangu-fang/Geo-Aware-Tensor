@@ -1,13 +1,154 @@
 # 方向 4 技术报告：Geometry-conditioned Neural Tensor / Operator
 
 更新时间：2026-08-15  
-状态：**多形状 Geometry-NO POC 可运行；当前 NO 分支为负信号**
+状态：**FNO、boundary operator 与 domain rank modulation 均未通过门槛；回到 geometry-coordinate CP**
 当前正确名称：**Geometry-conditioned Neural Tensor / Operator**
 不应使用的名称：完整 SDF-Tucker、跨域 few-shot completion、已验证的 geometry-general operator
 
 ---
 
-## 最新结论：48-domain Geometry-NO R1 与残差 R2
+## 最终快速尝试：R4 Boundary-DeepSets rank modulation
+
+R3 失败后没有再生成空间 operator，而只给 coordinate/SDF CP 加一个域级
+rank gate：
+
+\[
+q_\Omega=\operatorname{Pool}_{z_j\in\partial\Omega}
+\phi_\theta(z_j,n_j,t_j,\kappa_j),\qquad
+g_\Omega=1+\gamma\tanh(h_\theta(q_\Omega)),
+\]
+
+\[
+\widehat u_\Omega(s,p,x)=\sum_{r=1}^{R}
+a_r(s)b_r(p)c_r[x,d_\Omega(x),s]g_{\Omega,r}w_r.
+\]
+
+Pool 使用加权和与 max 的拼接，因此对 token 顺序严格不变。该结构只决定
+一个域激活哪些 CP ranks，不产生 query-dependent 场。对照包含：无域 gate
+的 coordinate/SDF CP、7 个手工统计量的 rank gate、正确 boundary DeepSets
+gate，以及把每个 case 的 boundary set 循环错配到下一个 case 的相同模型。
+
+seed 0 上，正确 boundary gate 在双孔洞 OOD 为 0.2554，优于 local CP 的
+0.2614；错配 set 为 0.2886，初步满足机制方向，因此补跑到 3 seeds。最终：
+
+| 模型 | 参数量 | ID NRMSE | 2-hole OOD NRMSE | 2-hole boundary NRMSE |
+|---|---:|---:|---:|---:|
+| coordinate/SDF CP | 3.6K | **0.2480±0.0058** | 0.2553±0.0060 | 0.2654±0.0053 |
+| 7-stat descriptor rank gate | 4.1K | 0.2485±0.0059 | **0.2547±0.0049** | 0.2646±0.0045 |
+| boundary DeepSets rank gate | 4.6K | 0.2533±0.0086 | 0.2550±0.0020 | **0.2642±0.0026** |
+| cyclic wrong-boundary rank gate | 4.6K | 0.2540±0.0086 | 0.2671±0.0186 | 0.2777±0.0176 |
+
+均值看似 wrong boundary 明显更差，但该差异由 seed 0 主导：正确 DeepSets
+只在 1/3 seeds 超过 local CP，也只在 1/3 seeds 超过 7-stat gate；正确 set
+相对 wrong set 只赢 2/3 seeds。它还在所有 seeds 的 ID 均不优于 local CP。
+因此错误集合消融没有给出稳定 paired mechanism，R4 判定 **NO-GO**。
+
+最终技术结论是：在当前 PDE 与 48-domain 协议上，简单 coordinate/SDF CP
+已经吸收主要几何变量。boundary set 能改变结果，但无证据表明学习 set
+encoder 比七个低阶统计量更有效。R4 代码应保留为 method-matched ablation，
+不能作为论文贡献；方向 4 不再继续增加 encoder。
+
+结果：`track4_rank_modulation_r4_seed{0,1,2}.json` 与
+`track4_rank_modulation_r4_summary.json`。
+
+---
+
+## R3：Boundary-operator-conditioned CP
+
+### 为什么从 FNO 换成边界算子
+
+FNO 分支在 1% labels 下用 100K 级参数拟合完整 ambient grid，训练误差很低、
+新几何误差却更高。本轮只尝试一个低容量替代：直接从外边界和孔洞边界
+采样 token，让共享 query-to-boundary kernel 产生每个 CP rank 的空间修正：
+
+\[
+I_{\Omega,r}(x)=\sum_{z_j\in\partial\Omega}w_j
+K_{\theta,r}(x-z_j,n_j,t_j,\kappa_j)V_{\theta,r}(z_j,n_j,t_j,\kappa_j),
+\]
+
+\[
+\widehat u_\Omega(s,p,x)=\sum_{r=1}^{R}a_r(s)b_r(p)
+\{c_r[x,d_\Omega(x),s]+\gamma I_{\Omega,r}(x)\}.
+\]
+
+其中 token 包含位置、法向、外边界/孔洞类型和离散曲率；每个边界连通
+分量独立归一化 quadrature weight。kernel 使用可学习正 length scale 的
+Green-like radial decay、法向 alignment 和极小 pair MLP。模型共 4.9K 参数，
+而 coordinate/SDF CP 为 3.6K；它不是完整 NO，只允许边界信息通过共享的
+rank-wise spatial correction 进入 source × parameter × space 分解。
+
+边界积分本身**不是本文可声称的新颖点**。Boundary-Augmented Neural
+Operators 已将 boundary/full-domain 表示与 Green representation 结合；
+Learning Only On Boundaries 和 BI-GreenNet 也直接从边界积分学习 PDE 解。
+若该路线以后出现稳定正信号，唯一可区分的主张只能是：
+
+> 在 1% sparse output supervision 下，用 boundary operator 生成低秩张量的
+> rank-wise basis，而不是直接输出完整场，即
+> **boundary-operator-conditioned tensor bottleneck**。
+
+### 冻结协议和 seed-0 gate
+
+沿用 R1 的 48 train / 8 ID validation / 8 two-hole OOD、1% labels、400
+updates。冻结 test specs 没有被物化或读取。预先采用 seed 0 gate；只有
+正确积分同时超过 coordinate/SDF CP，并优于 pooled 和 hole-token ablation，
+才运行其余 seeds。
+
+| 模型 | 参数量 | ID NRMSE | 2-hole OOD NRMSE | 2-hole boundary NRMSE |
+|---|---:|---:|---:|---:|
+| coordinate/SDF CP | 3.6K | 0.2538 | 0.2614 | 0.2708 |
+| boundary integral CP | 4.9K | 0.2577 | 0.2546 | 0.2648 |
+| boundary pooled/set CP | 4.9K | 0.2633 | 0.2566 | 0.2667 |
+| integral、去掉所有 hole tokens | 4.9K | **0.2474** | 0.2545 | 0.2641 |
+| integral、反转 boundary-type 编码 | 4.9K | 0.2569 | **0.2525** | **0.2625** |
+
+正确积分相对 local CP 只在 two-hole OOD 改善约 2.6%，ID 反而变差；更重要
+的是，去 hole tokens 与反转 type 编码没有恶化。反转编码在训练和验证中
+一致，严格说是可学习的符号重参数化，而不是强 misspecification control；
+它仅说明当前 type channel 没有可辨认贡献。去 hole tokens 才是关键因果
+消融，而它否定了“模型利用孔洞边界”的解释。因此没有运行 seeds 1–2。
+
+### 第二次、也是最后一次机制 sanity
+
+由于当前 simulator 直接用精确 SDF 构造 reaction 和 forcing，local CP 读取
+SDF 是很强的 oracle-like geometry baseline。第二次尝试同时移除 SDF，问
+边界积分能否从 boundary set 恢复 coordinate-only CP 缺失的几何：
+
+| 模型 | ID NRMSE | 2-hole OOD NRMSE |
+|---|---:|---:|
+| coordinate-only CP | **0.2703** | **0.2743** |
+| boundary integral CP，不读 SDF | 0.2713 | 0.2781 |
+
+答案仍是否定的。根据“两次失败就停止”的约束，本轮不再增加 attention、
+source-aware kernel 或更多 token，也不把偶然的 2.6% OOD 改善写成正结果。
+
+### R3 当时提出的 fallback（已在 R4 否定）
+
+R3 后可依赖的方法已回到 **geometry-coordinate functional CP**：连续空间
+factor 读取坐标、ambient SDF、source-relative distance，source 与物理参数
+保留独立 factor。若需要一个最小但真正不同于普通 functional CP 的下一步，
+只考虑域级 rank modulation：
+
+\[
+\widehat u_\Omega(s,p,x)=\sum_r a_r(s)b_r(p)
+g_r(q_\Omega)c_r(x,d_\Omega(x),s),
+\]
+
+其中 \(q_\Omega\) 只能由很小的 boundary DeepSets encoder 产生，\(g_r\)
+只做 rank-wise gate，不生成完整空间场。它的价值在于给“同一个低秩字典在
+不同拓扑上激活哪些 rank”一个清楚解释，参数和过拟合风险都远小于 FNO。
+R4 已按这个 formulation 实现，并与 7-stat descriptor gate 比较；结果没有
+通过 paired-seed 门槛，因此它现在只是保留的消融，而非后续主方法。
+
+代码与结果：
+
+- `src/geoaware/geometry_no_tensor.py`：typed boundary quadrature tokens 与
+  `BoundaryOperatorFunctionalCP`；
+- `papers/four_tracks/results/track4_boundary_operator_r3_seed0.json`；
+- `papers/four_tracks/results/track4_boundary_operator_no_sdf_r3_seed0.json`。
+
+---
+
+## 前一轮结论：48-domain Geometry-NO R1 与残差 R2
 
 用户最新反馈允许 CP、Tucker 或 TT，真正需要检验的是：能否用 neural
 operator 读取完整不规则域，再用低秩 neural tensor 在极少标签下抑制
@@ -695,7 +836,7 @@ boundary NRMSE 使用 boundary subset 自己的 std。这能描述区域内相�
 
 1. **真实 CP warm start + off-diagonal residual core**；
 2. 把 interior distance 改为明确的 ambient signed distance，并区分 outer/hole component；
-3. 新增极小 boundary-point DeepSets encoder，与 7-stat descriptor 做正面对照；
+3. 极小 boundary-point DeepSets encoder 已与 7-stat descriptor 对照，结果为负；
 4. 如前三项为正，再尝试 4-way Tucker，比较 joint \((s,x)\) factor 与 separate source/query factors；
 5. 暂不加入 attention、learned geodesic、PDE loss 或多个复杂 geometry tokens。
 
@@ -756,6 +897,10 @@ boundary NRMSE 使用 boundary subset 自己的 std。这能描述区域内相�
 - Geo-FNO: <https://arxiv.org/abs/2207.05209>
 - Geo-FNO 官方实现: <https://github.com/neuraloperator/Geo-FNO>
 - MG-TFNO（分解的是 operator parameter tensor）: <https://arxiv.org/abs/2310.00120>
+- Boundary-Augmented Neural Operators: <https://openreview.net/forum?id=DqZoWaDwfN>
+- Learning Only On Boundaries: <https://arxiv.org/abs/2308.12939>
+- BI-GreenNet: <https://arxiv.org/abs/2204.13247>
+- Geometric Generalization from a Kernel Integral Perspective: <https://arxiv.org/abs/2602.01498>
 - Transolver (ICML 2024): <https://icml.cc/virtual/2024/poster/33751>
 - Transolver 官方实现: <https://github.com/thuml/Transolver>
 - AirfRANS: <https://arxiv.org/abs/2212.07564>
@@ -764,6 +909,40 @@ boundary NRMSE 使用 boundary subset 自己的 std。这能描述区域内相�
 ---
 
 ## 12. 可复现入口
+
+Boundary-DeepSets rank modulation R4：
+
+```bash
+for seed in 0 1 2; do
+  PYTHONPATH=.python-packages:src python3 \
+    experiments/track4_geometry_no_tensor_r1.py \
+    --seed "$seed" --steps 400 \
+    --models coordinate_sdf_cp descriptor_rank_gated_cp \
+             boundary_deepsets_rank_gated_cp wrong_boundary_rank_gated_cp \
+    --output "papers/four_tracks/results/track4_rank_modulation_r4_seed${seed}.json"
+done
+```
+
+Boundary-operator R3 seed-0 gate：
+
+```bash
+PYTHONPATH=.python-packages:src python3 \
+  experiments/track4_geometry_no_tensor_r1.py \
+  --seed 0 --steps 400 \
+  --models coordinate_sdf_cp boundary_integral_cp boundary_pooled_cp \
+           boundary_integral_outer_only_cp boundary_integral_wrong_type_cp \
+  --output papers/four_tracks/results/track4_boundary_operator_r3_seed0.json
+```
+
+移除 SDF 的第二次机制 sanity：
+
+```bash
+PYTHONPATH=.python-packages:src python3 \
+  experiments/track4_geometry_no_tensor_r1.py \
+  --seed 0 --steps 400 \
+  --models coordinate_only_cp boundary_integral_no_sdf_cp \
+  --output papers/four_tracks/results/track4_boundary_operator_no_sdf_r3_seed0.json
+```
 
 最新 Geometry-NO R1（每个 seed 固定 400 steps）：
 

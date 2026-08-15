@@ -1,6 +1,6 @@
 # 方向 3 技术报告：Domain-kernel Bayesian Functional Tucker
 
-> 状态（2026-08-15 更新）：**显式 finite-feature variational GP 已实现；纯 GP 是负信号，neural mean + intrinsic GP residual 是新的条件正信号。** 新版本有明确的 \(q(u)\)、Gaussian prior/likelihood、KL、mini-batch ELBO、posterior variance 和 exact finite-GP 对照。它是严格的有限秩 GP hybrid，但还不是最终的 Bayesian functional Tucker。
+> 状态（2026-08-15 R4 更新）：**显式 finite-feature variational GP、四类几何 kernel dictionary 和 ELBO 学习的非负 kernel mixture 均已实现。** 方法友好的 matched/near-matched sanity 为强正信号；现有 elliptic 数据上，纯 GP mixture 有小幅收益，但 neural tensor + GP residual 的三 seed 收益不稳定。因此当前结论是“kernel selection 机制跑通，真实 PDE 泛化仍为条件 GO”，不是已经完成 Bayesian functional Tucker。
 
 ## 0. 先给结论
 
@@ -550,7 +550,7 @@ GINO、Geo-FNO、DAFNO/相关 arbitrary-domain operator 并非 Bayesian tensor b
 6. exact finite-GP posterior 在观测附近收缩 variance；
 7. mini-batch ELBO 数值有限且可反向传播。
 
-通过情况：`10 passed`（方向 3 定向测试）。
+通过情况：R4 后为 `13 passed`（方向 3 定向测试；新增 heat sign-invariance、graph-geodesic barrier 和 mixture feature-map/PSD 等价性）。
 
 更完整 Bayesian implementation 还必须新增：
 
@@ -667,4 +667,107 @@ GINO、Geo-FNO、DAFNO/相关 arbitrary-domain operator 并非 Bayesian tensor b
 
 ## 15. 最诚实的一句话进度
 
-我们已经完成最小但真实的 GP posterior 闭环；纯 GP 不够强，但“共享 neural tensor mean + intrinsic GP residual”在单一未见 validation geometry 上三 seed 稳定改善 point error 和 NLL。下一步必须扩大冻结形状协议并修正 under-coverage；在此之前它是条件 GO，不是论文结论。
+我们已经完成最小但真实的 GP posterior 闭环和可由 ELBO 近似选择的几何 kernel dictionary；在专门检验 kernel 机制的数据上结果清楚，但换成两个未见 geometry 的 elliptic validation 后，neural tensor residual 的收益不再稳定。下一步应优先改数据覆盖和 new-domain few-shot，而不是继续堆更复杂的 variational family。
+
+## 16. R4：丰富 geometry-aware kernel 与三层数据审计
+
+### 16.1 小而明确的 kernel dictionary
+
+本轮不再把所有“几何感知”压在一个 Matérn-like section 上，而是固定相同 Laplacian、source、参数 feature budget 和 ELBO 推理，只替换 covariance family：
+
+| Family | section / covariance | 它提取的几何信息 |
+|---|---|---|
+| `matern_resolvent` | \((I+\alpha L_\Omega)^{-3/2}\) | 多尺度低频平滑、边界条件和 topology 改变的全局谱结构 |
+| `heat_diffusion` | \(\exp(-tL_\Omega)\) | 在给定 diffusion time 内沿合法域路径传播的可达性 |
+| `geodesic_rbf` | \(\exp[-d_{G_\Omega}(x,s)^2/(2\ell^2)]\) | mesh graph 内最短路径；不会穿过墙或孔洞 shortcut |
+| `euclidean_rbf` | \(\exp[-\|x-s\|^2/(2\ell^2)]\) | ambient proximity control；不知道墙和孔洞 |
+
+所有 family 都输出 5 个 source-centred sections，再与 5 个固定 parameter RBF features 做 tensor product，因此单 kernel 都是 25 维。这里的 heat kernel 是 graph Laplacian 的有限谱近似；Matérn/resolvent 是同一算子的另一种 spectral response。两者不是改名后的同一个 kernel。
+
+四个 kernel 通过一个严格 PSD 的非负 mixture 合并：
+
+\[
+k_{\mathrm{mix}}=\sum_{q=1}^4 w_q k_q,\qquad
+w=\operatorname{softmax}(\eta),
+\]
+
+对应 feature map 是
+
+\[
+\Phi_{\mathrm{mix}}=[\sqrt{w_1}\Phi_1,\ldots,\sqrt{w_4}\Phi_4].
+\]
+
+whitened coefficients 仍采用 \(u\sim\mathcal N(0,I)\)，full-covariance \(q(u)\) 与 mixture logits \(\eta\) 一起用 mini-batch ELBO+SGD 优化。这样 prior、feature map、PSD 性和 ELBO 都是显式的。它只是连续 evidence-based weighting，不能夸大成自动发现唯一真实物理 kernel。
+
+实现位置：
+
+- `src/geoaware/domain_kernels.py`：heat、resolvent、graph-geodesic 和 Euclidean sections；
+- `src/geoaware/variational_domain_gp.py`：`NonnegativeKernelMixture`；
+- `experiments/track3_geometry_kernel_dictionary.py`：三层数据和 pure-GP dictionary；
+- `experiments/track3_kernel_mixture_neural_residual.py`：neural CP mean + GP residual；
+- `experiments/dataset_splits/track3_kernel_dictionary.json`：新的 3-train/2-validation/1-frozen-test split。
+
+### 16.2 为什么需要三层数据
+
+为了区分“代码能不能识别 kernel”与“真实 PDE 一定符合这个 kernel”，本轮固定 1% train-only entry observations、3 seeds、400 steps，并建立三层证据：
+
+1. **Matched intrinsic-GP sanity**：在每个 geometry 上用相同的 heat feature coefficients 生成 shared-function GP sample，再加固定 3% noise。它故意 fitting 本方法，只回答 ELBO 是否能从 dictionary 找回正确 family；不能作为通用性能证据。
+2. **Near-matched operator sanity**：生成器使用 dictionary 中没有的 noninteger eigenvalue warping、midway diffusion times，再混入 20% 非线性 resolvent component 和固定 5% noise。它检验 dictionary 能否近似一个邻近但不完全相同的 operator。
+3. **Mismatched elliptic PDE**：保留原 screened elliptic solver 的 field，不为方法重造 truth。这一层才检验实际 simulator 上是否仍有增益。
+
+新的 split 为 `l_shape/u_notch/wavy_three_lobe` 训练，`dumbbell/slanted_channel` 验证。`wavy_with_hole` 保持冻结且本轮未读取。kernel construction、normalization、checkpoint 和 mixture weights 均不读取 validation target。
+
+### 16.3 Pure GP dictionary：3 seeds 结果
+
+验证 NRMSE（mean±population std）：
+
+| Layer | Matern/resolvent | Heat | Geodesic RBF | Euclidean RBF | Learned mixture |
+|---|---:|---:|---:|---:|---:|
+| matched sanity | `0.1262±0.0034` | `0.0741±0.0015` | `0.4258±0.0393` | `0.3679±0.0278` | **`0.0725±0.0046`** |
+| near-matched | `0.2406±0.0074` | `0.1914±0.0039` | `0.4819±0.0317` | `0.4192±0.0202` | **`0.1432±0.0096`** |
+| elliptic PDE | `0.3815±0.0191` | `0.3473±0.0162` | `0.3779±0.0103` | `0.3251±0.0028` | **`0.3116±0.0055`** |
+
+matched sanity 中学到的平均 mixture weights 为：Matern `0.329`、heat `0.519`、geodesic `0.069`、Euclidean `0.082`。因此 ELBO 确实把最高权重放回了生成 heat family；它没有变成 one-hot，这是因为截断后的 heat 与 resolvent features 强相关，而且 ELBO 同时优化 posterior/noise。
+
+near-matched 中 heat 仍取得最高平均权重 `0.477`，mixture 又明显优于任一单 kernel，说明多个近似 filter 可以补偿 generator 与 dictionary 的 mismatch。这是本轮最清楚的方法机制正信号。
+
+elliptic 层的结论必须保守：单 kernel 最强的是 Euclidean RBF，不是 intrinsic kernel。mixture 从 Euclidean 的 `0.3251` 小幅改善到 `0.3116`，但不足以证明“不规则域 kernel 普遍优于 Euclidean”。它只说明 kernel combination 在 pure finite-GP 下有一点互补性。
+
+### 16.4 Neural tensor mean + GP residual
+
+为了检查 kernel dictionary 是否还能作为 neural tensor residual，本轮在同一新 split 上比较：
+
+| Model | Validation NRMSE | Boundary NRMSE |
+|---|---:|---:|
+| neural CP mean only | `0.2073±0.0105` | `0.2286±0.0202` |
+| + Matern GP | `0.2174±0.0256` | `0.2463±0.0279` |
+| + heat GP | **`0.1985±0.0267`** | **`0.2232±0.0272`** |
+| + learned mixture GP | `0.2054±0.0275` | `0.2329±0.0333` |
+
+三 seed 平均上 heat residual 略好，但只在部分 seed 改善；learned mixture 与 mean-only 基本持平且方差更大。这推翻了旧单一 validation geometry 上“intrinsic residual 三 seed 稳定改善”的强表述。最可能的问题不是 ELBO 没实现，而是：
+
+- 只有 3 个训练 geometry，shared neural mean 与 residual 容易争夺同一信号；
+- 当前是 zero-shot validation，domain-local GP residual 没有新域 target observation 可做 posterior adaptation；
+- train-observed ELBO 可以选择训练域 kernel，却不保证选择对新 topology 最稳的 kernel；
+- full-covariance 100 维 mixture 在 400 steps 下比单 kernel 更难优化。
+
+因此下一步最小实验应是 **new-domain few-shot**：先冻结 shared neural CP mean，再用验证域 0.1%/0.5%/1% sensors 只更新小 GP posterior和 mixture weights；同时增加 20–50 个训练 geometry。若 residual 在这种真正适合 GP 的任务上仍不稳定，就应把方向 3 降级为 kernel sanity / UQ 子项目，而不是继续堆更复杂的 VI。
+
+原始结果：
+
+- `papers/four_tracks/results/track3_kernel_dictionary_seed{0,1,2}.json`
+- `papers/four_tracks/results/track3_kernel_dictionary_summary.json`
+- `papers/four_tracks/results/track3_kernel_mixture_neural_residual_seed{0,1,2}.json`
+
+### 16.5 新增测试与文献边界
+
+定向测试新增：heat sections 的 eigenvector-sign invariance、graph geodesic 不穿墙、nonnegative mixture 的 simplex/PSD feature-map 等价性。方向 3 当前定向测试为 `13 passed`。
+
+理论定位参考以下一手工作：
+
+- [Matérn Gaussian Processes on Graphs, AISTATS 2021](https://proceedings.mlr.press/v130/borovitskiy21a.html)：graph Laplacian 上 Matérn covariance 的定义与谱计算；
+- [Graph Based Gaussian Processes on Restricted Domains](https://arxiv.org/abs/2010.07242)：有限 graph Laplacian heat kernel 对复杂 restricted domains 的表示；
+- [Intrinsic Gaussian Processes on Complex Constrained Domains](https://arxiv.org/abs/1801.01061)：利用 intrinsic/path geometry 避免 ambient kernel 穿越 domain barriers；
+- [Scalable Bayesian inference for heat kernel Gaussian processes on manifolds](https://arxiv.org/abs/2405.13342)：heat-kernel GP 的可扩展近似背景。
+
+本轮 novelty 不放在“发明 kernel mixture”；非负 covariance combination 是标准构造。论文可能成立的贡献点应是：**geometry-aware kernel dictionary 如何作为 sparse neural-tensor residual，配合 ELBO 在不规则域和新域 few-shot 下进行选择与不确定性推断。**

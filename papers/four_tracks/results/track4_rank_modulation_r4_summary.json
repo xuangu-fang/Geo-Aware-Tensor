@@ -1,0 +1,53 @@
+{
+  "experiment_id": "TRACK4-RANK-MODULATION-R4-3SEED-SUMMARY",
+  "status": "VALIDATION_ONLY_NEGATIVE",
+  "protocol": {
+    "seeds": [0, 1, 2],
+    "steps_per_seed": 400,
+    "observation_ratio": 0.01,
+    "train_geometries": 48,
+    "id_validation_geometries": 8,
+    "topology_ood_validation_geometries": 8,
+    "test_read": false
+  },
+  "metrics": {
+    "coordinate_sdf_cp": {
+      "id_nrmse_mean": 0.24798215,
+      "id_nrmse_sample_std": 0.00579156,
+      "topology_ood_nrmse_mean": 0.25525292,
+      "topology_ood_nrmse_sample_std": 0.00597300,
+      "topology_ood_boundary_nrmse_mean": 0.26541454,
+      "topology_ood_boundary_nrmse_sample_std": 0.00529001
+    },
+    "descriptor_rank_gated_cp": {
+      "id_nrmse_mean": 0.24854407,
+      "id_nrmse_sample_std": 0.00592504,
+      "topology_ood_nrmse_mean": 0.25473528,
+      "topology_ood_nrmse_sample_std": 0.00494230,
+      "topology_ood_boundary_nrmse_mean": 0.26457188,
+      "topology_ood_boundary_nrmse_sample_std": 0.00448768
+    },
+    "boundary_deepsets_rank_gated_cp": {
+      "id_nrmse_mean": 0.25330071,
+      "id_nrmse_sample_std": 0.00859927,
+      "topology_ood_nrmse_mean": 0.25502240,
+      "topology_ood_nrmse_sample_std": 0.00202057,
+      "topology_ood_boundary_nrmse_mean": 0.26424056,
+      "topology_ood_boundary_nrmse_sample_std": 0.00256232
+    },
+    "wrong_boundary_rank_gated_cp": {
+      "id_nrmse_mean": 0.25397638,
+      "id_nrmse_sample_std": 0.00860152,
+      "topology_ood_nrmse_mean": 0.26708933,
+      "topology_ood_nrmse_sample_std": 0.01863887,
+      "topology_ood_boundary_nrmse_mean": 0.27766803,
+      "topology_ood_boundary_nrmse_sample_std": 0.01756944
+    }
+  },
+  "paired_checks": {
+    "boundary_deepsets_beats_coordinate_sdf_on_topology_ood": "1/3 seeds",
+    "boundary_deepsets_beats_descriptor_gate_on_topology_ood": "1/3 seeds",
+    "correct_boundary_beats_wrong_boundary_on_topology_ood": "2/3 seeds"
+  },
+  "decision": "NO-GO: retain coordinate/SDF CP; rank modulation is an ablation, not a method contribution"
+}

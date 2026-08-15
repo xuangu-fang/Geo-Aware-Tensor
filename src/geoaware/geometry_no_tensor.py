@@ -44,6 +44,89 @@ def ambient_geometry_bundle(mask: np.ndarray) -> np.ndarray:
     ])
 
 
+def boundary_token_bundle(mask: np.ndarray, geometry: np.ndarray | None = None,
+                          max_tokens: int = 192) -> np.ndarray:
+    """Sample a deterministic, typed quadrature cloud on every boundary.
+
+    Each row contains ``(x, y, nx, ny, component_type, curvature, weight)``.
+    ``component_type`` is -1 on the exterior boundary and +1 on hole
+    boundaries.  The final entry is a per-component normalized quadrature
+    weight, so adding a hole does not silently dilute the exterior integral.
+    This routine uses only the domain mask and never reads solution values.
+    """
+    if mask.ndim != 2 or mask.dtype != np.bool_:
+        raise ValueError("mask must be a two-dimensional boolean array")
+    if max_tokens < 8:
+        raise ValueError("max_tokens must be at least 8")
+    geometry = ambient_geometry_bundle(mask) if geometry is None else geometry
+    if geometry.shape[1:] != mask.shape:
+        raise ValueError("geometry and mask resolutions do not match")
+
+    outside_labels, _ = ndimage.label(~mask)
+    exterior_label = int(outside_labels[0, 0])
+    interface = mask & ~ndimage.binary_erosion(mask)
+    coordinates = geometry[5:7]
+    normal_x, normal_y = geometry[3], geometry[4]
+    spacing = 2.0 / max(mask.shape[0]-1, mask.shape[1]-1)
+    curvature = (np.gradient(normal_x, spacing, axis=0)
+                 + np.gradient(normal_y, spacing, axis=1))
+
+    # Assign each active interface pixel to the adjacent outside component.
+    component = np.zeros_like(outside_labels)
+    for di, dj in ((1, 0), (-1, 0), (0, 1), (0, -1),
+                   (1, 1), (1, -1), (-1, 1), (-1, -1)):
+        shifted = np.roll(np.roll(outside_labels, di, axis=0), dj, axis=1)
+        choose = interface & (component == 0) & (shifted > 0)
+        component[choose] = shifted[choose]
+    labels = sorted(int(value) for value in np.unique(component[interface])
+                    if value > 0)
+    if not labels:
+        raise ValueError("mask has no detectable boundary")
+
+    # Give every component a minimum representation, then distribute the rest
+    # approximately in proportion to its pixel perimeter.
+    groups = [np.argwhere(interface & (component == label)) for label in labels]
+    minimum = min(12, max_tokens // len(groups))
+    remaining = max_tokens - minimum*len(groups)
+    total = sum(len(group) for group in groups)
+    budgets = [minimum + int(remaining*len(group)/total) for group in groups]
+    for index in range(max_tokens-sum(budgets)):
+        budgets[index % len(budgets)] += 1
+
+    rows = []
+    for label, pixels, budget in zip(labels, groups, budgets):
+        if len(pixels) > budget:
+            # Deterministic uniform sampling after ordering by polar angle
+            # around this component.  This avoids a raster-scan directional
+            # bias while keeping protocol repeats bitwise stable.
+            center = pixels.mean(0)
+            angle = np.arctan2(pixels[:, 1]-center[1], pixels[:, 0]-center[0])
+            ordered = pixels[np.argsort(angle)]
+            selection = np.linspace(0, len(ordered), budget,
+                                    endpoint=False).astype(int)
+            pixels = ordered[selection]
+        kind = -1.0 if label == exterior_label else 1.0
+        weight = 1.0/max(1, len(pixels))
+        for i, j in pixels:
+            rows.append([coordinates[0, i, j], coordinates[1, i, j],
+                         normal_x[i, j], normal_y[i, j], kind,
+                         np.clip(curvature[i, j]*spacing, -2., 2.), weight])
+    return np.asarray(rows, dtype=np.float32)
+
+
+def handcrafted_geometry_descriptor(mask: np.ndarray,
+                                    geometry: np.ndarray) -> np.ndarray:
+    """Seven low-order domain statistics for a method-matched gate baseline."""
+    active_distance = geometry[2, mask]
+    _, outside_components = ndimage.label(~mask)
+    # The exterior is one outside component; all remaining components are holes.
+    holes = max(0, outside_components-1)
+    return np.asarray([
+        mask.mean(), active_distance.mean(), active_distance.std(),
+        *np.quantile(active_distance, [.25, .5, .75]), holes/3.,
+    ], dtype=np.float32)
+
+
 class SpectralConv2d(nn.Module):
     """A compact FNO spectral convolution with resolution-safe mode clipping."""
 
@@ -170,8 +253,10 @@ class GeometryNODenseHead(nn.Module):
 class CoordinateSDFFunctionalCP(nn.Module):
     """No-operator CP baseline using only pointwise coordinates and SDF."""
 
-    def __init__(self, rank: int = 20, hidden: int = 48):
+    def __init__(self, rank: int = 20, hidden: int = 48,
+                 use_sdf: bool = True):
         super().__init__()
+        self.use_sdf = bool(use_sdf)
         self.source_factor = _factor_mlp(2, rank, hidden)
         self.parameter_factor = _factor_mlp(2, rank, hidden)
         self.space_factor = _factor_mlp(6, rank, hidden)
@@ -184,11 +269,164 @@ class CoordinateSDFFunctionalCP(nn.Module):
         parameter_features = torch.stack([value, torch.log(value)], 1)
         xy = case["coordinates"].to(indices.device)[node]
         sdf = case["active_sdf"].to(indices.device)[node, None]
+        if not self.use_sdf:
+            sdf = torch.zeros_like(sdf)
         distance = torch.linalg.vector_norm(xy - source_xy, dim=1, keepdim=True)
         spatial = torch.cat([xy, sdf, source_xy, distance], 1)
         return (self.source_factor(source_xy)
                 * self.parameter_factor(parameter_features)
                 * self.space_factor(spatial) * self.weight).sum(1)
+
+
+class BoundaryOperatorFunctionalCP(nn.Module):
+    """Low-capacity boundary-operator-conditioned functional CP.
+
+    A shared query-to-boundary kernel constructs one correction per CP rank.
+    This is a tensor bottleneck, not a general neural operator: the boundary
+    branch can affect the field only through the rank-wise spatial factors
+    shared across source and physical-parameter modes.
+
+    ``operator`` selects the method and two causal controls. ``integral`` uses
+    query-boundary displacement, normal alignment and boundary type;
+    ``pooled`` removes query-boundary interaction while retaining a DeepSets
+    summary; ``integral_outer_only`` drops all hole tokens.
+    """
+
+    def __init__(self, rank: int = 20, hidden: int = 48,
+                 operator: str = "integral", initial_gate: float = .05,
+                 use_sdf: bool = True):
+        super().__init__()
+        if operator not in {"integral", "pooled", "integral_outer_only",
+                            "integral_wrong_type"}:
+            raise ValueError(f"unknown boundary operator: {operator}")
+        self.operator = operator
+        self.use_sdf = bool(use_sdf)
+        self.source_factor = _factor_mlp(2, rank, hidden)
+        self.parameter_factor = _factor_mlp(2, rank, hidden)
+        self.local_factor = _factor_mlp(6, rank, hidden)
+        self.token_value = nn.Sequential(
+            nn.Linear(6, hidden//2), nn.GELU(), nn.Linear(hidden//2, rank))
+        # A compact learned Green-like radial kernel.  Positive length scales
+        # make the inductive bias explicit and stable under sparse supervision.
+        self.raw_lengthscale = nn.Parameter(
+            torch.linspace(-2.5, -.2, rank))
+        self.normal_gate = nn.Parameter(torch.zeros(rank))
+        self.type_gate = nn.Parameter(torch.zeros(rank))
+        self.integral_mix = nn.Sequential(
+            nn.Linear(4, hidden//2), nn.GELU(), nn.Linear(hidden//2, rank))
+        self.weight = nn.Parameter(torch.ones(rank) / math.sqrt(rank))
+        self.operator_gate = nn.Parameter(torch.tensor(float(initial_gate)))
+
+    def _integral_basis(self, xy: torch.Tensor, tokens: torch.Tensor) -> torch.Tensor:
+        if self.operator == "integral_outer_only":
+            tokens = tokens[tokens[:, 4] < 0]
+        if self.operator == "integral_wrong_type":
+            tokens = tokens.clone()
+            tokens[:, 4] = -tokens[:, 4]
+        token_features = tokens[:, :6]
+        token_value = self.token_value(token_features)
+        weights = tokens[:, 6]
+        if self.operator == "pooled":
+            pooled = (token_value * weights[:, None]).sum(0)
+            return pooled[None].expand(len(xy), -1)
+
+        delta = xy[:, None, :] - tokens[None, :, :2]
+        distance = torch.linalg.vector_norm(delta, dim=2).clamp_min(1e-5)
+        direction = delta/distance[:, :, None]
+        alignment = (direction*tokens[None, :, 2:4]).sum(2)
+        pair = torch.stack([distance, alignment, tokens[None, :, 4].expand_as(distance),
+                            tokens[None, :, 5].expand_as(distance)], 2)
+        learned_pair = self.integral_mix(pair)
+        lengthscale = torch.nn.functional.softplus(self.raw_lengthscale) + .03
+        radial = torch.exp(-distance[:, :, None]/lengthscale)
+        orientation = (1. + torch.tanh(self.normal_gate)[None, None]*alignment[:, :, None])
+        boundary_type = (1. + torch.tanh(self.type_gate)[None, None]
+                         * tokens[None, :, 4:5])
+        kernel = radial*orientation*boundary_type
+        return ((token_value[None] + learned_pair)*kernel
+                * weights[None, :, None]).sum(1)
+
+    def forward_case(self, case: dict, indices: torch.Tensor) -> torch.Tensor:
+        source, parameter, node = indices.T
+        device = indices.device
+        source_xy = case["source_xy"].to(device)[source]
+        value = case["parameters"].to(device)[parameter]
+        parameter_features = torch.stack([value, torch.log(value)], 1)
+        xy = case["coordinates"].to(device)[node]
+        sdf = case["active_sdf"].to(device)[node, None]
+        if not self.use_sdf:
+            sdf = torch.zeros_like(sdf)
+        distance = torch.linalg.vector_norm(xy-source_xy, dim=1, keepdim=True)
+        local = self.local_factor(torch.cat([xy, sdf, source_xy, distance], 1))
+
+        unique_node, inverse = torch.unique(node, sorted=False,
+                                            return_inverse=True)
+        unique_xy = case["coordinates"].to(device)[unique_node]
+        correction = self._integral_basis(
+            unique_xy, case["boundary_tokens"].to(device))[inverse]
+        spatial = local + self.operator_gate*correction
+        return (self.source_factor(source_xy)
+                * self.parameter_factor(parameter_features)
+                * spatial*self.weight).sum(1)
+
+
+class RankModulatedCoordinateCP(nn.Module):
+    """Geometry-coordinate CP with one small domain-level rank gate.
+
+    ``descriptor`` uses seven handcrafted statistics. ``boundary`` uses a
+    permutation-invariant DeepSets embedding of typed boundary tokens.
+    ``wrong_boundary`` has identical parameters but reads a cyclically
+    mismatched boundary set supplied by the experiment protocol.
+    """
+
+    def __init__(self, rank: int = 20, hidden: int = 48,
+                 conditioning: str = "boundary", set_width: int = 16,
+                 initial_gate: float = .05):
+        super().__init__()
+        if conditioning not in {"descriptor", "boundary", "wrong_boundary"}:
+            raise ValueError(f"unknown rank conditioning: {conditioning}")
+        self.conditioning = conditioning
+        self.source_factor = _factor_mlp(2, rank, hidden)
+        self.parameter_factor = _factor_mlp(2, rank, hidden)
+        self.space_factor = _factor_mlp(6, rank, hidden)
+        if conditioning == "descriptor":
+            self.gate_network = nn.Sequential(
+                nn.Linear(7, set_width), nn.GELU(), nn.Linear(set_width, rank))
+        else:
+            self.token_encoder = nn.Sequential(
+                nn.Linear(6, set_width), nn.GELU(),
+                nn.Linear(set_width, set_width), nn.GELU())
+            self.gate_network = nn.Linear(2*set_width, rank)
+        self.modulation_scale = nn.Parameter(torch.tensor(float(initial_gate)))
+        self.weight = nn.Parameter(torch.ones(rank) / math.sqrt(rank))
+
+    def domain_gate(self, case: dict, device: torch.device) -> torch.Tensor:
+        if self.conditioning == "descriptor":
+            inputs = case["geometry_descriptor"].to(device)
+        else:
+            key = ("wrong_boundary_tokens" if self.conditioning == "wrong_boundary"
+                   else "boundary_tokens")
+            tokens = case[key].to(device)
+            embedding = self.token_encoder(tokens[:, :6])
+            weighted_sum = (embedding*tokens[:, 6:7]).sum(0)
+            maximum = embedding.max(0).values
+            inputs = torch.cat([weighted_sum, maximum])
+        return 1. + self.modulation_scale*torch.tanh(self.gate_network(inputs))
+
+    def forward_case(self, case: dict, indices: torch.Tensor) -> torch.Tensor:
+        source, parameter, node = indices.T
+        device = indices.device
+        source_xy = case["source_xy"].to(device)[source]
+        value = case["parameters"].to(device)[parameter]
+        parameter_features = torch.stack([value, torch.log(value)], 1)
+        xy = case["coordinates"].to(device)[node]
+        sdf = case["active_sdf"].to(device)[node, None]
+        distance = torch.linalg.vector_norm(xy-source_xy, dim=1, keepdim=True)
+        spatial = self.space_factor(torch.cat([xy, sdf, source_xy, distance], 1))
+        gate = self.domain_gate(case, device)
+        return (self.source_factor(source_xy)
+                * self.parameter_factor(parameter_features)
+                * spatial*gate[None]*self.weight).sum(1)
 
 
 class CoordinateSDFPlusGeometryNOCP(nn.Module):

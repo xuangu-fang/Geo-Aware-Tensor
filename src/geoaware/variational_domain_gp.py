@@ -9,6 +9,7 @@ the mini-batch Gaussian ELBO.  No neural network weights are called a GP.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 import math
 
 import torch
@@ -112,6 +113,7 @@ class FiniteFeatureVariationalGP(nn.Module):
         variance = (features @ cholesky).square().sum(1).clamp_min(1e-12)
         return mean, variance
 
+
     def negative_elbo(
         self,
         features: torch.Tensor,
@@ -156,6 +158,44 @@ class FiniteFeatureVariationalGP(nn.Module):
         if include_noise:
             variance = variance + self.noise_std.square()
         return mean, variance
+
+
+class NonnegativeKernelMixture(nn.Module):
+    """Simplex-weighted sum of finite kernels with an auditable feature map.
+
+    Given family features ``Phi_q``, this module returns the concatenation
+    ``[sqrt(w_q) Phi_q]_q`` where ``w=softmax(logits)``.  With the standard
+    Gaussian coefficient prior this is exactly the PSD kernel
+    ``sum_q w_q Phi_q Phi_q^T``.  The logits may be optimized jointly with the
+    variational posterior by the same ELBO; this is evidence-based kernel
+    selection, not a discrete model-selection claim.
+    """
+
+    def __init__(self, family_names: Sequence[str]):
+        super().__init__()
+        if not family_names or len(set(family_names)) != len(family_names):
+            raise ValueError("family_names must be nonempty and unique")
+        self.family_names = tuple(family_names)
+        self.logits = nn.Parameter(torch.zeros(len(self.family_names)))
+
+    def weights(self) -> torch.Tensor:
+        return torch.softmax(self.logits, dim=0)
+
+    def forward(self, features: dict[str, torch.Tensor]) -> torch.Tensor:
+        if tuple(features) != self.family_names:
+            raise ValueError("feature dictionary order/names do not match mixture")
+        rows = {len(value) for value in features.values()}
+        if len(rows) != 1 or any(value.ndim != 2 for value in features.values()):
+            raise ValueError("all family features must be 2D with equal row count")
+        weights = self.weights()
+        return torch.cat([
+            features[name] * weights[index].sqrt()
+            for index, name in enumerate(self.family_names)
+        ], dim=1)
+
+    def weight_dict(self) -> dict[str, float]:
+        values = self.weights().detach().cpu().tolist()
+        return dict(zip(self.family_names, values, strict=True))
 
 
 @torch.no_grad()

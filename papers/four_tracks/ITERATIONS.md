@@ -112,3 +112,30 @@
 - 3 seeds×400 steps、1% labels、所有模型共享同一 case schedule：coordinate/SDF CP `0.2480±0.0047 / 0.2553±0.0049`（ID/OOD）；最佳 unmasked geometry-NO-CP `0.2840±0.0065 / 0.2958±0.0029`；masked geometry-NO-CP `0.3437±0.0186 / 0.3669±0.0130`；同 encoder dense head `0.7296±0.0300 / 0.7738±0.0218`。
 - NO observed loss 更低但 validation 更差，属于明确稀疏过拟合；一次小门控 NO residual 修正仍未超过 CP，停止继续加深。
 - 当前可保留的结论是 geometry-conditioned low-rank CP 有效；FNO 融合只是可复现实验接口和负信号。
+
+### 方向 1：2%--10% observation-ratio phase curve
+
+- 锁定 3 seeds、500 steps、random cold start，只使用 2%/5%/10%；五个模型共享 mask、noise、observed-only normalization 和预算。
+- aligned truth：Operator Tucker 从 `0.2582±0.0718`（2%）降至 `0.0765±0.0142`（10%），作为实现 sanity 为正。
+- 35% format/local mismatch：2% 时 Operator Tucker `0.4517±0.0461` 与 Neural F-Tucker `0.4546±0.0183` 基本持平；5%/10% 最佳改为 Operator CP `0.2723±0.0254 / 0.2160±0.0115`。实用识别阈值约为 5%，贡献应落在 operator factor space，不应绑死 Tucker core。
+- 强 non-aligned failure control：5%/10% Neural F-CP `0.6711±0.0406 / 0.4889±0.0239`，明显优于 Operator Tucker `0.9715±0.0549 / 0.8224±0.0216`。这确认 operator approximation bias 的边界，不包装成正结果。
+- SIREN 在 mixed truth 上 observed NRMSE 近零但 held-out 仍为 `0.872/0.705/0.526`，而 non-aligned Operator Tucker 连 observed 都无法拟合；前者是 sparse memorization，后者是 basis misspecification。
+- 下一步不再争论“越稀疏越强”，而做 operator mismatch strength × observation ratio 的二维 phase diagram。
+
+## R6：kernel dictionary 与方向 4 收口（2026-08-15）
+
+### 方向 3：geometry-kernel dictionary + ELBO selection
+
+- 统一 1% observations、3 seeds、400 steps、3 train geometries、2 unseen validation geometries；1 个 hole test 冻结未读。
+- kernel dictionary 含 Matérn/resolvent、heat/diffusion、graph-geodesic RBF 与 Euclidean RBF。PSD mixture 使用 `[sqrt(w_q) Phi_q]`，非负权重与 full-covariance `q(u)` 由 mini-batch ELBO+SGD 联合学习。
+- matched heat-GP sanity：mixture `0.0725±0.0046`，单 heat `0.0741`，learned heat weight 平均最高 `0.519`。
+- perturbed near-match：mixture `0.1432±0.0096`，优于单 heat `0.1914`，说明 evidence selection 不只在 exact match 下有效。
+- screened elliptic mismatch：pure mixture `0.3116±0.0055`，Euclidean `0.3251`；neural mean-only `0.2073±0.0105`，+heat residual `0.1985±0.0267`，+mixture residual `0.2054±0.0275`。hybrid 收益跨 seeds 不稳定。
+- 决策：保留“几何 kernel dictionary + variational evidence selection”作为方法主线；matched/near-match 明确标 sanity，不能声称任意 PDE 上超过 neural baseline。
+
+### 方向 4：boundary operator 与 rank modulation 均 NO-GO
+
+- boundary-integral CP seed0：local CP ID/OOD `0.2538/0.2614`，正确 integral `0.2577/0.2546`；但去掉 hole tokens `0.2474/0.2545`、反转 boundary type `0.2569/0.2525`，几何因果不成立。no-SDF sanity 再次失败。
+- fallback Boundary-DeepSets rank gate 在 3 seeds 下为 ID/OOD `0.2533±0.0086 / 0.2550±0.0020`；local CP 为 `0.2480±0.0058 / 0.2553±0.0060`。DeepSets 仅 1/3 seeds 胜 local，正确 boundary 仅 2/3 胜 wrong boundary。
+- Boundary-Augmented NO、BI-GreenNet 等已有工作也意味着“使用边界积分”本身不是新意。
+- 决策：方向 4 正式收口为 geometry-coordinate/SDF functional CP；FNO、boundary integral 和 rank modulation 只保留为可复现负消融，不再增加组件。

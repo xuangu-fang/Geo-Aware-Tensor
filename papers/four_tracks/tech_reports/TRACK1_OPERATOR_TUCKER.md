@@ -1,7 +1,7 @@
 # 方向 1 技术报告：Operator-informed Bayesian Tucker
 
 更新时间：2026-08-15  
-状态：**2% 受控机制实验在公平冷启动预算下为正；1% 不稳定，外部有效性尚未成立。**
+状态：**2%--10% ratio phase curve 已完成；aligned truth 为正，部分失配约从 5% 可识别，强 non-aligned truth 为负。**
 
 ## 0. 先给结论
 
@@ -25,11 +25,12 @@ $K_m$ 定义的有限维 RKHS/GP 空间里。不过，当前实现**没有对因
 1. 在与方法结构高度一致的受控 Tucker tensor 上，2% 观测、结构缺失和高噪声均有明显正信号；
 2. 在不规则椭圆场和 The Well 声学场上，绝对性能或相对性能为负。
 
-本轮进一步把所有模型锁为 3 个 validation seeds、500 次梯度更新和随机初始化。结果确认：
-2% random 下 Operator Tucker 为 `0.2582±0.0718`，明显优于 Neural Functional
-Tucker 的 `0.5704±0.0625`；但 1% random 下前者退化到 `1.2147±0.3165`，
-不如 neural baselines。因而当前故事必须写成“算子先验存在一个可见的样本阈值”，不能笼统写成
-“越稀疏优势越大”。
+本轮进一步把所有模型锁为 3 个 validation seeds、500 次梯度更新和随机初始化。2%--10%
+ratio phase curve 表明：aligned truth 上 Operator Tucker 一直最强；35% format/local mismatch
+下，2% 时它与 Neural Functional Tucker 基本持平，到 5% 后 operator family 才稳定领先；强
+non-aligned truth 上 operator family 在所有 ratios 都落后于 neural functional CP/Tucker。因而当前故事
+必须写成“正确或近似正确的 operator factor space 在达到可识别阈值后降低样本复杂度”，不能笼统写成
+“越稀疏优势越大”或“任意平滑场都受益”。
 
 所以现在最重要的不是继续加组件，而是完成两个验证：
 
@@ -54,7 +55,7 @@ G_{abc}U_1(i_1,a)U_2(i_2,b)U_3(i_3,c).
 - 一个 mode 是有 Dirichlet/Neumann 边界的区间；
 - 一个 mode 是不规则 mesh，其邻接关系和孔洞会改变平滑函数空间。
 
-方向 1 的问题是：**在 0.5%–5% 的极稀疏观测下，已知算子所定义的函数空间，能否降低 Tucker 因子的样本复杂度？**
+方向 1 的问题是：**在不超过 10% 的稀疏观测下，已知且近似正确的算子函数空间，能否降低 tensor factors 的样本复杂度？**
 
 ### 1.2 最小贡献应该只有三个
 
@@ -443,7 +444,68 @@ Operator Tucker 只以约 1% 的平均 NRMSE 优于 Neural F-Tucker，且只赢 
 必须使用真正从更细 operator GP/PDE solver 生成、learner basis 被截断或扰动的数据，不能继续扩写 aligned
 synthetic 的胜利。
 
-### 8.6 active acquisition 是明确负结果
+### 8.6 R5：2%--10% observation-ratio phase curve
+
+![方向 1：observation ratio × operator mismatch phase curve](../results/track1_ratio_phase_summary_r5/heldout_nrmse_phase_curve.png)
+
+图中虚线为 NRMSE=1 的绝对有效性门槛；误差棒来自 3 个冻结 seeds。左、中、右依次为 aligned、35% mixed 与 strong non-aligned truth。
+
+按用户给出的早筛预算，协议锁定为 random mask、3 seeds (`41,42,43`)、500 steps、10% observed-value
+noise、cold start。每个 dataset/seed/ratio 上五个模型共享同一 mask、noise realization、observed-only
+normalization 和训练预算；未观测 entries 只用于最后评估，不用于 checkpoint 或超参选择。以下都是 held-out
+NRMSE（均值±样本标准差）。
+
+**A. aligned operator-Tucker sanity**
+
+| Ratio | Operator Tucker | Operator CP | Neural F-Tucker | Neural F-CP | SIREN |
+|---:|---:|---:|---:|---:|---:|
+| 2% | **0.2582±0.0718** | 0.7680±0.1243 | 0.5706±0.0571 | 0.6118±0.0587 | 0.8362±0.0077 |
+| 5% | **0.1694±0.0704** | 0.2190±0.0197 | 0.4051±0.0432 | 0.4443±0.0405 | 0.6874±0.0055 |
+| 10% | **0.0765±0.0142** | 0.1532±0.0259 | 0.3790±0.0270 | 0.4046±0.0495 | 0.5402±0.0134 |
+
+这是预期的 aligned sanity：正确 operator space 中的 Tucker 在三个 ratios 都明显最好。它说明实现和
+sample-efficiency mechanism 能工作，但仍有 inverse-crime，因此不单独作为论文主证据。
+
+**B. 35% format/local mismatch（当前最接近正面主证据）**
+
+| Ratio | Operator Tucker | Operator CP | Neural F-Tucker | Neural F-CP | SIREN |
+|---:|---:|---:|---:|---:|---:|
+| 2% | **0.4517±0.0461** | 0.6020±0.0432 | 0.4546±0.0183 | 0.4635±0.0267 | 0.8720±0.0085 |
+| 5% | 0.2829±0.0292 | **0.2723±0.0254** | 0.3824±0.0112 | 0.3596±0.0026 | 0.7052±0.0204 |
+| 10% | 0.2500±0.0120 | **0.2160±0.0115** | 0.3693±0.0222 | 0.3330±0.0074 | 0.5256±0.0227 |
+
+2% 时 Operator Tucker 与 Neural F-Tucker 仅差 `0.0029`，不能称优势；5% 和 10% 时 operator
+family 清楚优于 neural tensor baselines，但最佳 decoder 变成 CP。这给出两个比“固定 Tucker 最强”更可靠的
+结论：
+
+1. 对这份部分失配数据，实用可识别阈值约在 **5%**；
+2. 正信号来自 operator-conditioned factor space 多于 dense Tucker core，因此论文方法应允许 Tucker/CP
+   作为 decoder 选择，而不是把贡献绑死在 Tucker。
+
+**C. 强 non-aligned approximation-error sanity**
+
+为避免继续只做 inverse crime，新增一个明确不由 learner basis 生成的连续场：time/range factors 包含
+coordinate warp、localized envelope 和 non-integer phases；periodic factor 包含超过 learner 七阶截断的
+8/9/11 harmonics，并加入非分离 coupled residual。它是故意构造的 failure control，不是假装公开 PDE 数据。
+
+| Ratio | Operator Tucker | Operator CP | Neural F-Tucker | Neural F-CP | SIREN |
+|---:|---:|---:|---:|---:|---:|
+| 2% | 1.3992±0.1533 | 1.5525±0.1792 | 1.3900±0.3302 | 1.2967±0.2407 | **1.0600±0.0107** |
+| 5% | 0.9715±0.0549 | 1.0202±0.0529 | 0.6981±0.0831 | **0.6711±0.0406** | 1.0251±0.0111 |
+| 10% | 0.8224±0.0216 | 0.8598±0.0080 | 0.5827±0.0454 | **0.4889±0.0239** | 0.9441±0.0133 |
+
+这里没有 operator 胜利：2% 时所有模型都近乎无效；5%--10% 时 Neural F-CP 最强。Operator Tucker
+在 10% 的 observed NRMSE 仍为 `0.6525±0.0064`、held-out 为 `0.8224±0.0216`，显示主要问题是
+截断 operator space 的 approximation bias，而非简单训练过拟合。相反，mixed truth 上 SIREN 在 2/5/10%
+的 observed NRMSE 约为 `0.0005/0.0002/0.0001`，held-out 却为 `0.872/0.705/0.526`，是典型 sparse
+memorization。二者共同形成清楚的 phase diagram：operator bias 只有在 basis mismatch 足够小且 observations
+足以识别 factors 时才有益。
+
+本轮不再把“observation ratio 越低，operator 越强”作为假设。更准确的可检验主张是：给定可诊断的
+operator approximation error，存在一个 bias--variance 区域，使有限 operator factor space 比高容量 neural
+factor 更稳定。下一步应沿 mismatch strength × observation ratio 二维图做连续控制，而不是只选有利的一个点。
+
+### 8.7 active acquisition 是明确负结果
 
 1% 初始观测再增加 1%：correct core-IV `0.206±0.014`，random `0.137±0.010`。原因是 acquisition 只优化固定 factors 下的 core variance，而新点加入后 factors 会重拟合。除非将 factor uncertainty 纳入 acquisition，否则不再继续包装这条支线。
 
@@ -481,9 +543,9 @@ synthetic 的胜利。
 
 | 轴 | 设置 |
 |---|---|
-| truth | exact spectral Tucker；截断 Matérn draw；非平稳 smooth field；弱局部尖峰 |
+| truth | exact spectral Tucker；部分 format/local mismatch；截断 Matérn draw；强 non-aligned smooth field；弱局部尖峰 |
 | fitted rank | under / matched / over-specified |
-| observation | 0.5%、1%、2%、5% |
+| observation | 2%、5%、10%（本阶段不超过 10%） |
 | noise | 0%、10%、30% field std |
 | mask | random、periodic gap、center block、missing fibers、sensor tracks |
 | geometry | correct、轻微 operator perturbation、topology erased、random permutation |
@@ -523,10 +585,10 @@ convergence sweep；不能在某一 seed 或某一方法上临时延长训练。
 
 必须同时满足：
 
-1. 在**非 model-aligned controlled truth** 上，correct operator Tucker 相对最强 functional/neural Tucker 或 flat GP 至少降低 15% NRMSE，3–5 个 fresh seeds 中至少 80% 获胜；
+1. 在**非 model-aligned controlled truth 的一段预注册 mismatch 区域**上，correct operator tensor family 相对最强 functional/neural tensor 或 flat GP 至少降低 15% NRMSE，3–5 个 fresh seeds 中至少 80% 获胜；
 2. 在至少一个公开物理数据集上 macro NRMSE ≤ 0.8，并且相对最佳 trivial predictor 至少有 20% MSE skill；
 3. correct operator 相对轻微错 operator/topology-erased control 至少降低 10% MSE，证明几何而非单纯容量；
-4. Tucker 相对 method-matched CP 至少降低 10% MSE，证明 dense small core；
+4. Tucker/CP decoder 必须在 validation 前冻结选择规则；若 Tucker 不稳定超过 CP，就把 dense core 降为可选 decoder，不再宣称它是必要贡献；
 5. 所有 neural baselines 单独调到 validation convergence，并补 classical Bayesian/side-information tensor baseline；
 6. 若保留 UQ contribution，统一 calibration 后 coverage 在 0.90–0.98，且 interval 比同 coverage 的 flat GP 更窄，或实现 factor uncertainty。
 
@@ -558,6 +620,10 @@ convergence sweep；不能在某一 seed 或某一方法上临时延长训练。
 - `papers/four_tracks/results/track1_fixed_budget_validation_r2/`：3-seed、500-step cold-start 公平主表；
 - `papers/four_tracks/results/track1_initializer_ablation_validation_r2/`：仅 Operator Tucker 的 flat-GP 初始化消融；
 - `papers/four_tracks/results/track1_mixed_validation_r2/`：部分 generator 失配、2% random 验证；
+- `src/geoaware/tensor_data.py::operator_nonaligned_tensor`：带 coordinate warp、高频截断失配和 coupled residual 的 failure-control generator；
+- `experiments/analyze_track1_ratio_phase.py`：强制 ratio 不超过 10%，汇总 observed/held-out error 与 phase curve；
+- `papers/four_tracks/results/track1_ratio_phase_{aligned,mixed,nonaligned}_r5/`：2/5/10%、3-seed raw artifacts；
+- `papers/four_tracks/results/track1_ratio_phase_summary_r5/`：统一 summary JSON 与 phase-curve 图；
 - `papers/four_tracks/results/track1_*_smoke/`：本轮 smoke artifacts。
 
 复现本轮 cold-start 主表：
@@ -575,4 +641,26 @@ $PY experiments/run_tensor_bayes.py \
   --reg .002 --noise .1 --init random --device cuda
 ```
 
-当前测试：`tests/test_paper_methods.py` 共 19 项通过。
+复现 R5 phase curve：
+
+```bash
+export PYTHONPATH=.python-packages:src
+
+for TASK in tucker nonaligned; do
+  python3 experiments/run_tensor_bayes.py \
+    --output papers/four_tracks/results/track1_ratio_phase_${TASK}_r5 \
+    --task $TASK \
+    --models geo_btucker,geo_bcp,neural_functional_tucker,neural_functional_cp,siren_inr \
+    --ratios .02,.05,.10 --masks random --seeds 41,42,43 \
+    --steps 500 --noise .1 --init random --device cuda
+done
+
+python3 experiments/run_tensor_bayes.py \
+  --output papers/four_tracks/results/track1_ratio_phase_mixed_r5 \
+  --task mixed --mismatch .35 \
+  --models geo_btucker,geo_bcp,neural_functional_tucker,neural_functional_cp,siren_inr \
+  --ratios .02,.05,.10 --masks random --seeds 41,42,43 \
+  --steps 500 --noise .1 --init random --device cuda
+```
+
+当前方向 1 定向测试：`tests/test_paper_methods.py` 共 20 项通过。

@@ -1,0 +1,379 @@
+{
+  "experiment_id": "TRACK4-GEOMETRY-NO-R1-SEED0",
+  "status": "VALIDATION_ONLY_EARLY_POC",
+  "decision_rule": "fixed 400-step budget; no test fields materialized or read",
+  "protocol": {
+    "train_geometries": 48,
+    "id_validation_geometries": 8,
+    "topology_ood_validation_geometries": 8,
+    "train_holes": "0/1",
+    "topology_ood_holes": 2,
+    "observation_ratio": 0.01,
+    "observed_labels": 3044,
+    "steps": 400,
+    "cases_per_step": 4,
+    "test_read": false,
+    "batch_schedule": "identical across model variants",
+    "manifest_sha256": "8e8d7a11e13f68dcd2474f06421cf1c0fe4942e83627ae080d2e623ac6a081fc"
+  },
+  "config": {
+    "manifest": "experiments/dataset_splits/track4_geometry_no_r1.json",
+    "cache": "data/track4_geometry_no_r1",
+    "output": "papers/four_tracks/results/track4_boundary_operator_no_sdf_r3_seed0.json",
+    "seed": 0,
+    "steps": 400,
+    "ratio": 0.01,
+    "cases_per_step": 4,
+    "train_limit": null,
+    "validation_limit": null,
+    "models": [
+      "coordinate_only_cp",
+      "boundary_integral_no_sdf_cp"
+    ]
+  },
+  "rows": [
+    {
+      "model": "coordinate_only_cp",
+      "parameters": 3584,
+      "best_complete_observed_mse": 0.07815628797403303,
+      "checkpoint_step": 400,
+      "id_validation": {
+        "macro_nrmse": 0.2703110110014677,
+        "macro_boundary_nrmse": 0.2786277234554291,
+        "cases": [
+          {
+            "case": "domain_2000",
+            "holes": 0,
+            "nrmse": 0.293014258146286,
+            "boundary_nrmse": 0.30603715777397156
+          },
+          {
+            "case": "domain_2001",
+            "holes": 1,
+            "nrmse": 0.25270628929138184,
+            "boundary_nrmse": 0.26371195912361145
+          },
+          {
+            "case": "domain_2002",
+            "holes": 0,
+            "nrmse": 0.27993085980415344,
+            "boundary_nrmse": 0.28087130188941956
+          },
+          {
+            "case": "domain_2003",
+            "holes": 1,
+            "nrmse": 0.22660575807094574,
+            "boundary_nrmse": 0.24424436688423157
+          },
+          {
+            "case": "domain_2004",
+            "holes": 0,
+            "nrmse": 0.24635201692581177,
+            "boundary_nrmse": 0.25690075755119324
+          },
+          {
+            "case": "domain_2005",
+            "holes": 1,
+            "nrmse": 0.2890021502971649,
+            "boundary_nrmse": 0.2869158983230591
+          },
+          {
+            "case": "domain_2006",
+            "holes": 0,
+            "nrmse": 0.2969200313091278,
+            "boundary_nrmse": 0.31251102685928345
+          },
+          {
+            "case": "domain_2007",
+            "holes": 1,
+            "nrmse": 0.2779567241668701,
+            "boundary_nrmse": 0.2778293192386627
+          }
+        ]
+      },
+      "topology_ood_validation": {
+        "macro_nrmse": 0.2743069417774677,
+        "macro_boundary_nrmse": 0.2850772738456726,
+        "cases": [
+          {
+            "case": "domain_3000",
+            "holes": 2,
+            "nrmse": 0.26968759298324585,
+            "boundary_nrmse": 0.28873807191848755
+          },
+          {
+            "case": "domain_3001",
+            "holes": 2,
+            "nrmse": 0.3243434727191925,
+            "boundary_nrmse": 0.32548367977142334
+          },
+          {
+            "case": "domain_3002",
+            "holes": 2,
+            "nrmse": 0.2512562572956085,
+            "boundary_nrmse": 0.26427191495895386
+          },
+          {
+            "case": "domain_3003",
+            "holes": 2,
+            "nrmse": 0.2793072462081909,
+            "boundary_nrmse": 0.29200422763824463
+          },
+          {
+            "case": "domain_3004",
+            "holes": 2,
+            "nrmse": 0.2311083972454071,
+            "boundary_nrmse": 0.24347716569900513
+          },
+          {
+            "case": "domain_3005",
+            "holes": 2,
+            "nrmse": 0.30864793062210083,
+            "boundary_nrmse": 0.32176437973976135
+          },
+          {
+            "case": "domain_3006",
+            "holes": 2,
+            "nrmse": 0.24191266298294067,
+            "boundary_nrmse": 0.2582421600818634
+          },
+          {
+            "case": "domain_3007",
+            "holes": 2,
+            "nrmse": 0.2881919741630554,
+            "boundary_nrmse": 0.2866365909576416
+          }
+        ]
+      },
+      "elapsed_seconds": 7.684908397961408
+    },
+    {
+      "model": "boundary_integral_no_sdf_cp",
+      "parameters": 4933,
+      "best_complete_observed_mse": 0.07686270708793409,
+      "checkpoint_step": 400,
+      "id_validation": {
+        "macro_nrmse": 0.2712893057614565,
+        "macro_boundary_nrmse": 0.27942745573818684,
+        "cases": [
+          {
+            "case": "domain_2000",
+            "holes": 0,
+            "nrmse": 0.28707438707351685,
+            "boundary_nrmse": 0.29959699511528015
+          },
+          {
+            "case": "domain_2001",
+            "holes": 1,
+            "nrmse": 0.2516820430755615,
+            "boundary_nrmse": 0.26251575350761414
+          },
+          {
+            "case": "domain_2002",
+            "holes": 0,
+            "nrmse": 0.27681389451026917,
+            "boundary_nrmse": 0.2789890170097351
+          },
+          {
+            "case": "domain_2003",
+            "holes": 1,
+            "nrmse": 0.22679345309734344,
+            "boundary_nrmse": 0.2447504848241806
+          },
+          {
+            "case": "domain_2004",
+            "holes": 0,
+            "nrmse": 0.24530354142189026,
+            "boundary_nrmse": 0.25606757402420044
+          },
+          {
+            "case": "domain_2005",
+            "holes": 1,
+            "nrmse": 0.2900420129299164,
+            "boundary_nrmse": 0.2881775200366974
+          },
+          {
+            "case": "domain_2006",
+            "holes": 0,
+            "nrmse": 0.2951926290988922,
+            "boundary_nrmse": 0.3095637261867523
+          },
+          {
+            "case": "domain_2007",
+            "holes": 1,
+            "nrmse": 0.2974124848842621,
+            "boundary_nrmse": 0.29575857520103455
+          }
+        ]
+      },
+      "topology_ood_validation": {
+        "macro_nrmse": 0.27811888605356216,
+        "macro_boundary_nrmse": 0.2873084284365177,
+        "cases": [
+          {
+            "case": "domain_3000",
+            "holes": 2,
+            "nrmse": 0.25917762517929077,
+            "boundary_nrmse": 0.27849653363227844
+          },
+          {
+            "case": "domain_3001",
+            "holes": 2,
+            "nrmse": 0.3392166197299957,
+            "boundary_nrmse": 0.33801180124282837
+          },
+          {
+            "case": "domain_3002",
+            "holes": 2,
+            "nrmse": 0.25601503252983093,
+            "boundary_nrmse": 0.26801174879074097
+          },
+          {
+            "case": "domain_3003",
+            "holes": 2,
+            "nrmse": 0.278608113527298,
+            "boundary_nrmse": 0.2891867458820343
+          },
+          {
+            "case": "domain_3004",
+            "holes": 2,
+            "nrmse": 0.24077406525611877,
+            "boundary_nrmse": 0.2516621947288513
+          },
+          {
+            "case": "domain_3005",
+            "holes": 2,
+            "nrmse": 0.30118033289909363,
+            "boundary_nrmse": 0.31254759430885315
+          },
+          {
+            "case": "domain_3006",
+            "holes": 2,
+            "nrmse": 0.2426670491695404,
+            "boundary_nrmse": 0.2572017014026642
+          },
+          {
+            "case": "domain_3007",
+            "holes": 2,
+            "nrmse": 0.3073122501373291,
+            "boundary_nrmse": 0.303349107503891
+          }
+        ]
+      },
+      "elapsed_seconds": 14.117966154124588,
+      "learned_operator_gate": 0.1408391147851944
+    },
+    {
+      "model": "observed_global_mean",
+      "parameters": 0,
+      "id_validation": {
+        "macro_nrmse": 1.002951130270958,
+        "macro_boundary_nrmse": 1.0032004490494728,
+        "cases": [
+          {
+            "case": "domain_2000",
+            "holes": 0,
+            "nrmse": 1.0098345279693604,
+            "boundary_nrmse": 1.0150269269943237
+          },
+          {
+            "case": "domain_2001",
+            "holes": 1,
+            "nrmse": 1.0028914213180542,
+            "boundary_nrmse": 1.0018681287765503
+          },
+          {
+            "case": "domain_2002",
+            "holes": 0,
+            "nrmse": 1.0036735534667969,
+            "boundary_nrmse": 1.0007718801498413
+          },
+          {
+            "case": "domain_2003",
+            "holes": 1,
+            "nrmse": 1.0027341842651367,
+            "boundary_nrmse": 1.0015512704849243
+          },
+          {
+            "case": "domain_2004",
+            "holes": 0,
+            "nrmse": 1.0001806020736694,
+            "boundary_nrmse": 1.001113772392273
+          },
+          {
+            "case": "domain_2005",
+            "holes": 1,
+            "nrmse": 1.0021661520004272,
+            "boundary_nrmse": 1.000610589981079
+          },
+          {
+            "case": "domain_2006",
+            "holes": 0,
+            "nrmse": 1.002016544342041,
+            "boundary_nrmse": 1.0047553777694702
+          },
+          {
+            "case": "domain_2007",
+            "holes": 1,
+            "nrmse": 1.0001120567321777,
+            "boundary_nrmse": 0.9999056458473206
+          }
+        ]
+      },
+      "topology_ood_validation": {
+        "macro_nrmse": 1.0045636594295502,
+        "macro_boundary_nrmse": 1.0038194805383682,
+        "cases": [
+          {
+            "case": "domain_3000",
+            "holes": 2,
+            "nrmse": 1.0089868307113647,
+            "boundary_nrmse": 1.005617618560791
+          },
+          {
+            "case": "domain_3001",
+            "holes": 2,
+            "nrmse": 1.0030957460403442,
+            "boundary_nrmse": 1.0019690990447998
+          },
+          {
+            "case": "domain_3002",
+            "holes": 2,
+            "nrmse": 1.0024946928024292,
+            "boundary_nrmse": 1.0030429363250732
+          },
+          {
+            "case": "domain_3003",
+            "holes": 2,
+            "nrmse": 1.0030049085617065,
+            "boundary_nrmse": 1.0042483806610107
+          },
+          {
+            "case": "domain_3004",
+            "holes": 2,
+            "nrmse": 1.0002261400222778,
+            "boundary_nrmse": 1.0000169277191162
+          },
+          {
+            "case": "domain_3005",
+            "holes": 2,
+            "nrmse": 1.0083751678466797,
+            "boundary_nrmse": 1.0098458528518677
+          },
+          {
+            "case": "domain_3006",
+            "holes": 2,
+            "nrmse": 1.0066910982131958,
+            "boundary_nrmse": 1.0050665140151978
+          },
+          {
+            "case": "domain_3007",
+            "holes": 2,
+            "nrmse": 1.0036346912384033,
+            "boundary_nrmse": 1.0007485151290894
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -15,10 +15,10 @@
 
 | 方向 | 几何放在哪里 | 最短故事 | 当前优先级 | 合适定位 |
 |---|---|---|---|---|
-| 1. Operator-informed Bayesian Tucker | 因子的算子谱先验 | 用已知物理/几何算子压缩贝叶斯 Tucker | P1，条件 GO | 2% 受控正信号；必须转 non-aligned truth |
+| 1. Operator-informed Bayesian Tensor | 因子的算子谱先验 | operator factor space + CP/Tucker decoder | P1，条件 GO | ratio×mismatch phase diagram 已跑通 |
 | 2. Phase-factorized Wave Tensor | 波的传播相位 | 三角恒等式把行波变成显式低秩 CP | P4，STOP / DOWNGRADE | 保留机制示例或学生项目，不再占主实验预算 |
-| 3. Domain-kernel Bayesian Functional Tensor | 域上的 GP covariance | neural tensor mean + intrinsic GP residual | P0，条件 GO | ELBO/UQ 已闭环；优先扩多几何与 few-shot |
-| 4. Geometry-conditioned Neural Tensor / Operator | ambient geometry 与低秩空间基 | NO 读几何，CP/TT/Tucker 耦合物理 modes | P1，CP 正 / NO 负 | 保留低秩主线；FNO 融合需重新设计 smooth extension |
+| 3. Domain-kernel Bayesian Functional Tensor | 域上的 GP covariance | ELBO 学习 geometry-kernel dictionary | P0，机制 GO | matched/near-match 正；真实 PDE hybrid 尚中性 |
+| 4. Geometry-coordinate Functional CP | 坐标、SDF、source 进入连续 CP factor | 最小几何函数 CP | P2，收口 | NO、边界积分、rank gate 均未稳定增益 |
 
 这里的“优先级”是投入顺序，不是价值排序。方向 1 和 2 的代码、结果与论文草稿均保留。
 
@@ -28,10 +28,10 @@
 
 | 方向 | 当前最可信结果 | 决策 |
 |---|---|---|
-| 1 | 2% random：Operator Tucker `0.2582±0.0718` vs Neural F-Tucker `0.5704±0.0625`；1% 时反而为 `1.2147±0.3165` | 保留，但不再宣称“越稀疏越强” |
+| 1 | aligned 2/5/10%：Operator Tucker `0.258/0.169/0.077`；strong non-aligned 10%：Operator Tucker `0.822` vs Neural F-CP `0.489` | 主张改为 ratio×operator-mismatch 适用域 |
 | 2 | clean traveling harmonic：correct phase `1.4859±0.0806`，zero `1.0000` | STOP / DOWNGRADE |
-| 3 | neural mean `0.2036±0.0169`；+ intrinsic GP residual `0.1765±0.0205`；+ Euclidean GP `0.2280±0.0148` | 条件 GO；扩大未见几何并校准 |
-| 4 | 48-domain：coordinate/SDF CP `0.2480±0.0047`；最佳 Geometry-NO-CP `0.2840±0.0065` | 低秩 CP 保留；当前 NO 融合为负 |
+| 3 | matched mixture `0.0725±0.0046`，near-match `0.1432±0.0096`，elliptic mixture `0.3116±0.0055` | kernel-selection 方法 GO；hybrid 泛化仍待证 |
+| 4 | local CP ID/OOD `0.2480/0.2553`；DeepSets gate `0.2533/0.2550`，仅 1/3 seeds 胜 local | 正式收口 local geometry CP |
 
 ## 方向 1：Operator-informed Bayesian Tucker
 
@@ -84,7 +84,7 @@ p(W_m)\propto\exp\{-\tfrac12\Vert(1+\Lambda_m)^{p/2}W_m\Vert_F^2\}.
 
 ### 论文边界
 
-这是一条**特殊场结构**路线，不再包装成任意 PDE 的通用 geometry model。审计发现原 `0.0952` 正结果的 generator 与模型频带对齐，且主体更接近驻波 harmonic，只能作 mechanism sanity。新的 independent-wave locked validation 中，trivial mean 为 `1.0002±0.0001`，paired phase 为 `3.4732±0.5044`，wrong Euclidean phase 反而为 `2.8920±0.3071`。因此方向 2 当前为 **PAUSE / NARROW GO**：只允许一次无频带泄漏的真正 traveling-harmonic 修正，不晋级 WaveBench，不继续堆 phase-envelope。
+这是一条**特殊场结构**路线，不再包装成任意 PDE 的通用 geometry model。最终 clean traveling-harmonic R2 中，zero 为 `1.0000`，correct paired phase 为 `1.4859±0.0806`，wrong Euclidean phase 为 `2.5336±0.0849`。正确传播坐标提供了相对机制信号，却没有形成绝对有效预测；方向 2 已按预注册门槛 **STOP / DOWNGRADE**，不再进入 WaveBench 或继续增加 phase 组件。
 
 ## 方向 3：Domain-kernel Bayesian Functional Tucker
 
@@ -105,8 +105,7 @@ u(z_1,z_2,z_3)=\sum_{a,b,c}G_{abc}
 f_{1a}(z_1)f_{2b}(z_2)f_{3c}(z_3).
 \]
 
-当前代码已从 kernel-section MLP 升级为有限特征 variational GP：显式
-\(p(u)=\mathcal N(0,I)\)、full-covariance \(q(u)\)、Gaussian likelihood、解析 KL、mini-batch ELBO 与 posterior variance。纯 GP 容量不足；当前有效版本是共享 neural CP mean 加 domain-GP residual。它可以称 finite-feature GP hybrid，但还不能称完整 Bayesian functional Tucker。
+当前代码已从单一 kernel-section MLP 升级为 finite-feature geometry-kernel dictionary：Matérn/resolvent、heat/diffusion、graph-geodesic RBF 与 Euclidean control 形成显式 PSD features；nonnegative mixture weights、full-covariance \(q(u)\)、likelihood 与 posterior variance由 mini-batch ELBO+SGD 联合学习。它可以称 finite-feature variational GP，但还不能称完整 Bayesian functional Tucker。
 
 ### 与方向 1 的本质区别
 
@@ -116,33 +115,32 @@ f_{1a}(z_1)f_{2b}(z_2)f_{3c}(z_3).
 
 ### 快速 POC 结果
 
-新的 method-matched 消融只在 `slanted_channel_r32` validation 上运行，不读取旧 hole test：
+在 3 train、2 unseen validation geometries、1% observations、3 seeds×400 steps 下：
 
-| 输入 | Validation NRMSE | Boundary NRMSE |
-|---|---:|---:|
-| intrinsic sections only | **0.2602±0.0055** | **0.2809±0.0086** |
-| Euclidean RBF sections only | 0.3320±0.0212 | 0.3080±0.0381 |
-| intrinsic + identical local inputs | **0.1905±0.0219** | **0.1905±0.0188** |
-| Euclidean RBF + identical local inputs | 0.2031±0.0297 | 0.2267±0.0152 |
+| 数据层 | Learned mixture NRMSE | 解释 |
+|---|---:|---|
+| matched heat-GP sanity | `0.0725±0.0046` | heat 权重平均最高 `0.519`，ELBO 能近似识别真核 |
+| perturbed near-match | `0.1432±0.0096` | 优于单 heat `0.1914`，不是只在 exact match 有效 |
+| screened elliptic mismatch | `0.3116±0.0055` | 只略优于 Euclidean `0.3251` |
 
-intrinsic section 的机制信号在三个 seeds 上为正，加入相同局部输入后边界误差仍约改善 16%。但这验证的是 neural input representation，不是 GP posterior。旧 `topology_erased` 实际仍使用正确边界距离、坐标和 descriptor，只能称 `bbox-kernel channel ablation`；旧 hole case 已被读取，不再是 untouched confirmation。
+elliptic 上 neural CP mean 为 `0.2073±0.0105`，加入 heat/mixture GP residual 为 `0.1985±0.0267 / 0.2054±0.0275`，跨 seeds 不稳定。因此当前正贡献是 kernel dictionary 与 evidence selection 的机制闭环，不是通用 neural hybrid SOTA。
 
-## 方向 4：Geometry-conditioned Neural Tensor / Operator
+## 方向 4：Geometry-coordinate Functional CP
 
 ### 最简公式
 
 \[
-u(\Omega,p,x,s)=\sum_{a,b,c}G_{abc}\,
-g_a(q_\Omega)\,h_b(p)\,r_c(x,s,d_{\partial\Omega}(x)).
+u(\Omega,p,x,s)=\sum_{r=1}^{R}w_r\,
+a_r(s)\,b_r(p)\,c_r(x,s,d_{\partial\Omega}(x)).
 \]
 
-三个 factor 都是连续函数，但交互只能经过一个小 Tucker core。当前 \(d_{\partial\Omega}\) 是活动域内到最近外边界/孔洞边界的正距离，并按每域 Q95 归一化；它不是在共享 ambient grid 上定义的完整 signed distance field。
+三个 factor 都是连续函数，交互经过小 CP bottleneck。当前 \(d_{\partial\Omega}\) 是活动域内到最近外边界/孔洞边界的正距离；它不是在共享 ambient grid 上定义的完整 signed distance field。
 
 ### 独特贡献
 
 1. 可在不同节点数与不同网格上查询，不要求规则矩形张量。
 2. interior boundary distance 让孔洞和外边界的局部信息进入 factor。
-3. 与 joint INR 的区别是显式低秩 core、可控 mode ranks 与 factor sharing，而不是独占几何输入。
+3. 与 joint INR 的区别是显式 rank bottleneck 与 mode sharing，而不是独占几何输入。
 
 ### 当前证据边界
 
@@ -150,7 +148,8 @@ g_a(q_\Omega)\,h_b(p)\,r_c(x,s,d_{\partial\Omega}(x)).
 - 1% labels、3 seeds×400 steps、共享 case schedule 下，coordinate/SDF CP 为 `0.2480±0.0047`（ID）与 `0.2553±0.0049`（OOD）。
 - 最好的 unmasked Geometry-NO-CP 为 `0.2840±0.0065 / 0.2958±0.0029`；hard-masked 版本更弱，同 encoder dense head 为 `0.7296±0.0300 / 0.7738±0.0218`。
 - NO 的 observed loss 很低但新几何误差更高，属于稀疏过拟合。一次小门控 NO residual 修正仍未超过 CP，当前不能把 FNO 融合写成正贡献。
-- “低秩 head 比 dense head 稳定”是正信号；“NO geometry encoder 优于 pointwise SDF/coordinate”不是正信号。
+- Boundary-integral CP 的弱 OOD 改善没有通过 hole-token/type 消融；Boundary-DeepSets rank gate 也只在 1/3 seeds 胜 local CP。
+- 最终结论是“低秩 local geometry CP 比 dense operator 稳定”；FNO、boundary integral、descriptor/DeepSets rank modulation 全部只作负消融。
 
 ## 四条线共享什么，不共享什么
 
@@ -204,9 +203,9 @@ papers/
 
 ## 接下来三步
 
-1. **优先确认方向 3。** 把 neural mean + intrinsic GP residual 扩到多个冻结 validation geometries，并新增 Task C 新域 few-shot；先做 calibration，不增加更复杂 VI。
-2. **方向 1 换 truth。** 使用 non-aligned operator-GP/PDE generator；维持 3 seeds×500 steps，不再靠 aligned synthetic 或 initializer 扩大战果。
-3. **方向 4 保留接口但收缩方法。** 先以 geometry-conditioned CP 为主；只有设计出低容量 smooth-extension/DAFNO-style residual 时才重启 NO，不再直接堆 FNO 深度。方向 2 停止新增实验。
+1. **优先发展方向 3。** 把 kernel dictionary 的 matched/near-match 机制写清，并增加 Task C 新域 few-shot posterior adaptation；先做 calibration，不增加更复杂 VI。
+2. **方向 1 扩展二维 phase diagram。** 连续扫描 operator mismatch strength × 2/5/10% ratio，冻结 CP/Tucker decoder 选择规则，再转一个 non-aligned PDE/GP truth。
+3. **方向 4 与方向 2停止结构扩张。** 方向 4 只维护 geometry-coordinate/SDF CP 作为简洁学生项目/共享 baseline；所有 operator 融合保留为负消融。
 
 ## 相关一手工作与代码
 

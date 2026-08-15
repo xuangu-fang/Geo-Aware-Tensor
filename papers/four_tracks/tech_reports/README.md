@@ -6,10 +6,10 @@
 
 | 方向 | 技术报告 | 当前责任边界 |
 |---|---|---|
-| 1. Operator-informed Bayesian Tucker | [`TRACK1_OPERATOR_TUCKER.md`](TRACK1_OPERATOR_TUCKER.md) | 固定离散张量、算子谱先验、conditional Bayesian core |
+| 1. Operator-informed Bayesian Tensor | [`TRACK1_OPERATOR_TUCKER.md`](TRACK1_OPERATOR_TUCKER.md) | operator factor space、ratio×mismatch phase diagram、CP/Tucker decoder |
 | 2. Phase-factorized Wave Tensor | [`TRACK2_PHASE_WAVE.md`](TRACK2_PHASE_WAVE.md) | 波场相位恒等式、传播距离、专项 wave benchmark |
-| 3. Domain-kernel GP Functional Tensor | [`TRACK3_DOMAIN_KERNEL_GP.md`](TRACK3_DOMAIN_KERNEL_GP.md) | 非欧域 kernel、ELBO+SGD、neural mean + GP residual |
-| 4. Geometry-conditioned Neural Tensor / Operator | [`TRACK4_NEURAL_FUNCTIONAL_TUCKER.md`](TRACK4_NEURAL_FUNCTIONAL_TUCKER.md) | ambient geometry encoder、CP/TT/Tucker 可替换低秩 head |
+| 3. Domain-kernel GP Functional Tensor | [`TRACK3_DOMAIN_KERNEL_GP.md`](TRACK3_DOMAIN_KERNEL_GP.md) | geometry-kernel dictionary、ELBO evidence selection、finite GP |
+| 4. Geometry-coordinate Functional CP | [`TRACK4_NEURAL_FUNCTIONAL_TUCKER.md`](TRACK4_NEURAL_FUNCTIONAL_TUCKER.md) | coordinate/SDF/source continuous CP；NO/boundary modules 仅负消融 |
 
 共享实验审计规则见 [`SHARED_AUDIT_PROTOCOL.md`](SHARED_AUDIT_PROTOCOL.md)。四份报告可以有不同方法，但不得使用不同的指标定义、数据泄漏标准或 baseline 命名口径。
 
@@ -38,7 +38,7 @@
 
 | 方向 | 当前数据判断 | 当前 baseline 判断 | 结论 |
 |---|---|---|---|
-| 1 | aligned operator Tucker 仍是机制数据；本轮增加部分失配 truth，但尚缺 non-aligned PDE/GP truth | functional CP/Tucker 与 SIREN 已加入并锁 3 seeds×500 steps；初始化收益单列消融 | 2% 后有 operator-space 正信号；1% 和 mismatch 不支持强 claim |
+| 1 | aligned、35% mixed 与强 non-aligned 三层 truth 已形成 bias control，但仍是自建 tensor family | functional CP/Tucker、operator CP/Tucker 与 SIREN 共享 2/5/10% masks 和 500 steps | operator factor space 有清楚适用区；decoder 不应绑死 Tucker，强 mismatch 下 neural CP 胜 |
 | 2 | clean traveling harmonic、independent wave、The Well 均未过绝对门槛 | correct/wrong travel time、ordinary CP、joint INR、zero gate 已齐 | **STOP / DOWNGRADE**；不再进入 WaveBench 或继续堆 phase 组件 |
-| 3 | 仍只有一个未见 validation geometry，适合 inference closure 和机制筛选，不足以确认跨拓扑泛化 | pure variational GP、exact finite-GP、mean-only、intrinsic/Euclidean GP residual 已齐 | pure GP 负；neural mean + intrinsic GP residual 为条件 GO，需多几何确认与校准 |
-| 4 | 48/8/8 随机多孔洞协议显著好于旧 6-shape POC，test specs 未读 | 同 encoder dense head、coordinate/SDF CP、SDF-only/full、masked/unmasked 均已齐 | CP 明显有效；当前 FNO 融合稀疏过拟合，保留接口但不能作为正贡献 |
+| 3 | 新协议含 3 train、2 unseen validation、1 frozen hole test；matched/near-matched/elliptic 三层数据明确区分 sanity 与 mismatch | Matérn、heat、geodesic、Euclidean 和可学习 PSD mixture 均用相同 ELBO/q(u) | kernel evidence selection 在 sanity/near-match 跑通；elliptic neural residual 中性，不宣称通用胜利 |
+| 4 | 48/8/8 随机多孔洞协议与未读 test 保留 | FNO、boundary integral、pooled/wrong-hole、DeepSets rank gate、descriptor gate 均已对照 | 所有 fancy geometry operator 均未稳定胜 local CP；正式收口 geometry-coordinate/SDF CP |

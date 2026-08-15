@@ -3,10 +3,13 @@ import torch
 
 from geoaware.domain_kernels import (
     euclidean_rbf_kernel_sections,
+    geodesic_rbf_kernel_sections,
+    heat_domain_kernel_sections,
     matern_domain_kernel_sections,
 )
 from geoaware.variational_domain_gp import (
     FiniteFeatureVariationalGP,
+    NonnegativeKernelMixture,
     exact_finite_gp_posterior,
     exact_finite_gp_predict,
     tensor_product_gp_features,
@@ -34,6 +37,33 @@ def test_euclidean_sections_peak_at_their_source():
     assert sections.shape == (2, 3, 2)
     assert torch.all(sections[0, 0] > sections[0, 1])
     assert torch.all(sections[1, 2] > sections[1, 1])
+
+
+def test_heat_sections_are_sign_invariant_and_decay_high_modes_faster():
+    basis = torch.eye(4)
+    eigenvalues = torch.tensor([0.0, 1.0, 3.0, 7.0])
+    sources = torch.tensor([0, 2])
+    signs = torch.tensor([-1.0, 1.0, -1.0, 1.0])
+    expected = heat_domain_kernel_sections(
+        basis, eigenvalues, sources, diffusion_times=(0.1, 1.0))
+    actual = heat_domain_kernel_sections(
+        basis * signs, eigenvalues, sources, diffusion_times=(0.1, 1.0))
+    torch.testing.assert_close(actual, expected)
+
+
+def test_geodesic_kernel_does_not_shortcut_across_a_wall():
+    # Nodes 0 and 3 are ambient-close but the valid path detours through 1,2.
+    coordinates = torch.tensor([
+        [0.0, 0.0], [0.0, 1.0], [0.1, 1.0], [0.1, 0.0],
+    ])
+    edges = torch.tensor([[0, 1], [1, 2], [2, 3]])
+    source = torch.tensor([0])
+    intrinsic = geodesic_rbf_kernel_sections(
+        coordinates, source, edges, lengthscales=(0.5,))
+    euclidean = euclidean_rbf_kernel_sections(
+        coordinates, source, lengthscales=(0.5,))
+    assert intrinsic[0, 3, 0] < intrinsic[0, 1, 0]
+    assert euclidean[0, 3, 0] > euclidean[0, 1, 0]
 
 
 @pytest.mark.parametrize("lengthscales", [(), (0.0,), (-1.0,)])
@@ -93,3 +123,20 @@ def test_variational_gp_elbo_accepts_a_differentiable_neural_mean():
     loss.backward()
     assert mean.grad is not None
     assert torch.isfinite(mean.grad).all()
+
+
+def test_nonnegative_kernel_mixture_is_a_simplex_scaled_feature_map():
+    mixture = NonnegativeKernelMixture(("heat", "matern"))
+    features = {
+        "heat": torch.tensor([[1.0, 0.0], [0.0, 1.0]]),
+        "matern": torch.tensor([[2.0], [1.0]]),
+    }
+    combined = mixture(features)
+    assert combined.shape == (2, 3)
+    torch.testing.assert_close(mixture.weights().sum(), torch.tensor(1.0))
+    kernel = combined @ combined.T
+    expected = 0.5 * (
+        features["heat"] @ features["heat"].T
+        + features["matern"] @ features["matern"].T
+    )
+    torch.testing.assert_close(kernel, expected)

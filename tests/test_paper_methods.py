@@ -19,7 +19,8 @@ from geoaware.neural_tensor import (
 from geoaware.tensor_bayes import OperatorBayesianCP, OperatorBayesianTucker
 from geoaware.operator_tucker_baselines import NeuralFunctionalCP, NeuralFunctionalTucker
 from geoaware.masks import make_observation_split
-from geoaware.tensor_data import explicit_mode_bases, operator_cp_tensor, operator_tucker_tensor
+from geoaware.tensor_data import (explicit_mode_bases, operator_cp_tensor,
+                                  operator_nonaligned_tensor, operator_tucker_tensor)
 from geoaware.the_well_pilot import block_mean_256_to_64, fixed_random_mask, nrmse_on_mask
 from geoaware.well_baselines import WellUNetClassic
 from geoaware.independent_wave_solver import (
@@ -151,6 +152,17 @@ def test_operator_tucker_structured_masks_preserve_the_declared_geometry():
     # unselected locations contribute none of it.
     assert torch.all(observed == observed[:1].expand_as(observed))
     assert int(observed[0].sum()) == round(.10 * math.prod(data.shape[1:]))
+
+
+def test_nonaligned_operator_benchmark_is_finite_periodic_and_off_basis():
+    data = operator_nonaligned_tensor(shape=(9, 11, 24), seed=7)
+    assert data.values.shape == (9, 11, 24)
+    assert torch.isfinite(data.values).all()
+    assert abs(float(data.values.mean())) < 1e-5
+    assert abs(float(data.values.std()) - 1) < 1e-5
+    # The generator includes periodic harmonic 11 while the learner is locked
+    # to seven frequencies, so this is not an exact inverse-crime draw.
+    assert data.basis_specs[2].n_frequencies == 7
 
 
 def test_neural_cp_and_tucker_contract_separate_point_factors():

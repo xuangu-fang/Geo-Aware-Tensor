@@ -19,10 +19,14 @@ from torch import nn
 
 from geoaware.geometry_no_data import case_from_spec, write_protocol_manifest
 from geoaware.geometry_no_tensor import (
+    BoundaryOperatorFunctionalCP,
     CoordinateSDFFunctionalCP,
     CoordinateSDFPlusGeometryNOCP,
     GeometryNODenseHead,
     GeometryNOFunctionalCP,
+    RankModulatedCoordinateCP,
+    boundary_token_bundle,
+    handcrafted_geometry_descriptor,
 )
 
 
@@ -36,12 +40,31 @@ MODEL_FACTORIES = {
     "geometry_no_dense_head": lambda: GeometryNODenseHead(
         latent=20, width=24, modes=8, masked=True, geometry_inputs="full"),
     "coordinate_sdf_cp": lambda: CoordinateSDFFunctionalCP(rank=20, hidden=48),
+    "coordinate_only_cp": lambda: CoordinateSDFFunctionalCP(
+        rank=20, hidden=48, use_sdf=False),
     "masked_geometry_no_residual": lambda: CoordinateSDFPlusGeometryNOCP(
         rank=20, hidden=48, width=24, modes=8, masked=True,
         initial_residual_gate=.01),
     "unmasked_geometry_no_residual": lambda: CoordinateSDFPlusGeometryNOCP(
         rank=20, hidden=48, width=24, modes=8, masked=False,
         initial_residual_gate=.01),
+    "boundary_integral_cp": lambda: BoundaryOperatorFunctionalCP(
+        rank=20, hidden=48, operator="integral", initial_gate=.05),
+    "boundary_pooled_cp": lambda: BoundaryOperatorFunctionalCP(
+        rank=20, hidden=48, operator="pooled", initial_gate=.05),
+    "boundary_integral_outer_only_cp": lambda: BoundaryOperatorFunctionalCP(
+        rank=20, hidden=48, operator="integral_outer_only", initial_gate=.05),
+    "boundary_integral_wrong_type_cp": lambda: BoundaryOperatorFunctionalCP(
+        rank=20, hidden=48, operator="integral_wrong_type", initial_gate=.05),
+    "boundary_integral_no_sdf_cp": lambda: BoundaryOperatorFunctionalCP(
+        rank=20, hidden=48, operator="integral", initial_gate=.05,
+        use_sdf=False),
+    "descriptor_rank_gated_cp": lambda: RankModulatedCoordinateCP(
+        rank=20, hidden=48, conditioning="descriptor", set_width=16),
+    "boundary_deepsets_rank_gated_cp": lambda: RankModulatedCoordinateCP(
+        rank=20, hidden=48, conditioning="boundary", set_width=16),
+    "wrong_boundary_rank_gated_cp": lambda: RankModulatedCoordinateCP(
+        rank=20, hidden=48, conditioning="wrong_boundary", set_width=16),
 }
 
 DEFAULT_R1_MODELS = [
@@ -80,9 +103,20 @@ def load_split(manifest: dict, split: str, cache: Path,
         else:
             case = case_from_spec(spec, manifest["resolution"])
             torch.save(case, path)
+        if "boundary_tokens" not in case:
+            case["boundary_tokens"] = torch.from_numpy(boundary_token_bundle(
+                case["mask"].numpy(), case["geometry"].numpy()))
+        case["geometry_descriptor"] = torch.from_numpy(
+            handcrafted_geometry_descriptor(case["mask"].numpy(),
+                                             case["geometry"].numpy()))
         cases.append(case)
         if index == 0 or index + 1 == len(specs):
             print(f"loaded {split}: {index+1}/{len(specs)}", flush=True)
+    # A deterministic cyclic mismatch is a causal control for whether a set
+    # embedding exploits the boundary paired with this particular solution.
+    for index, case in enumerate(cases):
+        case["wrong_boundary_tokens"] = cases[(index+1) % len(cases)][
+            "boundary_tokens"]
     return cases
 
 
@@ -214,6 +248,11 @@ def main() -> None:
         }
         if hasattr(model, "residual_gate"):
             row["learned_residual_gate"] = float(model.residual_gate.detach().cpu())
+        if hasattr(model, "operator_gate"):
+            row["learned_operator_gate"] = float(model.operator_gate.detach().cpu())
+        if hasattr(model, "modulation_scale"):
+            row["learned_modulation_scale"] = float(
+                model.modulation_scale.detach().cpu())
         rows.append(row)
         print(f"{model_name}: ID={row['id_validation']['macro_nrmse']:.4f} "
               f"2-hole={row['topology_ood_validation']['macro_nrmse']:.4f}",
