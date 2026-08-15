@@ -23,6 +23,11 @@ from geoaware.independent_wave_solver import (
     build_wave_domain,
     simulate_damped_wave,
 )
+from geoaware.domain_kernels import matern_domain_kernel_sections
+from geoaware.functional_tucker import (
+    DomainKernelFunctionalTucker,
+    GeometryConditionedNeuralFunctionalTucker,
+)
 
 
 def test_anisotropic_exact_posterior_is_finite_under_extreme_sparsity():
@@ -184,3 +189,40 @@ def test_well_unet_classic_preserves_spatial_shape():
         prediction = model(torch.randn(2, 5, 32, 32))
     assert prediction.shape == (2, 1, 32, 32)
     assert torch.isfinite(prediction).all()
+
+
+def test_domain_kernel_sections_are_sign_invariant():
+    generator = torch.Generator().manual_seed(9)
+    basis, _ = torch.linalg.qr(torch.randn(13, 6, generator=generator))
+    eigenvalues = torch.arange(6).float()
+    source_nodes = torch.tensor([1, 8])
+    first = matern_domain_kernel_sections(basis, eigenvalues, source_nodes)
+    signs = torch.tensor([1., -1., 1., -1., -1., 1.])
+    second = matern_domain_kernel_sections(basis * signs, eigenvalues, source_nodes)
+    assert first.shape == (2, 13, 5)
+    assert torch.allclose(first, second, atol=1e-6)
+
+
+def test_new_functional_tuckers_keep_explicit_small_cores():
+    n, n_nodes, n_sources = 10, 17, 3
+    indices = torch.stack([
+        torch.randint(n_sources, (n,)),
+        torch.randint(4, (n,)),
+        torch.randint(n_nodes, (n,)),
+    ], 1)
+    case = {
+        "descriptor": torch.randn(7),
+        "parameters": torch.linspace(.03, .3, 4),
+        "coords": torch.randn(n_nodes, 2),
+        "source_xy": torch.randn(n_sources, 2),
+        "boundary_distance": torch.rand(n_nodes),
+        "domain_kernel_features": torch.randn(n_sources, n_nodes, 5),
+    }
+    neural = GeometryConditionedNeuralFunctionalTucker(
+        ranks=(2, 3, 4), hidden=12)
+    kernel = DomainKernelFunctionalTucker(
+        kernel_channels=5, ranks=(2, 3, 4), hidden=12)
+    assert neural.core.shape == (2, 3, 4)
+    assert kernel.core.shape == (2, 3, 4)
+    assert torch.isfinite(neural.forward_case(case, indices)).all()
+    assert torch.isfinite(kernel.forward_case(case, indices)).all()

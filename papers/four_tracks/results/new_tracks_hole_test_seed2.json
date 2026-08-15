@@ -1,0 +1,136 @@
+{
+  "experiment_id": "FOUR-TRACK-POC-TEST-1BP-SEED2",
+  "status": "FAST_POC_NOT_FINAL_EVIDENCE",
+  "protocol": {
+    "train_resolution": 24,
+    "evaluation_resolution": 32,
+    "train_geometries": [
+      "l_shape",
+      "u_notch",
+      "wavy_three_lobe",
+      "dumbbell"
+    ],
+    "evaluation_geometries": [
+      "wavy_with_hole"
+    ],
+    "observation_ratio": 0.01,
+    "configuration_rule": "all architectures frozen before evaluation"
+  },
+  "config": {
+    "data": "data/irregular_boundary_elliptic",
+    "split": "experiments/dataset_splits/irregular_boundary_wave_smoke.json",
+    "evaluation_split": "test",
+    "ratio": 0.01,
+    "seed": 2,
+    "steps": 900,
+    "batch_size": 2048,
+    "modes": 48,
+    "output": "papers/four_tracks/results/new_tracks_hole_test_seed2.json"
+  },
+  "rows": [
+    {
+      "model": "domain_kernel_functional_tucker",
+      "parameters": 16282,
+      "training_loss": 0.004963037092238665,
+      "evaluation_macro_nrmse": 0.14121359586715698,
+      "evaluation_boundary_nrmse": 0.15368664264678955,
+      "case_metrics": [
+        {
+          "case": "wavy_with_hole_r32",
+          "nrmse": 0.14121359586715698,
+          "boundary_nrmse": 0.15368664264678955
+        }
+      ],
+      "elapsed_seconds": 5.482945553958416
+    },
+    {
+      "model": "topology_erased_kernel_tucker",
+      "parameters": 16282,
+      "training_loss": 0.010871244594454765,
+      "evaluation_macro_nrmse": 0.15701347589492798,
+      "evaluation_boundary_nrmse": 0.17884734272956848,
+      "case_metrics": [
+        {
+          "case": "wavy_with_hole_r32",
+          "nrmse": 0.15701347589492798,
+          "boundary_nrmse": 0.17884734272956848
+        }
+      ],
+      "elapsed_seconds": 4.998476155102253
+    },
+    {
+      "model": "sdf_neural_functional_tucker",
+      "parameters": 16414,
+      "training_loss": 0.012855145148932934,
+      "evaluation_macro_nrmse": 0.18183574080467224,
+      "evaluation_boundary_nrmse": 0.2080497145652771,
+      "case_metrics": [
+        {
+          "case": "wavy_with_hole_r32",
+          "nrmse": 0.18183574080467224,
+          "boundary_nrmse": 0.2080497145652771
+        }
+      ],
+      "elapsed_seconds": 4.902342421934009
+    },
+    {
+      "model": "coordinate_neural_functional_tucker",
+      "parameters": 16414,
+      "training_loss": 0.015376538969576359,
+      "evaluation_macro_nrmse": 0.17556150257587433,
+      "evaluation_boundary_nrmse": 0.21592362225055695,
+      "case_metrics": [
+        {
+          "case": "wavy_with_hole_r32",
+          "nrmse": 0.17556150257587433,
+          "boundary_nrmse": 0.21592362225055695
+        }
+      ],
+      "elapsed_seconds": 5.000097912736237
+    },
+    {
+      "model": "sdf_neural_functional_cp",
+      "parameters": 18400,
+      "training_loss": 0.012384283356368542,
+      "evaluation_macro_nrmse": 0.1742415428161621,
+      "evaluation_boundary_nrmse": 0.20106275379657745,
+      "case_metrics": [
+        {
+          "case": "wavy_with_hole_r32",
+          "nrmse": 0.1742415428161621,
+          "boundary_nrmse": 0.20106275379657745
+        }
+      ],
+      "elapsed_seconds": 4.317409532144666
+    },
+    {
+      "model": "joint_sdf_inr",
+      "parameters": 20353,
+      "training_loss": 0.008837777189910412,
+      "evaluation_macro_nrmse": 0.16668842732906342,
+      "evaluation_boundary_nrmse": 0.19326214492321014,
+      "case_metrics": [
+        {
+          "case": "wavy_with_hole_r32",
+          "nrmse": 0.16668842732906342,
+          "boundary_nrmse": 0.19326214492321014
+        }
+      ],
+      "elapsed_seconds": 2.884261557366699
+    },
+    {
+      "model": "observed_global_mean",
+      "parameters": 0,
+      "evaluation_macro_nrmse": 1.0001124143600464,
+      "evaluation_boundary_nrmse": 1.000570297241211,
+      "case_metrics": [
+        {
+          "case": "wavy_with_hole_r32",
+          "nrmse": 1.0001124143600464,
+          "boundary_nrmse": 1.000570297241211
+        }
+      ],
+      "elapsed_seconds": 0.0
+    }
+  ]
+}

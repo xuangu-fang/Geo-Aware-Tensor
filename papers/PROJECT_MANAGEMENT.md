@@ -1,13 +1,20 @@
 # 几何感知张量研究项目管理
 
+> 2026-08-15 口径更新：项目现在保留四条可独立成稿的研究线。本文下方的
+> A/B 里程碑是原两条线的历史记录，不作删除；新的优先级、方向 3/4
+> POC 与 repo 拆分规则以 [`four_tracks/README.md`](four_tracks/README.md)
+> 为当前单一事实源。
+
 ## 1. 项目目标与边界
 
-本项目保持两篇独立论文：
+本项目保留原来两篇独立论文，并增加两个快速 POC 方向：
 
 - **Paper A — Operator Geometry-Aware Tensor Decomposition**：研究 mode operator、显式 CP/Tucker core 与部分贝叶斯后验如何共同提高极低观测率下的张量重建和不确定性质量。
 - **Paper B — Geometry/Phase-Aligned Neural Tensor Factorization**：研究内禀传播坐标和显式 phase-paired tensor factors 如何实现跨几何、跨分辨率的稀疏场重建。
+- **Direction 3 — Domain-kernel Bayesian Functional Tucker**：用不规则域 GP kernel 定义连续 Tucker 因子。
+- **Direction 4 — Geometry-conditioned Neural Functional Tucker**：用 SDF 条件的神经函数因子实现跨网格、跨形状的显式 Tucker。
 
-两篇共享：数据对象协议、mask taxonomy、mismatch × observation-ratio phase diagram、baseline fairness、seed 纪律和结果注册格式。两篇不共享必须不同的主方法声明，也不为了统一而合并优化器或推断框架。
+四条线共享：数据对象协议、mask taxonomy、mismatch × observation-ratio phase diagram、baseline fairness、seed 纪律和结果注册格式。四条线不共享必须不同的主方法声明，也不为了统一而合并优化器或推断框架。
 
 ## 2. 研究工作流与状态机
 

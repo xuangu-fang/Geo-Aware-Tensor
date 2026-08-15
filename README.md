@@ -1,5 +1,10 @@
 # Geo-Aware Tensor POC
 
+> 2026-08-15 更新：当前的四方向定位、优先级、共享接口与两个新 POC 结果，
+> 统一记录在 [`papers/four_tracks/README.md`](papers/four_tracks/README.md)。
+> 原 Paper A/B 均保留；新增 domain-kernel GP functional Tucker 与
+> SDF-conditioned neural functional Tucker 两条线。
+
 ## 中文研究文档
 
 建议先读最新的[故事线与进展总报告](papers/zh/最新版本故事线与进展总报告.md)

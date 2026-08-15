@@ -1,0 +1,136 @@
+{
+  "experiment_id": "FOUR-TRACK-POC-TEST-1BP-SEED1",
+  "status": "FAST_POC_NOT_FINAL_EVIDENCE",
+  "protocol": {
+    "train_resolution": 24,
+    "evaluation_resolution": 32,
+    "train_geometries": [
+      "l_shape",
+      "u_notch",
+      "wavy_three_lobe",
+      "dumbbell"
+    ],
+    "evaluation_geometries": [
+      "wavy_with_hole"
+    ],
+    "observation_ratio": 0.01,
+    "configuration_rule": "all architectures frozen before evaluation"
+  },
+  "config": {
+    "data": "data/irregular_boundary_elliptic",
+    "split": "experiments/dataset_splits/irregular_boundary_wave_smoke.json",
+    "evaluation_split": "test",
+    "ratio": 0.01,
+    "seed": 1,
+    "steps": 900,
+    "batch_size": 2048,
+    "modes": 48,
+    "output": "papers/four_tracks/results/new_tracks_hole_test_seed1.json"
+  },
+  "rows": [
+    {
+      "model": "domain_kernel_functional_tucker",
+      "parameters": 16282,
+      "training_loss": 0.008025869727134705,
+      "evaluation_macro_nrmse": 0.16940777003765106,
+      "evaluation_boundary_nrmse": 0.18578365445137024,
+      "case_metrics": [
+        {
+          "case": "wavy_with_hole_r32",
+          "nrmse": 0.16940777003765106,
+          "boundary_nrmse": 0.18578365445137024
+        }
+      ],
+      "elapsed_seconds": 5.378619795199484
+    },
+    {
+      "model": "topology_erased_kernel_tucker",
+      "parameters": 16282,
+      "training_loss": 0.01135637890547514,
+      "evaluation_macro_nrmse": 0.18306933343410492,
+      "evaluation_boundary_nrmse": 0.20710216462612152,
+      "case_metrics": [
+        {
+          "case": "wavy_with_hole_r32",
+          "nrmse": 0.18306933343410492,
+          "boundary_nrmse": 0.20710216462612152
+        }
+      ],
+      "elapsed_seconds": 5.23308668192476
+    },
+    {
+      "model": "sdf_neural_functional_tucker",
+      "parameters": 16414,
+      "training_loss": 0.012805674225091934,
+      "evaluation_macro_nrmse": 0.18660597503185272,
+      "evaluation_boundary_nrmse": 0.21261325478553772,
+      "case_metrics": [
+        {
+          "case": "wavy_with_hole_r32",
+          "nrmse": 0.18660597503185272,
+          "boundary_nrmse": 0.21261325478553772
+        }
+      ],
+      "elapsed_seconds": 4.8580351788550615
+    },
+    {
+      "model": "coordinate_neural_functional_tucker",
+      "parameters": 16414,
+      "training_loss": 0.019981728866696358,
+      "evaluation_macro_nrmse": 0.20168526470661163,
+      "evaluation_boundary_nrmse": 0.25330492854118347,
+      "case_metrics": [
+        {
+          "case": "wavy_with_hole_r32",
+          "nrmse": 0.20168526470661163,
+          "boundary_nrmse": 0.25330492854118347
+        }
+      ],
+      "elapsed_seconds": 4.6827536476776
+    },
+    {
+      "model": "sdf_neural_functional_cp",
+      "parameters": 18400,
+      "training_loss": 0.0061024390161037445,
+      "evaluation_macro_nrmse": 0.14384976029396057,
+      "evaluation_boundary_nrmse": 0.18211789429187775,
+      "case_metrics": [
+        {
+          "case": "wavy_with_hole_r32",
+          "nrmse": 0.14384976029396057,
+          "boundary_nrmse": 0.18211789429187775
+        }
+      ],
+      "elapsed_seconds": 3.993240986019373
+    },
+    {
+      "model": "joint_sdf_inr",
+      "parameters": 20353,
+      "training_loss": 0.004436097107827663,
+      "evaluation_macro_nrmse": 0.1599617600440979,
+      "evaluation_boundary_nrmse": 0.20247459411621094,
+      "case_metrics": [
+        {
+          "case": "wavy_with_hole_r32",
+          "nrmse": 0.1599617600440979,
+          "boundary_nrmse": 0.20247459411621094
+        }
+      ],
+      "elapsed_seconds": 2.752299880143255
+    },
+    {
+      "model": "observed_global_mean",
+      "parameters": 0,
+      "evaluation_macro_nrmse": 0.9999957084655762,
+      "evaluation_boundary_nrmse": 1.0002588033676147,
+      "case_metrics": [
+        {
+          "case": "wavy_with_hole_r32",
+          "nrmse": 0.9999957084655762,
+          "boundary_nrmse": 1.0002588033676147
+        }
+      ],
+      "elapsed_seconds": 0.0
+    }
+  ]
+}
