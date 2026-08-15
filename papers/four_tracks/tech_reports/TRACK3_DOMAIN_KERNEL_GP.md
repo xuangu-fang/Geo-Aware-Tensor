@@ -1,6 +1,6 @@
 # 方向 3 技术报告：Domain-kernel Bayesian Functional Tucker
 
-> 状态：**机制 POC 已有正信号，但真正的 Bayesian GP 模型尚未实现。** 目前代码只能称为“domain-kernel section conditioned neural Tucker”。本文会严格区分“已经做成的东西”和“希望投稿时声称的东西”。
+> 状态（2026-08-15 更新）：**显式 finite-feature variational GP 已实现；纯 GP 是负信号，neural mean + intrinsic GP residual 是新的条件正信号。** 新版本有明确的 \(q(u)\)、Gaussian prior/likelihood、KL、mini-batch ELBO、posterior variance 和 exact finite-GP 对照。它是严格的有限秩 GP hybrid，但还不是最终的 Bayesian functional Tucker。
 
 ## 0. 先给结论
 
@@ -10,7 +10,7 @@
 
 当前证据支持较弱但明确的第一步：在相同 Tucker 网络中，把以欧氏距离构造的 RBF sections 换成由不规则域 Laplacian 构造的 intrinsic sections，在未见形状、24→32 跨分辨率、1% 训练条目条件下，三 seed 验证误差从 `0.3320` 降到 `0.2602`；加入相同局部坐标/SDF 后，两者分别为 `0.2031` 与 `0.1905`，边界误差分别为 `0.2267` 与 `0.1905`。
 
-但这还不能证明“Bayesian GP Tucker”：当前没有显式 Gaussian prior、variational posterior、ELBO、posterior variance 或 calibration。下一里程碑必须完成真实 GP 残差因子和可检查的 posterior predictive distribution。
+新完成的两组三-seed ELBO 实验修正了故事：纯 35 维 finite-feature GP 的点预测 NRMSE 约为 `0.32`，明显弱于 neural model；但把相同 GP 作为共享 neural CP mean 的 residual 后，intrinsic 版本从 mean-only 的 `0.2036` 改善到 `0.1765`，三个 seed 均改善，且显著优于参数匹配的 Euclidean residual `0.2280`。因此现在最值得推进的是 **neural tensor mean + domain-GP residual**，不是纯 GP，也暂时不是更复杂的全 Bayesian Tucker。
 
 ## 1. 四条线中本方向的独立故事
 
@@ -28,7 +28,7 @@
 
 ## 2. 数据对象与任务定义
 
-令第 (c) 个物理域为 ‎(Omega_c\subset\mathbb R^d)，它可以有不规则外边界和内部孔洞。一个观测写作
+令第 $c$ 个物理域为 $\Omega_c\subset\mathbb R^d$，它可以有不规则外边界和内部孔洞。一个观测写作
 
 \[
 \mathcal D=\{(c_i,s_i,a_i,x_i,y_i)\}_{i=1}^{N_{\rm obs}},
@@ -40,7 +40,7 @@
 - (a_i\in\mathcal A)：扩散系数、频率、Reynolds number 等工况参数；
 - (x_i\in\Omega_{c_i})：查询点；
 - (y_i=u_{c_i}(s_i,a_i,x_i)+\epsilon_i)：物理场值；
-- ‎(epsilon_i\sim\mathcal N(0,\sigma^2))。
+- $\epsilon_i\sim\mathcal N(0,\sigma^2)$。
 
 当前合成数据的张量语义是 `[source, diffusivity, irregular-domain node]`，每个域有 4 个 source、14 个 diffusivity 和约 300–900 个 active nodes。
 
@@ -48,7 +48,7 @@
 
 ### 2.1 同域 tensor completion
 
-训练和测试来自同一个 ‎(Omega_c)，只隐藏条目。这是最接近传统 tensor completion 的设置，也最适合与 CP/Tucker/FunBaT 公平比较。
+训练和测试来自同一个 $\Omega_c$，只隐藏条目。这是最接近传统 tensor completion 的设置，也最适合与 CP/Tucker/FunBaT 公平比较。
 
 ### 2.2 新域 few-shot adaptation（主任务）
 
@@ -79,7 +79,7 @@ k_{\Omega_c}(x,x';\kappa,\nu)
 \phi_{cj}(x)\phi_{cj}(x').
 \]
 
-因为 covariance 使用 ‎(phi_j(x)phi_j(x'))，单个 eigenvector 的任意正负翻转不会改变 kernel。孔洞和凹边界通过 ‎(L_{\Omega_c}) 改变传播关系；欧氏距离很近、但隔着孔洞或墙面的点，不再必然高度相关。
+因为 covariance 使用 $\phi_j(x)\phi_j(x')$，单个 eigenvector 的任意正负翻转不会改变 kernel。孔洞和凹边界通过 $L_{\Omega_c}$ 改变传播关系；欧氏距离很近、但隔着孔洞或墙面的点，不再必然高度相关。
 
 这里必须谨慎：Riemannian Matérn 的经典谱公式通常在紧致无边界 manifold 上陈述；本项目使用的是带 reflecting/Neumann 边界的离散 graph Laplacian。Neumann SPDE 会引入真实的边界 covariance effect。论文中必须把边界条件当作 prior 定义的一部分，并做 Dirichlet/Neumann/mismatched BC 消融，不能直接引用无边界结论后声称完全等价。
 
@@ -116,7 +116,7 @@ F^{(a)}_q\sim\operatorname{GP}(m^{(a)}_{\theta,q},k_a).
 
 ### 3.3 为什么 source 与 query 应分开
 
-当前 POC 把 ‎(k_{\Omega}(x,s))、(x)、(s) 一起送入一个 spatial MLP，因此严格说不是 source × parameter × space 的三模 Tucker。投稿模型应把 source factor 与 query factor分开。对于线性 elliptic PDE，其 Green function 本身就有谱展开
+当前 POC 把 $k_{\Omega}(x,s)$、$x$、$s$ 一起送入一个 spatial MLP，因此严格说不是 source × parameter × space 的三模 Tucker。投稿模型应把 source factor 与 query factor 分开。对于线性 elliptic PDE，其 Green function 本身就有谱展开
 
 \[
 G_\Omega(x,s)\approx\sum_j \rho_j\phi_j(x)\phi_j(s),
@@ -129,8 +129,11 @@ G_\Omega(x,s)\approx\sum_j \rho_j\phi_j(x)\phi_j(s),
 当前实现位于：
 
 - `src/geoaware/domain_kernels.py`
+- `src/geoaware/variational_domain_gp.py`
 - `src/geoaware/functional_tucker.py`
 - `experiments/run_four_track_fast_poc.py`
+- `experiments/track3_variational_domain_gp.py`
+- `experiments/track3_neural_mean_gp_residual.py`
 
 当前 intrinsic section 为
 
@@ -140,9 +143,9 @@ z_{\Omega,q}(x,s)=\operatorname{RMSNorm}\left[
 (1+\alpha_q\lambda_j)^{-p}\right],
 \]
 
-其中 (J=48)、‎(alpha_q\in\{0.03,0.1,0.3,1,3\})、(p=1.5)。eigenvalue 先除以该图第一个正 eigenvalue，basis 又做 empirical-‎(L^2) normalization，最后每个 section channel 按其自身 RMS 标准化。
+其中 $J=48$、$\alpha_q\in\{0.03,0.1,0.3,1,3\}$、$p=1.5$。eigenvalue 先除以该图第一个正 eigenvalue，basis 又做 empirical-$L^2$ normalization，最后每个 section channel 按其自身 RMS 标准化。
 
-这些操作对跨分辨率数值稳定很有帮助，但它们改变了 covariance amplitude，也没有学习 ‎(kappa,\nu,\sigma_f)。因此这些 section 应叫“由 covariance 启发的 geometry features”，不能当作已经校准的 GP covariance matrix。
+这些操作对跨分辨率数值稳定很有帮助，但它们改变了 covariance amplitude，也没有学习 $\kappa,\nu,\sigma_f$。因此这些 section 应叫“由 covariance 启发的 geometry features”，不能当作已经校准的 GP covariance matrix。
 
 点预测模型是
 
@@ -157,7 +160,7 @@ A_g(d_{\Omega}) B_p([\log a,a]) H_r(z),
 z=[z_\Omega(x,s),x,\operatorname{SDF}_\Omega(x),s,\|x-s\|,1].
 \]
 
-‎(A,B,H) 都是两层 GELU MLP，使用 AdamW 训练。这个模型有显式 Tucker core，但它是**确定性 neural functional Tucker**。普通 weight decay 不是显式 GP coefficient prior；当前没有 posterior distribution。
+$A,B,H$ 都是两层 GELU MLP，使用 AdamW 训练。这个模型有显式 Tucker core，但它是**确定性 neural functional Tucker**。普通 weight decay 不是显式 GP coefficient prior；当前没有 posterior distribution。
 
 ### 4.1 “composite kernel”命名需要纠正
 
@@ -244,6 +247,59 @@ q(w_{cr})=\mathcal N(\mu_{cr},S_{cr}).
 
 先用 diagonal (S)，通过 reparameterization Monte Carlo 训练。只有 Stage 2 完成后，代码才能诚实称为 approximate GP factor posterior。
 
+### 本轮已完成的最小 Bayesian 闭环：有限核上的显式变分 GP
+
+为了先把推理定义做对，本轮采用比 Stage 2 更小、可与 exact posterior 对齐的模型。对每个 observation 构造
+
+\[
+\phi(s,a,x)=D^{-1/2}\,z_\Omega(s,x)\otimes\psi(a)\in\mathbb R^{35},
+\]
+
+其中 \(z_\Omega\) 是 5 个 intrinsic Matérn sections 或参数完全匹配的 5 个 Euclidean RBF sections，\(\psi\) 是 7 个固定参数 RBF features。它定义合法有限秩 kernel
+
+\[
+k(\xi,\xi')=\phi(\xi)^\top\phi(\xi').
+\]
+
+白化的 inter-domain inducing coefficients 为
+
+\[
+p(u)=\mathcal N(0,I),\qquad
+q(u)=\mathcal N(m,LL^\top).
+\]
+
+likelihood 为 \(p(y_i\mid u)=\mathcal N(\phi_i^\top u,\sigma_n^2)\)，训练目标是
+
+\[
+\mathcal L=
+\frac{N}{|B|}\sum_{i\in B}
+\mathbb E_{q(u)}\log p(y_i\mid u)
+-\operatorname{KL}[q(u)\|p(u)].
+\]
+
+Gaussian expected log-likelihood 和 KL 都解析计算；使用 Adam mini-batch SGD，500 steps。因为只有 35 个 latent coefficients，还同时计算同一 kernel、同一 learned noise 下的闭式 exact posterior。这一实现可以严格称为 finite-feature variational GP，但还没有 Tucker core，也没有 neural mean。
+
+严格地说，这里的 GP covariance 是 **domain-kernel sections 的 inner-product kernel**，不是直接把原始 \(k_\Omega(x,x')\) 当作 observation covariance。sections 自身由域 Laplacian 谱构造，因此 geometry 进入了 prior；但论文不能把二者写成完全相同的 kernel。
+
+### 本轮 R3：共享 neural mean + GP residual
+
+令共享 neural CP mean 为 \(m_\theta(c,s,a,x)\)，则 R3 模型为
+
+\[
+y_i=m_\theta(\xi_i)+\phi_\Omega(\xi_i)^\top u+\epsilon_i.
+\]
+
+mean 与 full-covariance \(q(u)\) 从头联合训练，目标仍是
+
+\[
+\frac{N}{|B|}\sum_{i\in B}
+\mathbb E_q\log\mathcal N(y_i\mid
+m_\theta(\xi_i)+\phi_i^\top u,\sigma_n^2)
+-\mathrm{KL}[q(u)\|p(u)].
+\]
+
+`mean-only` 使用同一个 rank-24、hidden-64 geometry-conditioned neural CP、相同初始化、mask、mini-batch sequence、500 steps 和 learning rates；它只去掉 residual \(u\) 与 KL。intrinsic/Euclidean residual 的 latent dimension 都是 35，唯一差别是 kernel sections。
+
 ### Stage 3：source + space 双 domain-GP factor
 
 将 source 与 query spatial factors 都随机化，保留一维 parameter GP 或确定性 factor。主要风险是乘法因子的 scale/permutation non-identifiability 和 Monte Carlo 方差。建议：
@@ -256,7 +312,7 @@ q(w_{cr})=\mathcal N(\mu_{cr},S_{cr}).
 
 ### Stage 4：inducing / inter-domain scalable inference
 
-若每个域节点很多，使用 inducing variables ‎(u=f(Z)) 和
+若每个域节点很多，使用 inducing variables $u=f(Z)$ 和
 
 \[
 q(f,u)=p(f\mid u)q(u)
@@ -318,6 +374,60 @@ q(f,u)=p(f\mid u)q(u)
 - full Bayesian 后加入 NLL、CRPS、50/90/95% coverage 和 sharpness。
 
 ## 7. 新完成的机制消融
+
+### 7.1 共享 neural mean + variational GP residual（最新 R3）
+
+协议：4 个训练形状 `r24`、未见验证形状 `slanted_channel_r32`、训练标签 1%、验证域零目标观测、3 seeds、500 steps、mini-batch 512、test 未读取。全部 checkpoint 只看训练观测目标。
+
+| 模型 | Validation NRMSE | Boundary NRMSE | NLL | 95% coverage |
+|---|---:|---:|---:|---:|
+| observed train mean | 1.0009±0.0008 | 1.0003±0.0007 | 1.2580 | 0.9567 |
+| shared neural mean only | 0.2036±0.0169 | 0.2206±0.0164 | -0.3338 | 0.9486 |
+| mean + intrinsic GP residual | **0.1765±0.0205** | **0.1949±0.0276** | **-0.5688** | 0.9329 |
+| mean + Euclidean GP residual | 0.2280±0.0148 | 0.2410±0.0040 | -0.3118 | 0.9151 |
+
+最重要的 paired 结果：
+
+- intrinsic residual 相对 mean-only 的 global NRMSE 改善 13.3%，boundary NRMSE 改善 11.6%；
+- intrinsic 在 3/3 seeds 同时胜过 mean-only 和 Euclidean residual；
+- absolute skill 有效：所有 neural 方法都远好于约 1.0 的 observed-mean baseline；
+- intrinsic residual 的 uncertainty/absolute-error correlation 为 `0.553`，NLL 也优于 mean-only；
+- 95% coverage 只有 `0.933`，存在 under-coverage，不能声称 calibration 已解决。
+
+这是一条值得继续的条件正信号：geometry-aware GP 作为 residual 比作为完整 predictor 更合理。但当前 validation 仍只有一个形状；联合训练也意味着增益来自 mean 与 GP 的协同，而不是“冻结同一 mean 后只做 posterior correction”。因此下一步应先扩大冻结 validation geometry，而不是增加 VI 复杂度。
+
+结果：
+
+- `papers/four_tracks/results/track3_neural_mean_gp_residual_seed{0,1,2}.json`
+- `papers/four_tracks/results/track3_neural_mean_gp_residual_summary.json`
+
+### 7.2 显式纯 GP：ELBO + SGD（本轮 R2）
+
+独立实验：`experiments/track3_variational_domain_gp.py`。
+
+协议：4 个训练形状 `r24`、未见验证形状 `slanted_channel_r32`、训练标签 1%、验证域零目标观测、3 seeds、每 seed 500 steps、mini-batch 256。checkpoint 只看全部训练观测的 ELBO，validation target 不参与训练、调参或 checkpoint，test geometry 完全未读取。intrinsic 与 Euclidean control 共享 mask、feature dimension、参数 RBF、batch sequence、prior、posterior family 和优化预算。
+
+| 推理与核 | Validation NRMSE | Boundary NRMSE | 95% coverage | error/std corr. |
+|---|---:|---:|---:|---:|
+| intrinsic variational GP | 0.3282±0.0101 | 0.3593±0.0135 | 0.9759±0.0053 | 0.5368 |
+| Euclidean variational GP | **0.3216±0.0148** | **0.3172±0.0127** | 0.9644±0.0038 | 0.3199 |
+| intrinsic exact finite GP | **0.3119±0.0173** | 0.3532±0.0313 | 0.9736 | 0.6227 |
+| Euclidean exact finite GP | 0.3128±0.0239 | **0.2975±0.0160** | 0.9667 | 0.2966 |
+
+这组结果给出三个清楚结论：
+
+1. ELBO-GP 和 posterior variance 已真实跑通；intrinsic variance 与 absolute error 的相关性高于 Euclidean，说明 UQ 排序包含 geometry signal，但 95% coverage 约 97.6%，仍略保守。
+2. 500-step variational posterior 与 exact posterior 的 validation latent variance 相对 L1 差约 2.0%（intrinsic）/3.9%（Euclidean），但 mean 的 normalized RMSE 差约 0.09–0.10，说明早期 SGD 预算尚未完全收敛。
+3. exact posterior 中 intrinsic 与 Euclidean 全域 NRMSE 只差约 0.3%，而 boundary metric 是 Euclidean 更好；因此不能把 point-error 差异归因于变分推理，更不能声称 intrinsic GP 获胜。更大的瓶颈是 35 维纯线性 finite kernel 的容量。
+
+与上一节 neural POC 对照时也必须谨慎：neural model 的 `0.1905` 来自 900 steps 和非线性 MLP，当前 GP 的 `0.32` 来自用户指定的 500-step early protocol，二者不是严格同预算主表。但差距足够大，说明下一轮应保留 neural mean，并用 GP residual 提供局部 adaptation/UQ。
+
+结果：
+
+- `papers/four_tracks/results/track3_variational_gp_seed{0,1,2}.json`
+- `papers/four_tracks/results/track3_variational_gp_summary.json`
+
+### 7.3 Neural kernel-section 机制消融（上一轮）
 
 独立实验：`experiments/track3_kernel_input_ablation.py`。
 
@@ -430,22 +540,24 @@ GINO、Geo-FNO、DAFNO/相关 arbitrary-domain operator 并非 Bayesian tensor b
 
 ## 10. 测试与可复现性
 
-本轮新增 `tests/test_domain_kernels.py`：
+`tests/test_domain_kernels.py` 当前覆盖：
 
 1. intrinsic sections 对 eigenvector sign flips 不变；
 2. Euclidean RBF sections 在 source node 取最大值；
 3. 非正 lengthscale 和空 lengthscale 被拒绝。
+4. intrinsic/Euclidean 共用的 tensor-product GP feature dimension 正确；
+5. `q(u)=p(u)` 时 KL 为零且 prior variance 为正；
+6. exact finite-GP posterior 在观测附近收缩 variance；
+7. mini-batch ELBO 数值有限且可反向传播。
 
-通过情况：`5 passed`。
+通过情况：`10 passed`（方向 3 定向测试）。
 
-完整 Bayesian implementation 还必须新增：
+更完整 Bayesian implementation 还必须新增：
 
 - covariance symmetry/PSD test；
 - graph permutation equivariance test；
 - duplicate/degenerate eigenvalue basis-rotation invariance test；
 - 24/32/64 kernel diagonal与effective range convergence；
-- KL 为非负且 (q=p) 时为零；
-- posterior variance 随 nearby observations 增加而下降；
 - exact small GP 与 variational GP 的 posterior mean/variance 对齐；
 - predictive coverage synthetic calibration；
 - train-only normalization 和 split leakage automated audit。
@@ -527,10 +639,11 @@ GINO、Geo-FNO、DAFNO/相关 arbitrary-domain operator 并非 Bayesian tensor b
 
 ### Round 2：真实 GP 的最小闭环
 
-- neural mean + 单 spatial GP residual；
-- whitened diagonal variational posterior；
-- Gaussian core posterior；
-- exact small-domain GP 对齐 test；
+- 已完成：whitened full-covariance finite-feature `q(u)`、ELBO+SGD、exact posterior control 和 predictive UQ；
+- 已完成：共享 neural CP mean + 单 domain-GP residual 的 joint ELBO；
+- 下一步：在多 validation geometries 和 new-domain few-shot 上确认 residual 增益与 calibration；
+- 后续再加 Gaussian core posterior；
+- 加强 variational/exact posterior mean convergence test；
 - few-shot test-domain protocol 和 calibration。
 
 ### Round 3：直接对标 FunBaT
@@ -554,4 +667,4 @@ GINO、Geo-FNO、DAFNO/相关 arbitrary-domain operator 并非 Bayesian tensor b
 
 ## 15. 最诚实的一句话进度
 
-我们已经证明“intrinsic domain covariance sections 比参数匹配的欧氏 RBF sections 更适合当前不规则域边界任务”这一小机制在三 seed 验证上成立；还没有证明“Bayesian Functional Tucker 比 functional/neural Tucker 或真正 GP baseline 更好”。下一步不应继续给 MLP 加名词，而应先扩大形状协议，再实现一个最小但真实的 GP posterior 闭环。
+我们已经完成最小但真实的 GP posterior 闭环；纯 GP 不够强，但“共享 neural tensor mean + intrinsic GP residual”在单一未见 validation geometry 上三 seed 稳定改善 point error 和 NLL。下一步必须扩大冻结形状协议并修正 under-coverage；在此之前它是条件 GO，不是论文结论。

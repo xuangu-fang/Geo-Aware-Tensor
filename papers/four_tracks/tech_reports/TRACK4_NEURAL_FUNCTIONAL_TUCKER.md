@@ -1,9 +1,102 @@
-# 方向 4 技术报告：Geometry-conditioned Neural Functional Tucker
+# 方向 4 技术报告：Geometry-conditioned Neural Tensor / Operator
 
 更新时间：2026-08-15  
-状态：**POC 可运行；论文主张尚未通过**  
-当前正确名称：**边界距离条件的神经函数 Tucker**  
+状态：**多形状 Geometry-NO POC 可运行；当前 NO 分支为负信号**
+当前正确名称：**Geometry-conditioned Neural Tensor / Operator**
 不应使用的名称：完整 SDF-Tucker、跨域 few-shot completion、已验证的 geometry-general operator
+
+---
+
+## 最新结论：48-domain Geometry-NO R1 与残差 R2
+
+用户最新反馈允许 CP、Tucker 或 TT，真正需要检验的是：能否用 neural
+operator 读取完整不规则域，再用低秩 neural tensor 在极少标签下抑制
+operator 的过拟合。为此本轮不再给旧 Tucker 叠加新 core，而实现了一个
+更小、更明确的新方法：
+
+\[
+Z_{\Omega,r}(x)=\operatorname{FNO}_{\theta}
+ [m_\Omega,\widetilde m_\Omega,d_\Omega,n_x,n_y,x,y]_r(x),
+\]
+
+\[
+\widehat u_\Omega(s,p,x)=
+\sum_{r=1}^{R}a_r(s)b_r(p)Z_{\Omega,r}(x).
+\]
+
+这里 (m_\Omega) 是 occupancy，\(\widetilde m_\Omega\) 是平滑 mask，
+\(d_\Omega\) 是在完整 ambient grid 上定义、域内为正域外为负的真实
+signed distance，\((n_x,n_y)\) 是其归一化梯度。FNO 从不读取 target 或
+observation mask；loss 只在训练场的 1% output labels 上计算。
+
+这与 TFNO/MG-TFNO 的区别必须说清楚：它们主要分解 neural-operator
+weights；这里分解的是 `source × physical parameter × geometry-conditioned
+output basis`，而 neural operator 仅负责产生随域变化的空间因子。
+
+### 新数据协议
+
+- 48 个训练几何，外边界均随机 Fourier 扰动，包含 0/1 hole；
+- 8 个 ID validation，仍为 0/1 hole；
+- 8 个 topology-OOD validation，全部恰好 2 holes；
+- 8 个 test 的几何规格已经冻结，但本轮没有生成或读取 test fields；
+- 每个几何含 3 个 source、6 个 diffusivity、数值 screened-elliptic 解；
+- 分辨率 28，训练只读所有合法 tensor entries 的 1%；
+- 3 seeds、400 optimizer updates，不以 validation 选择 checkpoint。
+
+冻结 manifest：
+`experiments/dataset_splits/track4_geometry_no_r1.json`。
+
+### R1：三种子 validation 结果
+
+| 模型 | 参数量 | ID NRMSE | 2-hole OOD NRMSE |
+|---|---:|---:|---:|
+| coordinate/SDF/source-aware CP | 3.6K | **0.2480±0.0047** | **0.2553±0.0049** |
+| unmasked full-geometry FNO + CP | 115K | 0.2840±0.0065 | 0.2958±0.0029 |
+| masked SDF-only FNO + CP | 115K | 0.3224±0.0121 | 0.3561±0.0215 |
+| masked full-geometry FNO + CP | 115K | 0.3437±0.0186 | 0.3669±0.0130 |
+| masked full-geometry FNO + dense head | 118K | 0.7296±0.0300 | 0.7738±0.0218 |
+| observed global mean | 0 | 1.0029±0.0001 | 1.0040±0.0004 |
+
+因此本轮有两个同时成立的结论：
+
+1. 低秩 CP head 非常重要：同 encoder 的 dense head 明显失败；
+2. neural-operator geometry branch **没有超过** 很小的 pointwise
+   coordinate/SDF CP，不能把它写成有效的新方法贡献。
+
+hard-masked FNO 更弱并不意外。每层把域外 feature 直接清零，会在不规则
+边界制造高频跳变和 Fourier ringing，同时移除 FNO 做平滑 ambient
+extension 所需的域外 buffer。像素化 SDF 求出的 normals 也带来冗余高频
+噪声；这解释了 SDF-only 比 full bundle 更好、unmasked 又比 hard-masked
+更好。更关键的证据是，masked FNO+CP 的 observed normalized MSE 可低至
+约 0.004，而小 CP 约为 0.066，但 validation 反而更差：这是非常直接的
+稀疏标签过拟合，而非 400 steps 没有优化收敛。
+
+### R2：小门控 NO residual
+
+按照“先保住简单 CP，再让 NO 只修正它”的思路，进一步实现：
+
+\[
+\widehat u = \widehat u_{\rm coord/SDF\ CP}
+ + \gamma\widehat u_{\rm geometry-NO\ CP},\qquad \gamma_0=0.01.
+\]
+
+在完全相同的 case schedule、seed 0 和 400 updates 下：
+
+| 模型 | ID NRMSE | 2-hole OOD NRMSE |
+|---|---:|---:|
+| coordinate/SDF CP | **0.2538** | **0.2614** |
+| + unmasked NO residual | 0.2917 | 0.2865 |
+| + hard-masked NO residual | 0.3488 | 0.3541 |
+
+残差版仍未改善，所以按预先纪律不再为 R2 跑其余两个 seeds，也不继续加深
+FNO、attention 或更多 geometry channels。当前判定是：
+
+> **保留 geometry-NO 接口和完整数据协议，但暂停把 FNO branch 当方向 4
+> 主方法；当前可依赖的正信号仍是 geometry-conditioned low-rank CP。**
+
+若以后重启 NO 路线，只允许一个结构性修正：用低容量 smooth extension /
+DAFNO-style domain convolution 代替每层 hard masking，并让其修正显式局部
+CP，而不是重新训练一个 100K 级自由空间分支。
 
 ---
 
@@ -662,6 +755,7 @@ boundary NRMSE 使用 boundary subset 自己的 std。这能描述区域内相�
 - DAFNO 官方实现: <https://github.com/ningliu-iga/DAFNO>
 - Geo-FNO: <https://arxiv.org/abs/2207.05209>
 - Geo-FNO 官方实现: <https://github.com/neuraloperator/Geo-FNO>
+- MG-TFNO（分解的是 operator parameter tensor）: <https://arxiv.org/abs/2310.00120>
 - Transolver (ICML 2024): <https://icml.cc/virtual/2024/poster/33751>
 - Transolver 官方实现: <https://github.com/thuml/Transolver>
 - AirfRANS: <https://arxiv.org/abs/2212.07564>
@@ -670,6 +764,29 @@ boundary NRMSE 使用 boundary subset 自己的 std。这能描述区域内相�
 ---
 
 ## 12. 可复现入口
+
+最新 Geometry-NO R1（每个 seed 固定 400 steps）：
+
+```bash
+PYTHONPATH=.python-packages:src .venv/bin/python \
+  experiments/track4_geometry_no_tensor_r1.py \
+  --seed 0 --steps 400 \
+  --output papers/four_tracks/results/track4_geometry_no_r1_seed0.json
+```
+
+小门控 residual R2 筛选：
+
+```bash
+PYTHONPATH=.python-packages:src .venv/bin/python \
+  experiments/track4_geometry_no_tensor_r1.py \
+  --seed 0 --steps 400 \
+  --models coordinate_sdf_cp masked_geometry_no_residual \
+           unmasked_geometry_no_residual \
+  --output papers/four_tracks/results/track4_geometry_no_residual_r2_seed0.json
+```
+
+这两个命令只会读取 train、ID validation 和 topology-OOD validation；入口
+对 `test` split 有显式拒绝逻辑。
 
 当前 validation POC：
 

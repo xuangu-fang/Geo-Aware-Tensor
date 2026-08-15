@@ -75,3 +75,40 @@
 - 完整-observed checkpoint 修复后，CP-shaped-core Tucker `0.1922±0.0305`，functional CP `0.1958±0.0312`，joint INR `0.1723±0.0175`。
 - Tucker 只赢 CP 1/3 seeds；CP-shaped core 只是代数初值，不是 trained-CP warm start。
 - 决策：新生成 80–200 shapes 与冻结多孔洞 test；只允许真实 CP warm start + off-diagonal residual 这一个最小方法修正。
+
+## R4：方向 1 固定预算公平主表（2026-08-15）
+
+- 按新协议锁为 3 个 validation seeds、500 steps、随机冷启动；所有方法共享 observation mask、噪声与 observed-only normalization。
+- 比较 Operator Tucker/CP、Neural Functional Tucker/CP 与 SIREN；参数量依次为 247、320、8,178、8,872、19,105。
+- 2% random：Operator Tucker `0.2582±0.0718`，明显优于 Neural F-Tucker `0.5704±0.0625` 与 SIREN `0.8358±0.0080`。
+- 2% periodic gap：Operator Tucker `0.5975±0.1298`，优势存在但明显缩小；Neural F-CP 为 `0.6889±0.0507`。
+- 1% random：Operator Tucker `1.2147±0.3165`，弱于 Neural F-Tucker `0.8984±0.1035`；当前不能宣称观测越稀疏优势越大。
+- flat-GP/HOSVD 初始化把 Operator Tucker 的 1% random 改善到 `0.8587±0.1118`，证明旧正结果包含不可忽略的初始化收益。它被保留为消融，不混入 cold-start 主表。
+- 在 35% dense-Tucker + 65% CP/local-residual 的部分失配 truth 上，Operator Tucker `0.4517±0.0461`，Neural F-Tucker `0.4562±0.0198`；只赢 2/3 seeds，平均差约 1%，优势不显著。
+- 决策：方向 1 继续，但论文故事暂时收窄为“operator factor space 在达到可识别阈值后降低样本复杂度”；下一轮优先换 non-aligned truth，而不是继续在 exact spectral truth 上调参。
+
+原始记录：`results/track1_fixed_budget_validation_r2/results.json` 与
+`results/track1_initializer_ablation_validation_r2/results.json`、
+`results/track1_mixed_validation_r2/results.json`。
+
+## R5：3--5 seeds / 300--500 steps 早筛轮（2026-08-15）
+
+### 方向 2：clean traveling harmonic 最终判定
+
+- learner-free generator 使用真正的 `travel time - time` characteristic，频率不进入模型初始化。
+- 3 seeds×500 steps：zero `1.0000`，joint INR `1.2753±0.0203`，correct paired phase `1.4859±0.0806`，ordinary CP `2.4778±0.1679`，wrong Euclidean phase `2.5336±0.0849`。
+- correct geometry 虽优于 wrong geometry，但仍未学到绝对有效预测；决策为 **STOP / DOWNGRADE**。
+
+### 方向 3：ELBO+SGD 与 GP residual
+
+- 实现 full-covariance finite-feature variational GP：显式 prior、`q(u)`、KL、Gaussian ELL、mini-batch ELBO 和 posterior variance。
+- pure GP 没有几何优势：intrinsic `0.3282±0.0101`，Euclidean `0.3216±0.0148`。
+- 共享 neural CP mean 后，mean-only `0.2036±0.0169`，intrinsic GP residual `0.1765±0.0205`，Euclidean residual `0.2280±0.0148`；intrinsic 在 3/3 seeds 赢 mean-only。
+- coverage95 为 `0.9329`，且只有一个未见 validation geometry；因此是条件 GO，不是最终确认。
+
+### 方向 4：Geometry-NO × CP
+
+- 新数据为 48 train 0/1-hole、8 ID validation、8 two-hole OOD validation；8 个 test specs 冻结未读。
+- 3 seeds×400 steps、1% labels、所有模型共享同一 case schedule：coordinate/SDF CP `0.2480±0.0047 / 0.2553±0.0049`（ID/OOD）；最佳 unmasked geometry-NO-CP `0.2840±0.0065 / 0.2958±0.0029`；masked geometry-NO-CP `0.3437±0.0186 / 0.3669±0.0130`；同 encoder dense head `0.7296±0.0300 / 0.7738±0.0218`。
+- NO observed loss 更低但 validation 更差，属于明确稀疏过拟合；一次小门控 NO residual 修正仍未超过 CP，停止继续加深。
+- 当前可保留的结论是 geometry-conditioned low-rank CP 有效；FNO 融合只是可复现实验接口和负信号。

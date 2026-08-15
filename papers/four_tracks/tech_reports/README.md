@@ -8,8 +8,8 @@
 |---|---|---|
 | 1. Operator-informed Bayesian Tucker | [`TRACK1_OPERATOR_TUCKER.md`](TRACK1_OPERATOR_TUCKER.md) | 固定离散张量、算子谱先验、conditional Bayesian core |
 | 2. Phase-factorized Wave Tensor | [`TRACK2_PHASE_WAVE.md`](TRACK2_PHASE_WAVE.md) | 波场相位恒等式、传播距离、专项 wave benchmark |
-| 3. Domain-kernel GP Functional Tucker | [`TRACK3_DOMAIN_KERNEL_GP.md`](TRACK3_DOMAIN_KERNEL_GP.md) | 非欧域 kernel、有限特征 POC、未来 GP posterior |
-| 4. Geometry-conditioned Neural Functional Tucker | [`TRACK4_NEURAL_FUNCTIONAL_TUCKER.md`](TRACK4_NEURAL_FUNCTIONAL_TUCKER.md) | SDF/边界距离条件的连续因子、显式 Tucker/CP |
+| 3. Domain-kernel GP Functional Tensor | [`TRACK3_DOMAIN_KERNEL_GP.md`](TRACK3_DOMAIN_KERNEL_GP.md) | 非欧域 kernel、ELBO+SGD、neural mean + GP residual |
+| 4. Geometry-conditioned Neural Tensor / Operator | [`TRACK4_NEURAL_FUNCTIONAL_TUCKER.md`](TRACK4_NEURAL_FUNCTIONAL_TUCKER.md) | ambient geometry encoder、CP/TT/Tucker 可替换低秩 head |
 
 共享实验审计规则见 [`SHARED_AUDIT_PROTOCOL.md`](SHARED_AUDIT_PROTOCOL.md)。四份报告可以有不同方法，但不得使用不同的指标定义、数据泄漏标准或 baseline 命名口径。
 
@@ -29,16 +29,16 @@
 ## 当前最重要的共享结论
 
 - “1% observation”必须说明是**训练域完整张量的 entry subsampling**，还是**测试域 few-shot observations**。当前新方向 POC 是前者，并且对测试域零观测；它更接近稀疏监督下的跨几何 surrogate，而不是传统 transductive tensor completion。
-- 当前 irregular elliptic 数据只有 6 个手工几何族、其中 1 个 validation、1 个 hole test。它足够做机制 POC，不足以证明 geometry generalization。
+- 旧 irregular elliptic 数据只有 6 个手工几何族、其中 1 个 validation、1 个已读 hole test。方向 4 新协议已扩为 48 train、8 ID validation、8 双孔 topology-OOD validation，并冻结 8 个未读 test specs；这足够做早期多形状 POC，但仍不是公开外部证据。
 - 当前 `boundary_distance` 是活动域内部到最近外边界或孔洞边界的正距离；它不是含域外符号的完整 SDF。报告和模型名应区分“interior boundary distance”与真正 SDF。
-- 方向 3 当前是 kernel-feature neural POC，不是完整 GP，也不是严格 GP-MAP；只有显式 GP prior/coefficients 和 posterior 后才能使用 Bayesian GP 主张。
+- 方向 3 已实现有限特征 variational GP：显式 Gaussian prior、full-covariance variational posterior、KL、Gaussian likelihood、mini-batch ELBO 与 posterior variance。准确名称是 finite-feature GP hybrid，尚不是完整 Bayesian functional Tucker。
 - 任何方法若 NRMSE 接近 1，即使 paired p-value 显著也视为任务整体无效。外部任务先过绝对效果门槛，再讨论相对提升。
 
 ## 你最关心的“数据和 baseline 到底选对了没有”
 
 | 方向 | 当前数据判断 | 当前 baseline 判断 | 结论 |
 |---|---|---|---|
-| 1 | aligned operator Tucker 只适合 sanity；irregular elliptic/The Well 没有外部正信号 | operator CP/flat GP/wrong operator 正确；原先缺 neural functional CP/Tucker，且其收敛预算被低估 | 方向可保留，但旧主表是 inverse-crime 机制证据，必须重跑修正后先验并增加公开数据 |
-| 2 | band-aligned harmonic 只是 sanity；independent wave 和 The Well 都明确失败 | ordinary CP/joint INR/wrong phase/trivial gate 已配齐；WaveBench 官方 FNO/U-Net 只能在 operator protocol 中比 | 当前暂停；不应继续扩大波场应用或堆 envelope |
-| 3 | irregular elliptic 适合 intrinsic-vs-Euclidean 机制测试，但只有 1 validation shape，hole test 已读 | 新 intrinsic/Euclidean section 对照正确；旧 `topology_erased` 命名过强；真正 KRR/GP、FunBaT 尚缺 | 只证明 intrinsic feature 有机制信号，尚未证明 GP/Bayesian 方法 |
-| 4 | 6-shape elliptic 适合实现 POC，不足以学 topology distribution；边界距离又是 generator 显式变量 | same-input CP 和 joint INR 选得对；`coordinate` 仍读全局几何，不是 no-geometry；下一级应先加 F-INR/CORAL，再加 GINO | Tucker 尚未超过 CP/INR；先扩形状和修正 geometry ablation，不可先加复杂 encoder |
+| 1 | aligned operator Tucker 仍是机制数据；本轮增加部分失配 truth，但尚缺 non-aligned PDE/GP truth | functional CP/Tucker 与 SIREN 已加入并锁 3 seeds×500 steps；初始化收益单列消融 | 2% 后有 operator-space 正信号；1% 和 mismatch 不支持强 claim |
+| 2 | clean traveling harmonic、independent wave、The Well 均未过绝对门槛 | correct/wrong travel time、ordinary CP、joint INR、zero gate 已齐 | **STOP / DOWNGRADE**；不再进入 WaveBench 或继续堆 phase 组件 |
+| 3 | 仍只有一个未见 validation geometry，适合 inference closure 和机制筛选，不足以确认跨拓扑泛化 | pure variational GP、exact finite-GP、mean-only、intrinsic/Euclidean GP residual 已齐 | pure GP 负；neural mean + intrinsic GP residual 为条件 GO，需多几何确认与校准 |
+| 4 | 48/8/8 随机多孔洞协议显著好于旧 6-shape POC，test specs 未读 | 同 encoder dense head、coordinate/SDF CP、SDF-only/full、masked/unmasked 均已齐 | CP 明显有效；当前 FNO 融合稀疏过拟合，保留接口但不能作为正贡献 |

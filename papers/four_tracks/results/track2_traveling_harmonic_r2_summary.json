@@ -1,0 +1,73 @@
+{
+  "experiment_id": "TRACK2-TRAVELING-HARMONIC-R2-LOCKED-VALIDATION-SUMMARY",
+  "status": "VALIDATION_ONLY_COMPLETE",
+  "seeds": [0, 1, 2],
+  "steps_per_seed": 500,
+  "training_target_ratio": 0.01,
+  "test_files_read": [],
+  "generator": "independent true traveling harmonic mixture in physical travel-time coordinate; irrational frequencies not used by learner initialization",
+  "decision": "STOP_AND_DOWNGRADE",
+  "decision_reason": "paired travel-time phase failed the pre-registered absolute gate in all three seeds, even on the ideal traveling-harmonic case",
+  "rows": [
+    {
+      "model": "zero",
+      "parameters": 0,
+      "global_nrmse_mean": 0.9999938011,
+      "global_nrmse_std": 0.0,
+      "macro_late_nrmse_mean": 0.9999751151,
+      "macro_boundary_nrmse_mean": 0.9997245669,
+      "absolute_gate_pass_count": null
+    },
+    {
+      "model": "train_observed_mean",
+      "parameters": 0,
+      "global_nrmse_mean": 1.0002160867,
+      "global_nrmse_std": 0.0000985667,
+      "macro_late_nrmse_mean": 1.0001996756,
+      "macro_boundary_nrmse_mean": 0.9999832213,
+      "absolute_gate_pass_count": null
+    },
+    {
+      "model": "joint_inr",
+      "parameters": 11713,
+      "global_nrmse_mean": 1.2752852837,
+      "global_nrmse_std": 0.0202928246,
+      "macro_late_nrmse_mean": 1.2602064808,
+      "macro_boundary_nrmse_mean": 1.2066266735,
+      "absolute_gate_pass_count": 0
+    },
+    {
+      "model": "paired_travel_time_phase",
+      "parameters": 22926,
+      "global_nrmse_mean": 1.4859206279,
+      "global_nrmse_std": 0.0806287708,
+      "macro_late_nrmse_mean": 1.5484274824,
+      "macro_boundary_nrmse_mean": 1.3241542776,
+      "absolute_gate_pass_count": 0
+    },
+    {
+      "model": "ordinary_functional_cp",
+      "parameters": 21200,
+      "global_nrmse_mean": 2.4778220654,
+      "global_nrmse_std": 0.1678769361,
+      "macro_late_nrmse_mean": 2.4213113387,
+      "macro_boundary_nrmse_mean": 1.7680640221,
+      "absolute_gate_pass_count": 0
+    },
+    {
+      "model": "wrong_euclidean_phase",
+      "parameters": 22926,
+      "global_nrmse_mean": 2.5335839589,
+      "global_nrmse_std": 0.0849088104,
+      "macro_late_nrmse_mean": 2.5312287410,
+      "macro_boundary_nrmse_mean": 2.5719533761,
+      "absolute_gate_pass_count": 0
+    }
+  ],
+  "interpretation": {
+    "geometry_attribution": "correct travel time is substantially better than Euclidean time, but both are absolutely invalid",
+    "optimization_signal": "paired observed-train normalized MSE is 0.0135-0.0253 while validation NRMSE is 1.44-1.58; this is sparse-label zero-shot overfit rather than failure to fit training labels",
+    "frequency_signal": "learned bands move only slightly from their off-grid initialization and no band receives generator-frequency metadata",
+    "scope": "retain only as a controlled identity demonstration or student project; do not spend the main-project budget on R3, WaveBench, or added architecture"
+  }
+}

@@ -1,8 +1,10 @@
+import numpy as np
 import pytest
 import torch
 
 from geoaware.neural_tensor import paired_phase_carriers
 from geoaware.phase_wave_protocol import absolute_wave_gate
+from geoaware.traveling_harmonic_generator import traveling_harmonic_phase
 
 
 def test_paired_carriers_exactly_span_traveling_cosine_and_sine():
@@ -19,6 +21,16 @@ def test_paired_carriers_exactly_span_traveling_cosine_and_sine():
     reconstructed_sin = products[..., 3] - products[..., 2]
     assert torch.allclose(reconstructed_cos, torch.cos(phase), atol=1e-6)
     assert torch.allclose(reconstructed_sin, torch.sin(phase), atol=1e-6)
+
+
+def test_independent_generator_is_constant_along_traveling_characteristic():
+    travel_time = np.asarray([0.2, 0.7, 1.1], dtype=np.float32)
+    times = np.asarray([0.1, 0.4], dtype=np.float32)
+    source = np.asarray([-0.72, 0.38], dtype=np.float32)
+    delta = 0.173
+    original = traveling_harmonic_phase(travel_time, times, source)
+    shifted = traveling_harmonic_phase(travel_time + delta, times + delta, source)
+    np.testing.assert_allclose(original, shifted, atol=2e-6)
 
 
 def test_paired_carriers_reject_ambiguous_shapes():

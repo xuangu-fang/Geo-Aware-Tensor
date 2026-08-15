@@ -35,6 +35,7 @@
 |---|---|---|---|---|
 | controlled operator CP/Tucker | 人工 mode operators 与可控低秩真值 | 1 | 实现与机制 sanity | simulator 与 prior 同源，不是外部证据 |
 | irregular-boundary elliptic | 6 种域、2 分辨率、screened elliptic、Neumann/reflecting boundary | 1/3/4 | 孔洞、边界、跨分辨率 POC | 仅 6 个几何；forcing 与域生成均为自建；只有一个 hole test |
+| randomized multi-hole elliptic | 48 train、8 ID-val、8 双孔 OOD-val、8 冻结未读 test specs | 4 | 稀疏监督下 geometry-NO/CP、topology shift | 自建 screened-elliptic；尚无外部 strong operator |
 | irregular-boundary wave | 同一几何族的独立数值波求解 | 2 | phase 方法独立 solver smoke | 小规模、源点和传播结构理想化 |
 | independent wave smoke | 多障碍/墙体、独立 wave solver | 2 | 几何传播 sanity | 仍为自建，未等同 WaveBench |
 | The Well acoustic scattering | 公共数据 | 2 | 外部失败证据 | 当前抽取任务所有方法 NRMSE≈1，已拒绝 |
@@ -73,8 +74,9 @@
 2. **Data audits**：PDE residual、hash、shape、connectedness、hole count、train/test geometry grouping；
 3. **Mechanism tests**：correct/wrong geometry、SDF/coordinate、CP/Tucker、kernel replacement；
 4. **Optimization tests**：完整 observed loss checkpoint，不按单个 minibatch 选择；多 seed、rank/capacity matched；
-5. **Statistical confirmation**：至少 10 个未用于选择的 seeds 或独立 geometries，paired effect + CI；
-6. **External validation**：作者数据/官方 split/官方 baseline 实现，且先过 absolute-effect gate。
+5. **Early screening**：默认 3 seeds、300--500 updates；若绝对门槛或相对 baseline 均失败，立即停止扩预算；
+6. **Statistical confirmation**：只有通过 early gate 的方案才增加独立 geometries/seeds，报告 paired effect + CI；
+7. **External validation**：作者数据/官方 split/官方 baseline 实现，且先过 absolute-effect gate。
 
 ## 6. 冻结门槛
 
@@ -85,7 +87,15 @@
 - Bayesian 主张必须报告 posterior predictive、NLL、coverage-width；只有 weight decay 不能叫 Bayesian inference；
 - 主会候选至少覆盖 3 个数据族、多个 topology-held-out geometries 和一个官方强 baseline。
 
-## 7. 一手 baseline 入口
+## 7. 当前统一早期预算（2026-08-15 起）
+
+- 默认 `3 seeds × 300--500 gradient steps`；不再用 10 seeds 筛方法。
+- checkpoint 只看完整 observed training loss 或预先划分的 validation，不按随机 minibatch 选择。
+- 一个方法在 seed 0 已明显输给 method-matched baseline 时，只允许一次有明确机制依据的最小修正；再次失败即停止。
+- test geometry、test field 和 test mask 在模型/超参数冻结前不得读取。
+- 训练误差接近零但 validation NRMSE 接近或高于 1，记为稀疏过拟合，不记为“模型已收敛”。
+
+## 8. 一手 baseline 入口
 
 - GINO / NeuralOperator: <https://github.com/neuraloperator/neuraloperator>
 - DAFNO: <https://github.com/ningliu-iga/DAFNO>
@@ -93,4 +103,3 @@
 - Transolver: <https://github.com/thuml/Transolver>
 - AirfRANS: <https://github.com/Extrality/airfrans_lib>
 - WaveBench: <https://github.com/wavebench/wavebench>
-

@@ -148,6 +148,7 @@ class OperatorBayesianCP(nn.Module):
                     opt.zero_grad(set_to_none=True); loss.backward(); opt.step()
         self._fit_amplitude_posterior(ix,y)
         self._posterior["history"]=history
+        self._posterior["best_observed_objective"]=best[0]
         if self.factor_laplace:
             self._posterior["factor_var"] = self._diagonal_factor_laplace(ix)
         return self
@@ -242,7 +243,9 @@ class OperatorBayesianCP(nn.Module):
                                      self._posterior["history"],
                                      {"rank_cap":self.rank,"ard":self.ard,"power":self.power,
                                       "noise":self._posterior["noise"],
-                                      "calibration":self._posterior["calibration"]})
+                                      "calibration":self._posterior["calibration"],
+                                      "best_observed_objective":
+                                          self._posterior["best_observed_objective"]})
 
 
 class OperatorBayesianTucker(nn.Module):
@@ -346,6 +349,7 @@ class OperatorBayesianTucker(nn.Module):
         self.to(device)
         self._fit_core_posterior(ix, y)
         self._posterior["history"] = history
+        self._posterior["best_observed_objective"] = best[0]
         return self
 
     @torch.no_grad()
@@ -412,4 +416,6 @@ class OperatorBayesianTucker(nn.Module):
              "core_size": math.prod(self.ranks),
              "core_precision": self._posterior["alpha"],
              "noise": self._posterior["noise"],
-             "calibration": self._posterior["calibration"]})
+             "calibration": self._posterior["calibration"],
+             "best_observed_objective":
+                 self._posterior["best_observed_objective"]})

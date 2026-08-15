@@ -1,0 +1,404 @@
+{
+  "experiment_id": "TRACK2-TRAVELING-HARMONIC-R2-LOCKED-VALIDATION",
+  "status": "VALIDATION_ONLY",
+  "decision_rule": "STOP/DOWNGRADE if paired phase fails the pre-registered absolute gate; do not read test files",
+  "task_semantics": "1% sparse training-target supervision; source-conditioned zero-shot unseen-geometry and 24-to-32 transfer; no validation context",
+  "generator_independence": "learner-free analytic \u03c4-t generator; irrational generator frequencies are not imported by or used to initialize any model",
+  "checkpoint_rule": "minimum loss on all observed training labels",
+  "config": {
+    "seed": 0,
+    "ratio": 0.01,
+    "steps": 500,
+    "learning_rate": 0.002,
+    "train_resolution": 24,
+    "validation_resolution": 32,
+    "source_indices": [
+      0,
+      1
+    ],
+    "learner_initial_bands_hz": [
+      1.25,
+      2.75,
+      4.25,
+      5.75,
+      7.25,
+      8.75
+    ],
+    "learner_characteristic": "physical travel time minus time"
+  },
+  "train_cases": [
+    "wall_left_door_low_r24_s0",
+    "wall_left_door_low_r24_s1",
+    "wall_center_door_mid_r24_s0",
+    "wall_center_door_mid_r24_s1",
+    "circle_center_r24_s0",
+    "circle_center_r24_s1",
+    "ellipse_tilted_r24_s0",
+    "ellipse_tilted_r24_s1",
+    "double_vertical_r24_s0",
+    "double_vertical_r24_s1"
+  ],
+  "validation_cases": [
+    "circle_offset_r32_s0",
+    "circle_offset_r32_s1"
+  ],
+  "locked_test_geometries": [
+    "wall_right_door_high",
+    "double_diagonal"
+  ],
+  "test_files_read": [],
+  "n_observed_training_labels": 2222,
+  "realized_training_ratio_range": [
+    0.009982014388489209,
+    0.010018050541516246
+  ],
+  "target_scale_from_observed_train_only": 0.5617481470108032,
+  "strongest_trivial_global_nrmse": 0.9999938011169434,
+  "rows": [
+    {
+      "model": "ordinary_functional_cp",
+      "parameters": 21200,
+      "global_nrmse": 2.6680428981781006,
+      "global_vrmse": 2.6680593490600586,
+      "macro_nrmse": 2.6524640321731567,
+      "macro_late_nrmse": 2.6926472187042236,
+      "macro_boundary_nrmse": 1.878218412399292,
+      "case_metrics": [
+        {
+          "case": "circle_offset_r32_s0",
+          "nrmse": 2.957836151123047,
+          "vrmse": 2.9578731060028076,
+          "late_nrmse": 3.1894776821136475,
+          "boundary_nrmse": 2.096320152282715,
+          "mse": 2.7965338230133057,
+          "target_variance": 0.3196399211883545
+        },
+        {
+          "case": "circle_offset_r32_s1",
+          "nrmse": 2.3470919132232666,
+          "vrmse": 2.347121000289917,
+          "late_nrmse": 2.1958167552948,
+          "boundary_nrmse": 1.6601166725158691,
+          "mse": 1.783764362335205,
+          "target_variance": 0.3237922787666321
+        }
+      ],
+      "absolute_gate": {
+        "model_nrmse": 2.6680428981781006,
+        "strongest_trivial_nrmse": 0.9999938011169434,
+        "mse_skill": -6.118541160253433,
+        "max_nrmse": 0.8,
+        "min_mse_skill": 0.2,
+        "passed": false
+      }
+    },
+    {
+      "model": "joint_inr",
+      "parameters": 11713,
+      "global_nrmse": 1.288570761680603,
+      "global_vrmse": 1.288578748703003,
+      "macro_nrmse": 1.2884292602539062,
+      "macro_late_nrmse": 1.2592373490333557,
+      "macro_boundary_nrmse": 1.180941879749298,
+      "case_metrics": [
+        {
+          "case": "circle_offset_r32_s0",
+          "nrmse": 1.3170605897903442,
+          "vrmse": 1.3170771598815918,
+          "late_nrmse": 1.2869728803634644,
+          "boundary_nrmse": 1.1629765033721924,
+          "mse": 0.5544768571853638,
+          "target_variance": 0.3196399211883545
+        },
+        {
+          "case": "circle_offset_r32_s1",
+          "nrmse": 1.2597979307174683,
+          "vrmse": 1.259813666343689,
+          "late_nrmse": 1.231501817703247,
+          "boundary_nrmse": 1.1989072561264038,
+          "mse": 0.5139005184173584,
+          "target_variance": 0.3237922787666321
+        }
+      ],
+      "absolute_gate": {
+        "model_nrmse": 1.288570761680603,
+        "strongest_trivial_nrmse": 0.9999938011169434,
+        "mse_skill": -0.6604351934815003,
+        "max_nrmse": 0.8,
+        "min_mse_skill": 0.2,
+        "passed": false
+      }
+    },
+    {
+      "model": "paired_travel_time_phase",
+      "parameters": 22926,
+      "global_nrmse": 1.5788875818252563,
+      "global_vrmse": 1.5788973569869995,
+      "macro_nrmse": 1.5783708095550537,
+      "macro_late_nrmse": 1.6609026789665222,
+      "macro_boundary_nrmse": 1.463791310787201,
+      "case_metrics": [
+        {
+          "case": "circle_offset_r32_s0",
+          "nrmse": 1.5472772121429443,
+          "vrmse": 1.5472966432571411,
+          "late_nrmse": 1.6322698593139648,
+          "boundary_nrmse": 1.5232776403427124,
+          "mse": 0.7652585506439209,
+          "target_variance": 0.3196399211883545
+        },
+        {
+          "case": "circle_offset_r32_s1",
+          "nrmse": 1.609464406967163,
+          "vrmse": 1.6094844341278076,
+          "late_nrmse": 1.6895354986190796,
+          "boundary_nrmse": 1.4043049812316895,
+          "mse": 0.838764488697052,
+          "target_variance": 0.3237922787666321
+        }
+      ],
+      "learned_bands_hz": [
+        1.2595614194869995,
+        2.736095905303955,
+        4.234489440917969,
+        5.737193584442139,
+        7.247425556182861,
+        8.7584228515625
+      ],
+      "absolute_gate": {
+        "model_nrmse": 1.5788875818252563,
+        "strongest_trivial_nrmse": 0.9999938011169434,
+        "mse_skill": -1.4929169025469102,
+        "max_nrmse": 0.8,
+        "min_mse_skill": 0.2,
+        "passed": false
+      }
+    },
+    {
+      "model": "wrong_euclidean_phase",
+      "parameters": 22926,
+      "global_nrmse": 2.6316046714782715,
+      "global_vrmse": 2.6316211223602295,
+      "macro_nrmse": 2.631597399711609,
+      "macro_late_nrmse": 2.7316776514053345,
+      "macro_boundary_nrmse": 3.0253825187683105,
+      "case_metrics": [
+        {
+          "case": "circle_offset_r32_s0",
+          "nrmse": 2.6641006469726562,
+          "vrmse": 2.6641340255737305,
+          "late_nrmse": 2.787954568862915,
+          "boundary_nrmse": 3.1145660877227783,
+          "mse": 2.26867938041687,
+          "target_variance": 0.3196399211883545
+        },
+        {
+          "case": "circle_offset_r32_s1",
+          "nrmse": 2.5990941524505615,
+          "vrmse": 2.5991265773773193,
+          "late_nrmse": 2.675400733947754,
+          "boundary_nrmse": 2.9361989498138428,
+          "mse": 2.1873652935028076,
+          "target_variance": 0.3237922787666321
+        }
+      ],
+      "learned_bands_hz": [
+        1.2174485921859741,
+        2.730541944503784,
+        4.241660118103027,
+        5.742466449737549,
+        7.247783660888672,
+        8.721874237060547
+      ],
+      "absolute_gate": {
+        "model_nrmse": 2.6316046714782715,
+        "strongest_trivial_nrmse": 0.9999938011169434,
+        "mse_skill": -5.925429006529201,
+        "max_nrmse": 0.8,
+        "min_mse_skill": 0.2,
+        "passed": false
+      }
+    },
+    {
+      "model": "zero",
+      "parameters": 0,
+      "global_nrmse": 0.9999938011169434,
+      "global_vrmse": 1.0,
+      "macro_nrmse": 0.9999875128269196,
+      "macro_late_nrmse": 0.9999751150608063,
+      "macro_boundary_nrmse": 0.9997245669364929,
+      "case_metrics": [
+        {
+          "case": "circle_offset_r32_s0",
+          "nrmse": 0.9999874830245972,
+          "vrmse": 1.0,
+          "late_nrmse": 0.9999751448631287,
+          "boundary_nrmse": 0.9997227191925049,
+          "mse": 0.3196399211883545,
+          "target_variance": 0.3196399211883545
+        },
+        {
+          "case": "circle_offset_r32_s1",
+          "nrmse": 0.9999875426292419,
+          "vrmse": 1.0,
+          "late_nrmse": 0.9999750852584839,
+          "boundary_nrmse": 0.999726414680481,
+          "mse": 0.32379230856895447,
+          "target_variance": 0.3237922787666321
+        }
+      ]
+    },
+    {
+      "model": "train_observed_mean",
+      "parameters": 0,
+      "global_nrmse": 1.0001238584518433,
+      "global_vrmse": 1.0001300573349,
+      "macro_nrmse": 1.0001177191734314,
+      "macro_late_nrmse": 1.000106930732727,
+      "macro_boundary_nrmse": 0.9998835623264313,
+      "case_metrics": [
+        {
+          "case": "circle_offset_r32_s0",
+          "nrmse": 1.000119924545288,
+          "vrmse": 1.000132441520691,
+          "late_nrmse": 1.000111699104309,
+          "boundary_nrmse": 0.9998562932014465,
+          "mse": 0.31972452998161316,
+          "target_variance": 0.3196399211883545
+        },
+        {
+          "case": "circle_offset_r32_s1",
+          "nrmse": 1.0001155138015747,
+          "vrmse": 1.0001280307769775,
+          "late_nrmse": 1.000102162361145,
+          "boundary_nrmse": 0.999910831451416,
+          "mse": 0.32387515902519226,
+          "target_variance": 0.3237922787666321
+        }
+      ]
+    }
+  ],
+  "training": {
+    "ordinary_functional_cp": {
+      "best_step": 498,
+      "best_all_observed_train_loss": 0.21779437363147736,
+      "history": [
+        {
+          "step": 0,
+          "all_observed_train_loss": 1.0002340078353882
+        },
+        {
+          "step": 100,
+          "all_observed_train_loss": 0.7822926044464111
+        },
+        {
+          "step": 200,
+          "all_observed_train_loss": 0.5389115810394287
+        },
+        {
+          "step": 300,
+          "all_observed_train_loss": 0.35689234733581543
+        },
+        {
+          "step": 400,
+          "all_observed_train_loss": 0.2698516249656677
+        },
+        {
+          "step": 499,
+          "all_observed_train_loss": 0.22032584249973297
+        }
+      ]
+    },
+    "joint_inr": {
+      "best_step": 499,
+      "best_all_observed_train_loss": 0.5723592042922974,
+      "history": [
+        {
+          "step": 0,
+          "all_observed_train_loss": 1.0070573091506958
+        },
+        {
+          "step": 100,
+          "all_observed_train_loss": 0.9112002849578857
+        },
+        {
+          "step": 200,
+          "all_observed_train_loss": 0.7861432433128357
+        },
+        {
+          "step": 300,
+          "all_observed_train_loss": 0.7085253596305847
+        },
+        {
+          "step": 400,
+          "all_observed_train_loss": 0.6341803669929504
+        },
+        {
+          "step": 499,
+          "all_observed_train_loss": 0.5723592042922974
+        }
+      ]
+    },
+    "paired_travel_time_phase": {
+      "best_step": 494,
+      "best_all_observed_train_loss": 0.01377539150416851,
+      "history": [
+        {
+          "step": 0,
+          "all_observed_train_loss": 1.0001966953277588
+        },
+        {
+          "step": 100,
+          "all_observed_train_loss": 0.4187941253185272
+        },
+        {
+          "step": 200,
+          "all_observed_train_loss": 0.09817348420619965
+        },
+        {
+          "step": 300,
+          "all_observed_train_loss": 0.037076450884342194
+        },
+        {
+          "step": 400,
+          "all_observed_train_loss": 0.021356625482439995
+        },
+        {
+          "step": 499,
+          "all_observed_train_loss": 0.01385713741183281
+        }
+      ]
+    },
+    "wrong_euclidean_phase": {
+      "best_step": 494,
+      "best_all_observed_train_loss": 0.04903392121195793,
+      "history": [
+        {
+          "step": 0,
+          "all_observed_train_loss": 1.000213384628296
+        },
+        {
+          "step": 100,
+          "all_observed_train_loss": 0.4308813214302063
+        },
+        {
+          "step": 200,
+          "all_observed_train_loss": 0.17489832639694214
+        },
+        {
+          "step": 300,
+          "all_observed_train_loss": 0.09841004759073257
+        },
+        {
+          "step": 400,
+          "all_observed_train_loss": 0.06596601754426956
+        },
+        {
+          "step": 499,
+          "all_observed_train_loss": 0.06055474653840065
+        }
+      ]
+    }
+  },
+  "elapsed_seconds": 11.97198134707287
+}

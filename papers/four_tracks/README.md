@@ -15,12 +15,23 @@
 
 | 方向 | 几何放在哪里 | 最短故事 | 当前优先级 | 合适定位 |
 |---|---|---|---|---|
-| 1. Operator-informed Bayesian Tucker | 因子的算子谱先验 | 用已知物理/几何算子压缩贝叶斯 Tucker | P1，保留并补强 baseline | 学生项目或中等规模方法论文；外部数据与 UQ 做强后可升级 |
-| 2. Phase-factorized Wave Tensor | 波的传播相位 | 三角恒等式把行波变成显式低秩 CP | P2，应用导向 | 波动、声学、浅水等专项论文，不宣称通用几何学习 |
-| 3. Domain-kernel Bayesian Functional Tucker | 域上的 GP covariance | 用不规则域 Matérn/heat kernel 定义连续 Tucker 因子 | P0/P1，高风险高回报 | 若完成可扩展后验与跨域 UQ，可冲概率 ML/AI 主会；否则是完整学生论文 |
-| 4. Geometry-conditioned Neural Functional Tucker | SDF 条件的神经函数因子 | 在变形网格上共享显式 neural Tucker，而非 monolithic INR | P0，最快形成强主线 | 最有希望先发展成 AI 主会完整稿；必须对标 GINO/DAFNO/Geo-FNO/Transolver |
+| 1. Operator-informed Bayesian Tucker | 因子的算子谱先验 | 用已知物理/几何算子压缩贝叶斯 Tucker | P1，条件 GO | 2% 受控正信号；必须转 non-aligned truth |
+| 2. Phase-factorized Wave Tensor | 波的传播相位 | 三角恒等式把行波变成显式低秩 CP | P4，STOP / DOWNGRADE | 保留机制示例或学生项目，不再占主实验预算 |
+| 3. Domain-kernel Bayesian Functional Tensor | 域上的 GP covariance | neural tensor mean + intrinsic GP residual | P0，条件 GO | ELBO/UQ 已闭环；优先扩多几何与 few-shot |
+| 4. Geometry-conditioned Neural Tensor / Operator | ambient geometry 与低秩空间基 | NO 读几何，CP/TT/Tucker 耦合物理 modes | P1，CP 正 / NO 负 | 保留低秩主线；FNO 融合需重新设计 smooth extension |
 
 这里的“优先级”是投入顺序，不是价值排序。方向 1 和 2 的代码、结果与论文草稿均保留。
+
+## 本轮固定预算结论
+
+本轮统一采用早期筛选预算：默认 3 seeds、300--500 updates、validation-only，只有过 gate 才扩预算。
+
+| 方向 | 当前最可信结果 | 决策 |
+|---|---|---|
+| 1 | 2% random：Operator Tucker `0.2582±0.0718` vs Neural F-Tucker `0.5704±0.0625`；1% 时反而为 `1.2147±0.3165` | 保留，但不再宣称“越稀疏越强” |
+| 2 | clean traveling harmonic：correct phase `1.4859±0.0806`，zero `1.0000` | STOP / DOWNGRADE |
+| 3 | neural mean `0.2036±0.0169`；+ intrinsic GP residual `0.1765±0.0205`；+ Euclidean GP `0.2280±0.0148` | 条件 GO；扩大未见几何并校准 |
+| 4 | 48-domain：coordinate/SDF CP `0.2480±0.0047`；最佳 Geometry-NO-CP `0.2840±0.0065` | 低秩 CP 保留；当前 NO 融合为负 |
 
 ## 方向 1：Operator-informed Bayesian Tucker
 
@@ -94,7 +105,8 @@ u(z_1,z_2,z_3)=\sum_{a,b,c}G_{abc}
 f_{1a}(z_1)f_{2b}(z_2)f_{3c}(z_3).
 \]
 
-当前快速 POC 只把多个 \(k_\Omega(x,s)\) kernel sections 作为 MLP 输入。它没有显式 Gaussian prior、kernel-ridge solve、variational posterior 或 posterior variance，因此严格名称是 **domain-kernel-section conditioned neural Tucker**，目前连 GP-MAP 都不能宣称。只有实现显式 GP coefficients/posterior 后，才升级为 Bayesian 方法。
+当前代码已从 kernel-section MLP 升级为有限特征 variational GP：显式
+\(p(u)=\mathcal N(0,I)\)、full-covariance \(q(u)\)、Gaussian likelihood、解析 KL、mini-batch ELBO 与 posterior variance。纯 GP 容量不足；当前有效版本是共享 neural CP mean 加 domain-GP residual。它可以称 finite-feature GP hybrid，但还不能称完整 Bayesian functional Tucker。
 
 ### 与方向 1 的本质区别
 
@@ -115,7 +127,7 @@ f_{1a}(z_1)f_{2b}(z_2)f_{3c}(z_3).
 
 intrinsic section 的机制信号在三个 seeds 上为正，加入相同局部输入后边界误差仍约改善 16%。但这验证的是 neural input representation，不是 GP posterior。旧 `topology_erased` 实际仍使用正确边界距离、坐标和 descriptor，只能称 `bbox-kernel channel ablation`；旧 hole case 已被读取，不再是 untouched confirmation。
 
-## 方向 4：Geometry-conditioned Neural Functional Tucker
+## 方向 4：Geometry-conditioned Neural Tensor / Operator
 
 ### 最简公式
 
@@ -134,9 +146,11 @@ g_a(q_\Omega)\,h_b(p)\,r_c(x,s,d_{\partial\Omega}(x)).
 
 ### 当前证据边界
 
-- 修正 checkpoint 为完整 observed-set loss 后，CP-shaped-core Tucker 三 seed validation 为 `0.1922±0.0305`，functional CP 为 `0.1958±0.0312`，但 Tucker 只赢 1/3 seeds，差异无法支持 Tucker 贡献。
-- 相同输入的 joint INR 为 `0.1723±0.0175`，仍明显更强。
-- `coordinate Tucker` 仍读取包含 fluid fraction/boundary quantiles 的全局 descriptor，它不是 no-geometry baseline。旧 hole case 已被读取，下一轮必须新生成多孔洞冻结 test set。
+- 新协议含 48 train 0/1-hole、8 ID validation、8 双孔 topology-OOD validation；8 个 test specs 已冻结但未读。
+- 1% labels、3 seeds×400 steps、共享 case schedule 下，coordinate/SDF CP 为 `0.2480±0.0047`（ID）与 `0.2553±0.0049`（OOD）。
+- 最好的 unmasked Geometry-NO-CP 为 `0.2840±0.0065 / 0.2958±0.0029`；hard-masked 版本更弱，同 encoder dense head 为 `0.7296±0.0300 / 0.7738±0.0218`。
+- NO 的 observed loss 很低但新几何误差更高，属于稀疏过拟合。一次小门控 NO residual 修正仍未超过 CP，当前不能把 FNO 融合写成正贡献。
+- “低秩 head 比 dense head 稳定”是正信号；“NO geometry encoder 优于 pointwise SDF/coordinate”不是正信号。
 
 ## 四条线共享什么，不共享什么
 
@@ -190,9 +204,9 @@ papers/
 
 ## 接下来三步
 
-1. **先重建数据证据链。** 扩到 80–200 个参数化形状、多孔洞/无孔洞、family-held-out 和全新 hash-locked test；分开 Task C 测试域 few-shot completion 与 Task O zero-shot surrogate。
-2. **再补最短 baseline。** 方向 1 重跑修正后谱先验与 neural functional Tucker；方向 3 接 Euclidean/domain KRR/GP 与 FunBaT；方向 4 先接 F-INR/CORAL，训练几何足够后再接 GINO/DAFNO/Transolver。
-3. **按负信号收缩路线。** 方向 2 暂停外部数据扩张；方向 4 若真实 CP warm start + off-diagonal residual 仍不超过 CP/INR，就降级为 functional CP 学生项目；方向 3 只在显式 GP/KRR 过门后实现 variational posterior。
+1. **优先确认方向 3。** 把 neural mean + intrinsic GP residual 扩到多个冻结 validation geometries，并新增 Task C 新域 few-shot；先做 calibration，不增加更复杂 VI。
+2. **方向 1 换 truth。** 使用 non-aligned operator-GP/PDE generator；维持 3 seeds×500 steps，不再靠 aligned synthetic 或 initializer 扩大战果。
+3. **方向 4 保留接口但收缩方法。** 先以 geometry-conditioned CP 为主；只有设计出低容量 smooth-extension/DAFNO-style residual 时才重启 NO，不再直接堆 FNO 深度。方向 2 停止新增实验。
 
 ## 相关一手工作与代码
 

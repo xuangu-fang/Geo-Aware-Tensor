@@ -1,0 +1,25 @@
+{
+  "experiment_id": "TRACK4-GEOMETRY-NO-R1-3SEED-SUMMARY",
+  "status": "VALIDATION_ONLY_NEGATIVE_FOR_NO_BRANCH",
+  "protocol": {
+    "seeds": [0, 1, 2],
+    "steps": 400,
+    "train_geometries": 48,
+    "id_validation_geometries": 8,
+    "topology_ood_validation_geometries": 8,
+    "training_label_fraction": 0.01,
+    "train_holes": "0/1",
+    "topology_ood_holes": 2,
+    "test_read": false,
+    "batch_schedule": "identical across all model variants within each seed"
+  },
+  "rows": [
+    {"model": "geometry_no_cp", "id_nrmse_mean": 0.3437, "id_nrmse_std": 0.0186, "id_boundary_nrmse_mean": 0.3503, "id_boundary_nrmse_std": 0.0221, "topology_ood_nrmse_mean": 0.3669, "topology_ood_nrmse_std": 0.0130, "topology_ood_boundary_nrmse_mean": 0.3651, "topology_ood_boundary_nrmse_std": 0.0137},
+    {"model": "sdf_only_no_cp", "id_nrmse_mean": 0.3224, "id_nrmse_std": 0.0121, "id_boundary_nrmse_mean": 0.3269, "id_boundary_nrmse_std": 0.0142, "topology_ood_nrmse_mean": 0.3561, "topology_ood_nrmse_std": 0.0215, "topology_ood_boundary_nrmse_mean": 0.3573, "topology_ood_boundary_nrmse_std": 0.0240},
+    {"model": "unmasked_geometry_no_cp", "id_nrmse_mean": 0.2840, "id_nrmse_std": 0.0065, "id_boundary_nrmse_mean": 0.2932, "id_boundary_nrmse_std": 0.0086, "topology_ood_nrmse_mean": 0.2958, "topology_ood_nrmse_std": 0.0029, "topology_ood_boundary_nrmse_mean": 0.2986, "topology_ood_boundary_nrmse_std": 0.0017},
+    {"model": "geometry_no_dense_head", "id_nrmse_mean": 0.7296, "id_nrmse_std": 0.0300, "id_boundary_nrmse_mean": 0.7383, "id_boundary_nrmse_std": 0.0305, "topology_ood_nrmse_mean": 0.7738, "topology_ood_nrmse_std": 0.0218, "topology_ood_boundary_nrmse_mean": 0.7696, "topology_ood_boundary_nrmse_std": 0.0192},
+    {"model": "coordinate_sdf_cp", "id_nrmse_mean": 0.2480, "id_nrmse_std": 0.0047, "id_boundary_nrmse_mean": 0.2586, "id_boundary_nrmse_std": 0.0042, "topology_ood_nrmse_mean": 0.2553, "topology_ood_nrmse_std": 0.0049, "topology_ood_boundary_nrmse_mean": 0.2654, "topology_ood_boundary_nrmse_std": 0.0043},
+    {"model": "observed_global_mean", "id_nrmse_mean": 1.0029, "id_nrmse_std": 0.0001, "id_boundary_nrmse_mean": 1.0027, "id_boundary_nrmse_std": 0.0004, "topology_ood_nrmse_mean": 1.0040, "topology_ood_nrmse_std": 0.0004, "topology_ood_boundary_nrmse_mean": 1.0031, "topology_ood_boundary_nrmse_std": 0.0005}
+  ],
+  "decision": "The full FNO branch is not promoted. The 3.6K-parameter coordinate/SDF/source-aware CP is both better and much smaller than the 115K-parameter geometry-NO variants."
+}

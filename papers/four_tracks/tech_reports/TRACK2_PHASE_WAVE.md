@@ -1,7 +1,7 @@
 # 方向 2 技术报告：Phase-factorized Wave Tensor
 
 > 审计日期：2026-08-15  
-> 当前结论：**保留为波传播专用方向；受控机制 POC 为正，但 independent reflected-wave R1 已给出明确负信号，尚无合格的外部数据证据。** 不能把它写成通用 PDE 或通用不规则域方法。
+> 当前结论：**STOP / DOWNGRADE。** independent reflected-wave R1 失败后，唯一允许的 clean R2 在真正 traveling harmonic 上仍未通过绝对 gate。保留三角恒等式作为受控机制或学生项目，不再占用主论文实验预算。
 
 ## 1. 一页结论
 
@@ -23,7 +23,7 @@ u(g,t,x)\approx A(g,t,x)\cos\{k[d_g(x,s)-ct]+\varphi\}
 
 1. 代码中的四项 carrier 的确忠实实现了角差恒等式，这次新增了精确单元测试；
 2. 最强的 `0.0952±0.0144` 正结果来自**与模型频率字典对齐的驻波型合成数据**，不是对真正移动波包或多重散射的充分证明；
-3. independent wave、真实不规则边界波和 The Well 都没有给出可发表的正证据。新完成的 independent-wave locked validation 中，最好的 learned baseline 仍为 `1.482` NRMSE，paired phase 为 `3.473`；The Well early-40 的所有模型又几乎都是 NRMSE 1，因此均未通过绝对有效性 gate。
+3. independent wave、真实不规则边界波和 The Well 都没有给出可发表的正证据；进一步的 clean R2 即使把数据收窄为严格的 `τ-t` traveling harmonic，paired phase 仍为 `1.486±0.081`，高于 zero baseline 的 `1.000`，三 seed 全部拒绝。
 
 所以当前适合的论文故事是：**物理相位可分性给波场 functional CP 提供结构归纳偏置，以及这个归纳偏置何时成立、何时因移动包络和多路径散射失效。**
 
@@ -143,6 +143,7 @@ A_b(d,t)=1+\sum_{r=1}^Q a_{br}E_r(d)H_r(t)
 | eikonal harmonic control | generator 独立写出，但 band 与模型显式对齐 | 有 geodesic，主信号不是 traveling wave | 10 seeds，paired `0.0952` | 机制 sanity 为正；不能单独支撑论文 |
 | moving-envelope control | 是 | 更接近 `A(d-ct)cos(k(d-ct))` | envelope `0.644`，IP-NF `0.624` | 诚实负边界；联合 INR 更合适 |
 | independent wave smoke | 独立 finite-difference solver；不 import learner | 变速、反射、8 几何、2 源、24→32 | locked validation 3 seeds 已完成；所有 learned model 失败 | 绝对有效性和 correct/wrong attribution 均失败；test 保持未读 |
+| clean traveling harmonic R2 | learner-free analytic generator；生成频率不进入模型 | 严格 `τ-t`、两个非对齐无理频率、2 源、24→32 | 3 seeds×500 steps；paired `1.486±0.081` | correct 明显优于 wrong，但仍比 zero 差；触发 STOP/DOWNGRADE |
 | irregular outer-boundary wave | 独立 solver | 真正不规则外边界和孔洞/通道 | 一 seed：paired `1.091`，wrong `1.037`，joint `1.037` | 绝对无效，且 correct 不优于 wrong |
 | The Well acoustic maze | Clawpack 外部数据 | 多源、强反射、有限速度高密墙 | paired `0.9918`，几乎所有方法为 1 | 当前 single-arrival phase 模型不匹配；结果拒绝 |
 | WaveBench | 公开 TMLR benchmark | 线性波很匹配，但主要是 regular-grid operator tasks | 尚未接入 | 可做公开应用，但必须先改成 operator protocol |
@@ -186,13 +187,39 @@ u_{tt}+\eta u_t+L_cu=f(t),
 
 机器可读汇总见 [`track2_independent_wave_r1_summary.json`](../results/track2_independent_wave_r1_summary.json)，逐 seed 文件保留全部训练轨迹、checkpoint step、case metrics 和 `test_files_read=[]`。
 
-### 5.3 The Well 不是“坏数据”，而是当前任务/方法不匹配
+### 5.3 Clean traveling-harmonic R2（完成，最终判定）
+
+[`run_traveling_harmonic_phase_r2.py`](../../../experiments/run_traveling_harmonic_phase_r2.py) 是 R1 失败后预先允许的唯一 formulation correction。它复用同一 train/validation/test 几何 split、1% train-label mask、零 validation context 和全 observed-train checkpoint，但把目标换成独立模块 [`traveling_harmonic_generator.py`](../../../src/geoaware/traveling_harmonic_generator.py) 生成的
+
+\[
+u_s(t,x)=a_s(x)\left[\cos\{2\pi\sqrt{13}(\tau_s(x)-t)+\phi_s\}
++0.42\sin\{2\pi\sqrt{41}(\tau_s(x)-t)-0.37+\phi_s\}\right].
+\]
+
+这里没有 standing-wave 主项或 moving envelope：`a_s(x)` 只依赖空间，且新增单元测试验证同时平移 `τ` 和 `t` 时 carrier 严格不变。生成器不 import learner；模型也不读取 `√13,√41`，而从预先固定的 `[1.25,2.75,4.25,5.75,7.25,8.75] Hz` 宽频字典开始学习。因此这是 identity 本身而非同频泄漏的干净测试。
+
+三 seeds、每个模型 500 steps 的 validation 结果为：
+
+| 模型 | 参数量 | global NRMSE | late NRMSE | boundary NRMSE | gate pass |
+|---|---:|---:|---:|---:|---:|
+| zero | 0 | `1.0000±0.0000` | `1.0000` | `0.9997` | trivial |
+| train observed mean | 0 | `1.0002±0.0001` | `1.0002` | `1.0000` | trivial |
+| joint INR | 11,713 | `1.2753±0.0203` | `1.2602` | `1.2066` | 0/3 |
+| paired travel-time phase | 22,926 | `1.4859±0.0806` | `1.5484` | `1.3242` | 0/3 |
+| ordinary functional CP | 21,200 | `2.4778±0.1679` | `2.4213` | `1.7681` | 0/3 |
+| wrong Euclidean phase | 22,926 | `2.5336±0.0849` | `2.5312` | `2.5720` | 0/3 |
+
+correct travel time 相比 wrong Euclidean 有稳定而显著的结构优势，说明几何坐标方向本身不是毫无信息；但 absolute gate 先于 pairwise 排名，`1.486` 仍比零预测差得多，不能包装成成功。paired 模型 observed-train normalized MSE 已为 `0.0135–0.0253`，而 validation 为 `1.44–1.58`，主要问题是 1% sparse-label 下的跨几何过拟合，不是训练集未拟合。learned bands 也只在初始化附近小幅移动。
+
+机器可读汇总为 [`track2_traveling_harmonic_r2_summary.json`](../results/track2_traveling_harmonic_r2_summary.json)，三个逐 seed JSON 均记录 `test_files_read=[]`。根据预先承诺，本结果直接触发 STOP/DOWNGRADE，不再读取锁定 test，也不执行 independent-wave R3 或 WaveBench 扩张。
+
+### 5.4 The Well 不是“坏数据”，而是当前任务/方法不匹配
 
 The Well 官方 acoustic-maze 数据是 2000 条、201×256×256 的 Clawpack 模拟，材料密度跨多个数量级，且每条轨迹有 1–6 个初始压力环。官方完整监督 benchmark 上 U-Net/ConvNeXt U-Net 的 VRMSE 可到 `0.0351/0.0153`，说明数据本身可学习；我们的 early-40 是另一个只有 1% target labels 的极低监督协议，不能拿官方数字直接横比。[官方数据卡](https://huggingface.co/datasets/polymathic-ai/acoustic_scattering_maze)
 
 当前 PairedPhaseCP 又把多个源压成一张 “到最近源” 的 travel-time map，无法表示不同源、反射路径和相干叠加。所以这里的负结果应解释为 **single-arrival formulation + extreme sparse labels 的共同失败**，而不是宣称 phase prior 对真实声学普遍无效。
 
-### 5.4 WaveBench 的正确用法
+### 5.5 WaveBench 的正确用法
 
 WaveBench 有 24 个线性波数据集，包含 time-harmonic forward、reverse time continuation 和 inverse source，并提供 FNO/U-Net 代码与 checkpoint。[TMLR 论文](https://openreview.net/forum?id=6wpInwnzs8)、[官方代码](https://github.com/wavebench/wavebench)、[Zenodo 数据](https://zenodo.org/records/8015145)
 
@@ -257,7 +284,7 @@ F-INR 已经系统支持 CP、TT、Tucker 与多种 INR backbone，所以本方�
 - useful result gate 接受；
 - CP/Tucker factor contraction、envelope 分离和独立 wave solver PSD/finite tests。
 
-本轮 consumer 已完成三-seed full run；全仓自动测试为 `35 passed`。尚缺：source-conditioned loader 的独立单元测试、连续频率 OOD、POD baseline 和 FNO/GINO 同协议集成测试。
+R1 与 R2 均已完成三-seed run；R2 另有严格 traveling-characteristic 单元测试。由于该方向已触发 STOP，source-conditioned loader、POD 和 FNO/GINO 集成不再列为本方向必须补齐的开发项。
 
 ## 8. 现有正负证据应该怎样表述
 
@@ -272,6 +299,7 @@ F-INR 已经系统支持 CP、TT、Tucker 与多种 INR backbone，所以本方�
 - 正数据频率与模型频率重合，且主信号不是 traveling phase，因果归因弱于此前文档的表述。
 - moving envelope 上 joint INR 仍更强，说明显式低秩的适用条件有限。
 - independent reflected wave 现在已有 locked 三-seed 负结果：paired phase 比 trivial mean 差得多，correct travel time 也不如 wrong Euclidean control。
+- clean traveling harmonic R2 中 correct travel time 虽优于 wrong control，但自身 `1.486±0.081` 仍未恢复信号；这排除了“只要改成真正 traveling phase 就会 work”的解释。
 - phase-envelope 增加容量但没有赢过 joint INR，不应继续堆叠包络模块。
 
 ## 9. 下一轮最小实验矩阵
@@ -279,17 +307,17 @@ F-INR 已经系统支持 CP、TT、Tucker 与多种 INR backbone，所以本方�
 | 轮次 | 唯一问题 | 数据 | 模型 | Gate | 决策 |
 |---|---|---|---|---|---|
 | R1（完成） | 当前 phase CP 能否处理独立 reflected wave | independent wave；train 5 geometry@24，val 1@32，test 2 锁定 | zero/mean、joint INR、ordinary CP、paired、wrong | 全部 FAIL；correct 也不优于 wrong | test 未读；暂停外部扩张 |
-| R2 | 优势来自 identity 还是频率泄漏 | 新合成 traveling harmonic；generator 频率连续采样，test 频段 held out | paired fixed bank、learned-frequency paired、ordinary CP、joint INR | fixed/learned 都需通过；报告 phase error | 只允许一次 formulation correction |
-| R3（有条件） | 修正后能否处理 independent wave | 同 R1，仅在 R2 成功后 | 加入 POD；其余协议冻结 | 仍需绝对 gate+correct/wrong | 不过则收束项目 |
-| R4（暂缓） | 能否成为公开 operator application | WaveBench 一个 ID+一个 OOD task | official U-Net/FNO、TFNO、phase operator | 仅在 R3 为正后开启 | 当前不执行 |
+| R2（完成） | 优势来自 identity 还是频率泄漏 | learner-free 真 traveling harmonic；两个 off-grid 无理频率 | trainable-frequency paired、ordinary CP、joint INR、wrong | paired 0/3 通过；correct 优于 wrong 但仍比 zero 差 | STOP/DOWNGRADE |
+| R3（取消） | 修正后能否处理 independent wave | 原计划同 R1 | 原计划加入 POD | R2 未成功，因此不启动 | 取消 |
+| R4（取消） | 能否成为公开 operator application | 原计划 WaveBench | official U-Net/FNO、TFNO、phase operator | R3 未启动 | 取消 |
 
-R1 已经执行且失败。source conditioning 和 time/travel-time 物理单位已在 consumer 中显式修正，因此不能再把失败简单归因于漏传 source 或归一化错误。下一步若继续，只允许做一次 R2：去掉 generator/model 同频对齐并用真正的 `d-t` traveling harmonic，判断 identity 自身是否成立。不要加入 attention、Bayesian uncertainty、learned ray tracing 或大 Tucker core。
+R1 和唯一允许的 R2 都已执行且失败。source conditioning、物理 `τ-t`、生成器/模型频率解耦和 500-step 公平预算均已落实，因此本方向不再通过 attention、Bayesian uncertainty、learned ray tracing 或大 Tucker core 继续搜索。
 
 ## 10. GO / NO-GO
 
-### 当前判定：PAUSE / NARROW GO（仅保留受控学生项目）
+### 当前判定：STOP / DOWNGRADE（仅保留受控学生项目）
 
-保留理由：idea 简洁、代码忠实、受控结果很强，并且对“为什么 wave tensor 可能低秩”提供了明确物理解释。但 independent-wave R1 已触发原先的暂停条件，当前不能推进为公开应用论文。
+保留理由：idea 简洁、代码忠实、受控 aligned 结果很强，并且对“为什么 wave tensor 可能低秩”提供了明确物理解释。但 R1 和 clean R2 都触发绝对无效条件，不能继续推进为主论文或公开应用论文。
 
 ### 升级为完整论文的必要条件
 

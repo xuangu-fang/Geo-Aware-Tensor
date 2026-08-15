@@ -105,6 +105,22 @@ def test_operator_tucker_spectral_prior_matches_factor_normalization():
     assert torch.allclose(model.factor_prior(), prior, atol=1e-6)
 
 
+def test_operator_cp_spectral_prior_matches_factor_normalization():
+    data = operator_cp_tensor(shape=(7, 8, 9), seed=27)
+    basis, eigenvalues = explicit_mode_bases(data, "correct")
+    model = OperatorBayesianCP(
+        basis, eigenvalues, rank=4, ard=True, device="cpu"
+    )
+    indices = data.flat_indices()[:19]
+    prediction = model(indices).detach()
+    prior = model.factor_prior().detach()
+    with torch.no_grad():
+        for coefficient in model.coeff:
+            coefficient.mul_(0.17)
+    assert torch.allclose(model(indices), prediction, atol=1e-6)
+    assert torch.allclose(model.factor_prior(), prior, atol=1e-6)
+
+
 def test_operator_tucker_functional_baselines_are_continuous_and_explicit():
     coordinates = torch.rand(17, 3)
     cp = NeuralFunctionalCP((False, False, True), rank=4, hidden=12)

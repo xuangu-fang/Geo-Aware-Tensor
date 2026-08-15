@@ -68,7 +68,9 @@ def fit_functional_baseline(name,data,obs,y,steps,seed,device,tucker_ranks,rank)
     with torch.no_grad():
         for start in range(0,len(coordinates),8192):
             chunks.append(model(coordinates[start:start+8192].to(dev)).cpu())
-    return torch.cat(chunks),sum(parameter.numel() for parameter in model.parameters())
+    return (torch.cat(chunks),
+            sum(parameter.numel() for parameter in model.parameters()),
+            best[0])
 
 
 def load_task(name,mismatch=0.):
@@ -107,11 +109,13 @@ def main():
             seed_all(seed); started=time.perf_counter()
             if name in ("neural_functional_cp","neural_functional_tucker","siren_inr"):
                 ranks=tuple(map(int,args.tucker_ranks.split(",")))
-                normalized_mean,parameter_count=fit_functional_baseline(
+                normalized_mean,parameter_count,best_objective=fit_functional_baseline(
                     name,data,obs,y,args.steps,seed,args.device,ranks,args.rank)
                 mean=normalized_mean*scale+center; std=None; effective_rank=None
                 meta={"parameters":parameter_count,"inference":"deterministic_regularized_fit",
-                      "uncertainty_metrics_supported":False}
+                      "uncertainty_metrics_supported":False,"optimizer":"AdamW",
+                      "learning_rate":2e-3,"gradient_steps":args.steps,
+                      "initialization":"random","best_observed_objective":best_objective}
             elif name=="flat_geo_gp":
                 phi,eig=flat_product_features(data,512)
                 split_scale=1.0
@@ -170,6 +174,10 @@ def main():
                 model=make_fit(obs,y,args.steps)
                 pred=model.predict(data.flat_indices()); mean=pred.mean*scale+center; std=pred.std*scale*split_scale
                 effective_rank=pred.effective_rank; meta=pred.metadata | {
+                    "parameters":sum(parameter.numel() for parameter in model.parameters()),
+                    "inference":"regularized_factor_fit_plus_conditional_empirical_bayes",
+                    "optimizer":"AdamW","learning_rate":3e-3,
+                    "gradient_steps":args.steps,"initialization":args.init,
                     "component_precision":pred.component_precision.tolist(),
                     "component_energy":pred.component_energy.tolist(),
                     "factor_spectral_energy":[x.tolist() for x in pred.factor_spectral_energy],
@@ -177,6 +185,9 @@ def main():
             row={"task":data.name,"shape":data.shape,"model":name,"mask":mask,"ratio":ratio,
                  "ratio_actual":split.ratio_actual,"n_observed":len(obs),"seed":seed,
                  "metrics":metrics(truth,mean,std,split.held_out),"effective_rank":effective_rank,
+                 "observed_fit":{"mse":float((mean[obs]-noisy[obs]).square().mean()),
+                    "nrmse":float((mean[obs]-noisy[obs]).square().mean().sqrt()/
+                                  noisy[obs].std().clamp_min(1e-8))},
                  "metadata":meta,"elapsed_seconds":time.perf_counter()-started,"arguments":vars(args)}
             rows.append(row); print(f"{data.name} {mask} {ratio:g} s{seed} {name} "
                                     f"NRMSE={row['metrics']['nrmse']:.3f} rank={effective_rank}",flush=True)

@@ -5,6 +5,12 @@ from geoaware.domain_kernels import (
     euclidean_rbf_kernel_sections,
     matern_domain_kernel_sections,
 )
+from geoaware.variational_domain_gp import (
+    FiniteFeatureVariationalGP,
+    exact_finite_gp_posterior,
+    exact_finite_gp_predict,
+    tensor_product_gp_features,
+)
 
 
 def test_domain_sections_are_invariant_to_eigenvector_signs():
@@ -35,3 +41,55 @@ def test_euclidean_sections_reject_invalid_lengthscales(lengthscales):
     with pytest.raises(ValueError):
         euclidean_rbf_kernel_sections(
             torch.zeros(2, 2), torch.tensor([0]), lengthscales=lengthscales)
+
+
+def test_tensor_product_gp_features_have_matched_finite_kernel_dimension():
+    sections = torch.arange(2 * 4 * 3, dtype=torch.float32).reshape(2, 4, 3)
+    parameters = torch.tensor([0.1, 0.3, 1.0])
+    indices = torch.tensor([[0, 0, 1], [1, 2, 3]])
+    features = tensor_product_gp_features(
+        sections, parameters, indices, parameter_centers=5)
+    assert features.shape == (2, 15)
+    assert torch.isfinite(features).all()
+
+
+def test_variational_gp_prior_has_zero_kl_and_positive_variance():
+    model = FiniteFeatureVariationalGP(4)
+    assert float(model.kl_to_prior().detach()) == pytest.approx(0.0, abs=1e-6)
+    _, variance = model.predict(torch.eye(4), include_noise=False)
+    torch.testing.assert_close(variance, torch.ones(4), atol=2e-4, rtol=2e-4)
+
+
+def test_exact_finite_gp_observations_reduce_nearby_latent_variance():
+    train_features = torch.tensor([[1.0, 0.0], [1.0, 0.1]])
+    targets = torch.tensor([1.0, 0.9])
+    mean, covariance = exact_finite_gp_posterior(
+        train_features, targets, noise_std=0.05)
+    query = torch.tensor([[1.0, 0.05], [0.0, 1.0]])
+    prediction, variance = exact_finite_gp_predict(query, mean, covariance)
+    assert prediction.shape == variance.shape == (2,)
+    assert variance[0] < variance[1]
+
+
+def test_minibatch_elbo_is_finite_and_differentiable():
+    model = FiniteFeatureVariationalGP(3)
+    features = torch.tensor([[1.0, 0.0, 0.2], [0.0, 1.0, -0.1]])
+    targets = torch.tensor([0.5, -0.4])
+    loss, diagnostics = model.negative_elbo(
+        features, targets, total_count=len(targets))
+    loss.backward()
+    assert torch.isfinite(loss)
+    assert diagnostics["kl"] >= 0
+    assert model.variational_mean.grad is not None
+
+
+def test_variational_gp_elbo_accepts_a_differentiable_neural_mean():
+    model = FiniteFeatureVariationalGP(2)
+    features = torch.eye(2)
+    targets = torch.tensor([0.2, -0.1])
+    mean = torch.tensor([0.1, -0.2], requires_grad=True)
+    loss, _ = model.negative_elbo(
+        features, targets, total_count=2, mean_offset=mean)
+    loss.backward()
+    assert mean.grad is not None
+    assert torch.isfinite(mean.grad).all()

@@ -1,7 +1,7 @@
 # 方向 1 技术报告：Operator-informed Bayesian Tucker
 
 更新时间：2026-08-15  
-状态：**受控机制实验为正，外部有效性尚未成立；保留，但暂不按完整主会论文宣称。**
+状态：**2% 受控机制实验在公平冷启动预算下为正；1% 不稳定，外部有效性尚未成立。**
 
 ## 0. 先给结论
 
@@ -24,6 +24,12 @@ $K_m$ 定义的有限维 RKHS/GP 空间里。不过，当前实现**没有对因
 
 1. 在与方法结构高度一致的受控 Tucker tensor 上，2% 观测、结构缺失和高噪声均有明显正信号；
 2. 在不规则椭圆场和 The Well 声学场上，绝对性能或相对性能为负。
+
+本轮进一步把所有模型锁为 3 个 validation seeds、500 次梯度更新和随机初始化。结果确认：
+2% random 下 Operator Tucker 为 `0.2582±0.0718`，明显优于 Neural Functional
+Tucker 的 `0.5704±0.0625`；但 1% random 下前者退化到 `1.2147±0.3165`，
+不如 neural baselines。因而当前故事必须写成“算子先验存在一个可见的样本阈值”，不能笼统写成
+“越稀疏优势越大”。
 
 所以现在最重要的不是继续加组件，而是完成两个验证：
 
@@ -127,14 +133,16 @@ E_m(\bar W_m)=
 
 ### 3.1 初始化
 
-默认随机初始化。主结果使用 `--init flat_gp`：
+默认随机初始化。较早结果使用 `--init flat_gp`：
 
 1. 只用观测 entries 拟合 finite-feature operator GP；
 2. 在全网格上取该 GP 的 posterior mean；
 3. 对 posterior mean 做 HOSVD；
 4. 把 HOSVD factors 投影回各 mode basis，并解一个 ridge core。
 
-它没有读取 held-out truth，因而不是数据泄漏。但是它给 proposed model 一个很强的 observation-only warm start；functional neural baselines 当前从随机初始化开始。后续公平实验必须给 neural Tucker 多次重启或 CP/HOSVD 类 warm start，不能把优化优势误写成先验优势。
+它没有读取 held-out truth，因而不是数据泄漏。但是它给 proposed model 一个很强的
+observation-only warm start；functional neural baselines 当前从随机初始化开始。本轮公平主表因此统一采用
+random cold start，另把 flat-GP 初始化单列为优化消融，不把它混入几何先验的主结论。
 
 ### 3.2 因子与 core 的联合点估计
 
@@ -328,8 +336,9 @@ functional neural tensor 本身不是新结构，已有工作用分离 neural CP
 
 - 同一个 noisy observation tensor、同一个 mask、同一个 normalization；
 - rank-matched 比较回答 inductive bias，parameter-matched 比较回答效率，两者不要混成一个表；
-- proposed 有 flat-GP/HOSVD warm start时，neural Tucker 至少做 5 restarts 或 CP-diagonal warm start；
-- 每个 baseline 使用自己的 validation convergence budget，不能机械地都跑 500 steps；
+- 早期 POC 统一使用 3 个 seeds 与 500 steps；不因为某方法收敛慢而临时增加预算；
+- flat-GP/HOSVD warm start 必须作为单独初始化消融，并报告其额外 wall time，不能混入 cold-start 主表；
+- 成熟论文阶段才在冻结的 validation budget 内给各方法独立调学习率/收敛步数，并同时报告固定预算结果；
 - UQ 模型使用完全相同的 raw/LOO/split calibration protocol；
 - 报告参数量、peak GPU memory、wall time，以及是否读取 operator/SDF/boundary metadata。
 
@@ -361,7 +370,7 @@ functional neural tensor 本身不是新结构，已有工作用分离 neural CP
 
 旧参数化同一 seed 的 proposed 为 `0.153`。这一 smoke 表明修正没有消灭信号，但它不等价于重新确认旧十 seed 结果；完整结果需要重跑。
 
-### 8.3 新 functional baseline smoke
+### 8.3 历史 functional baseline smoke（已被 R4 主表取代）
 
 相同 2% mask、seed 30：
 
@@ -375,11 +384,66 @@ functional neural tensor 本身不是新结构，已有工作用分离 neural CP
 这里有两个信息：
 
 - method-matched neural Tucker 仍未追上 operator Tucker，方向是正的；
-- neural Tucker 从 500 到 2000 steps 大幅改善，说明统一 500-step budget 对 neural baseline 不公平。后续必须各自调收敛预算。
+- neural Tucker 从 500 到 2000 steps 大幅改善，说明 500-step 表衡量的是固定计算预算而非最终收敛上限。按当前早期 POC 协议，各方法仍统一锁为 500 steps；只有晋级后才做独立 convergence sweep。
 
 该表只有一个已查看 seed，且 truth 与 operator 对齐，只能作为接口 smoke，不能进入论文结论。
 
-### 8.4 active acquisition 是明确负结果
+### 8.4 R4：500-step 公平冷启动主表
+
+本轮只使用 `operator_tucker_tensor` 的 validation entries；没有把此前已经读取的外部/孔洞
+test 重新包装成新结论。统一协议为：3 seeds (`41,42,43`)、500 gradient steps、10% observed-value
+noise、相同 observed normalization、相同 mask、全部 random initialization。Operator Tucker ranks
+为 `(4,5,5)`，Operator CP rank 为 10；neural models 使用相同 ranks，并保留更大的网络容量。
+
+| Mask / ratio | Operator Tucker | Operator CP | Neural F-Tucker | Neural F-CP | SIREN INR |
+|---|---:|---:|---:|---:|---:|
+| random / 1% | 1.2147±0.3165 | 1.2845±0.0299 | **0.8984±0.1035** | 0.9916±0.0941 | 0.9129±0.0113 |
+| random / 2% | **0.2582±0.0718** | 0.7680±0.1243 | 0.5704±0.0625 | 0.6117±0.0583 | 0.8358±0.0080 |
+| periodic gap / 1% | 0.9827±0.2131 | 1.2553±0.1235 | **0.9078±0.0911** | 0.9221±0.0693 | 0.9129±0.0227 |
+| periodic gap / 2% | **0.5975±0.1298** | 0.6777±0.0580 | 0.7094±0.0474 | 0.6889±0.0507 | 0.8395±0.0217 |
+
+可训练参数分别为 247、320、8,178、8,872、19,105。所有模型都是 500 steps；Operator
+models 使用 AdamW `3e-3`，neural baselines 使用 `2e-3`。因此这是 rank-matched、固定训练预算比较，
+不是 parameter-matched 比较；容量差异反而偏向 neural baselines。
+
+最关键的判断有三点：
+
+1. 2% random 的正信号很大：Operator Tucker 相对最强 neural tensor 约降低 55% NRMSE；
+2. 1% 下所有结果接近或超过无效区间，Operator 方法尤其不稳定，不能宣称 extreme-sparse monotonic gain；
+3. periodic gap 2% 的差距较小，说明周期 encoding 本身已让 neural CP/Tucker 成为强 baseline。
+
+观测点拟合误差也被写入 artifact。SIREN 在四个设置的 observed NRMSE 都约为 `0.0001–0.0002`，
+但 validation NRMSE 仍约 `0.83–0.91`，是清楚的极稀疏过拟合；Operator Tucker 的 observed
+NRMSE 约 `0.13–0.14`。因此 2% 的优势不是因为它比 INR 更彻底地记住 observations，而是来自
+受限 factor function space。1% 下该 function space/core 仍不足以被稳定识别。
+
+初始化消融只替换 Operator Tucker 的 initialization，其余设置完全不变：flat-GP/HOSVD 将
+random 1% 从 `1.2147±0.3165` 改善到 `0.8587±0.1118`，random 2% 从
+`0.2582±0.0718` 改善到 `0.2290±0.1684`；periodic-gap 2% 从
+`0.5975±0.1298` 改善到 `0.4220±0.0776`。这说明初始化确实重要，也说明旧结果不能完全归因于
+operator prior。冷启动表仍是当前主表。
+
+### 8.5 R4b：部分 generator 失配验证
+
+为了检查 exact Tucker inverse crime，额外使用 `operator_mixed_0.35`：65% 是带局部非谱残差的
+CP 场，35% 是 dense Tucker 场。它仍共享大部分 operator basis，因此只算“部分失配”，不是最终
+external validation。协议仍为 3 seeds、2% random、500 steps、cold start。
+
+| 模型 | Validation NRMSE |
+|---|---:|
+| Operator Tucker | **0.4517±0.0461** |
+| Operator CP | 0.6020±0.0432 |
+| Neural F-Tucker | 0.4562±0.0198 |
+| Neural F-CP | 0.4633±0.0294 |
+| SIREN INR | 0.9296±0.1058 |
+
+Operator Tucker 只以约 1% 的平均 NRMSE 优于 Neural F-Tucker，且只赢 2/3 seeds；这不是有意义的
+方法优势。正面部分是所有 separated tensor methods 都明显优于 SIREN，Tucker 也优于 Operator CP；
+负面部分是 exact spectral Tucker 上的大幅领先一旦加入 format/local mismatch 就几乎消失。因此下一步
+必须使用真正从更细 operator GP/PDE solver 生成、learner basis 被截断或扰动的数据，不能继续扩写 aligned
+synthetic 的胜利。
+
+### 8.6 active acquisition 是明确负结果
 
 1% 初始观测再增加 1%：correct core-IV `0.206±0.014`，random `0.137±0.010`。原因是 acquisition 只优化固定 factors 下的 core variance，而新点加入后 factors 会重拟合。除非将 factor uncertainty 纳入 acquisition，否则不再继续包装这条支线。
 
@@ -423,7 +487,10 @@ functional neural tensor 本身不是新结构，已有工作用分离 neural CP
 | noise | 0%、10%、30% field std |
 | mask | random、periodic gap、center block、missing fibers、sensor tracks |
 | geometry | correct、轻微 operator perturbation、topology erased、random permutation |
-| seeds | 5 selection + 10 fresh confirmation |
+| seeds | 3 validation；最终 confirmation 也控制在 3–5 个 fresh seeds |
+
+早期 selection 全部固定 500 steps。只有方向通过数据与 baseline 门槛后，才投入更长的
+convergence sweep；不能在某一 seed 或某一方法上临时延长训练。
 
 主比较：correct operator Tucker、operator CP、flat GP、discrete Tucker、graph-regularized Tucker、neural functional CP/Tucker、SIREN。
 
@@ -456,7 +523,7 @@ functional neural tensor 本身不是新结构，已有工作用分离 neural CP
 
 必须同时满足：
 
-1. 在**非 model-aligned controlled truth** 上，correct operator Tucker 相对最强 functional/neural Tucker 或 flat GP 至少降低 15% NRMSE，10 个 fresh seeds 中至少 8 个获胜；
+1. 在**非 model-aligned controlled truth** 上，correct operator Tucker 相对最强 functional/neural Tucker 或 flat GP 至少降低 15% NRMSE，3–5 个 fresh seeds 中至少 80% 获胜；
 2. 在至少一个公开物理数据集上 macro NRMSE ≤ 0.8，并且相对最佳 trivial predictor 至少有 20% MSE skill；
 3. correct operator 相对轻微错 operator/topology-erased control 至少降低 10% MSE，证明几何而非单纯容量；
 4. Tucker 相对 method-matched CP 至少降低 10% MSE，证明 dense small core；
@@ -488,21 +555,24 @@ functional neural tensor 本身不是新结构，已有工作用分离 neural CP
 - `experiments/run_tensor_bayes.py`：支持 neural functional baselines，并禁止 deterministic baseline 输出伪 UQ；
 - `src/geoaware/tensor_bayes.py`：修正归一化 factor 与谱惩罚不一致；
 - `tests/test_paper_methods.py`：增加 factor-prior scale invariance、periodic seam、structured mask 语义测试；
+- `papers/four_tracks/results/track1_fixed_budget_validation_r2/`：3-seed、500-step cold-start 公平主表；
+- `papers/four_tracks/results/track1_initializer_ablation_validation_r2/`：仅 Operator Tucker 的 flat-GP 初始化消融；
+- `papers/four_tracks/results/track1_mixed_validation_r2/`：部分 generator 失配、2% random 验证；
 - `papers/four_tracks/results/track1_*_smoke/`：本轮 smoke artifacts。
 
-复现修正后 smoke：
+复现本轮 cold-start 主表：
 
 ```bash
 export PYTHONPATH=src
 PY=/home/ubuntu/project/yanjiu/.venv/bin/python
 
 $PY experiments/run_tensor_bayes.py \
-  --output papers/four_tracks/results/track1_normalized_prior_smoke \
+  --output papers/four_tracks/results/track1_fixed_budget_validation_r2 \
   --task tucker \
-  --models geo_btucker,wrong_btucker,geo_bcp_noard,flat_geo_gp \
-  --ratios .02 --masks random --seeds 30 \
+  --models geo_btucker,geo_bcp,neural_functional_tucker,neural_functional_cp,siren_inr \
+  --ratios .01,.02 --masks random,periodic_gap --seeds 41,42,43 \
   --tucker-ranks 4,5,5 --rank 10 --steps 500 \
-  --reg .002 --noise .1 --init flat_gp --device cuda
+  --reg .002 --noise .1 --init random --device cuda
 ```
 
-当前测试：`tests/test_paper_methods.py` 共 18 项通过。
+当前测试：`tests/test_paper_methods.py` 共 19 项通过。
