@@ -19,8 +19,9 @@ from geoaware.neural_tensor import (
 from geoaware.tensor_bayes import OperatorBayesianCP, OperatorBayesianTucker
 from geoaware.operator_tucker_baselines import NeuralFunctionalCP, NeuralFunctionalTucker
 from geoaware.masks import make_observation_split
-from geoaware.tensor_data import (explicit_mode_bases, operator_cp_tensor,
-                                  operator_nonaligned_tensor, operator_tucker_tensor)
+from geoaware.tensor_data import (explicit_mode_bases, operator_basis_mismatch_tensor,
+                                  operator_cp_tensor, operator_nonaligned_tensor,
+                                  operator_tucker_tensor)
 from geoaware.the_well_pilot import block_mean_256_to_64, fixed_random_mask, nrmse_on_mask
 from geoaware.well_baselines import WellUNetClassic
 from geoaware.independent_wave_solver import (
@@ -163,6 +164,21 @@ def test_nonaligned_operator_benchmark_is_finite_periodic_and_off_basis():
     # The generator includes periodic harmonic 11 while the learner is locked
     # to seven frequencies, so this is not an exact inverse-crime draw.
     assert data.basis_specs[2].n_frequencies == 7
+
+
+def test_calibrated_basis_mismatch_matches_product_space_projection_error():
+    mismatch = .55
+    data = operator_basis_mismatch_tensor(mismatch, shape=(12, 14, 24), seed=7)
+    bases, _ = explicit_mode_bases(data)
+    projectors = [torch.linalg.qr(basis, mode="reduced").Q for basis in bases]
+    projected = torch.einsum(
+        "ta,xb,yc,txy->abc", projectors[0], projectors[1], projectors[2], data.values)
+    projected = torch.einsum(
+        "abc,ta,xb,yc->txy", projected, projectors[0], projectors[1], projectors[2])
+    relative_error = torch.linalg.vector_norm(data.values - projected) / torch.linalg.vector_norm(data.values)
+    assert abs(float(data.values.mean())) < 1e-5
+    assert abs(float(data.values.std()) - 1) < 1e-5
+    assert abs(float(relative_error) - mismatch) < 2e-5
 
 
 def test_neural_cp_and_tucker_contract_separate_point_factors():

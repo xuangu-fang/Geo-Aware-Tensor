@@ -139,6 +139,98 @@ def operator_nonaligned_tensor(shape: tuple[int, int, int] = (20, 28, 36),
         "Smooth warped/high-frequency Tucker field outside the learner basis, plus a coupled residual.")
 
 
+def operator_basis_mismatch_tensor(
+        mismatch: float, shape: tuple[int, int, int] = (20, 28, 36),
+        seed: int = 3701) -> FieldDataset:
+    """Tucker field with a calibrated continuous operator-space mismatch.
+
+    ``mismatch`` is not an arbitrary interpolation coefficient.  Up to floating
+    point error, it is the relative Frobenius error of the best projection of
+    the noiseless tensor onto the learner's three-mode operator product space.
+    Aligned and orthogonal factor columns are mixed at a common principal angle;
+    the Tucker core, multilinear ranks and total signal energy stay fixed.
+
+    This is an oracle diagnostic benchmark for a bias--variance phase diagram,
+    rather than a claim that real PDE misspecification is one-dimensional.
+    """
+    if not 0 <= mismatch <= 1:
+        raise ValueError("mismatch must lie in [0, 1]")
+    specs = (BasisSpec("neumann", 7, "time-interval"),
+             BasisSpec("dirichlet", 8, "bounded-range"),
+             BasisSpec("periodic", 7, "angle-circle"))
+    ranks = (4, 5, 5)
+    basis_pairs = [basis_on_grid(n, spec) for n, spec in zip(shape, specs)]
+    learner_bases = [pair[0] for pair in basis_pairs]
+    if any(n - torch.linalg.matrix_rank(basis) < rank
+           for n, basis, rank in zip(shape, learner_bases, ranks)):
+        raise ValueError("shape leaves too few off-basis dimensions for the requested ranks")
+
+    generator = torch.Generator().manual_seed(seed)
+    aligned, orthogonal = [], []
+    t = torch.linspace(0, 1, shape[0])
+    x = torch.linspace(0, 1, shape[1])
+    angle = 2 * math.pi * torch.arange(shape[2]) / shape[2]
+    smooth_off_candidates = [
+        torch.stack([
+            torch.exp(-1.8 * t) * torch.cos(math.pi * (1.35 * t + .55 * t.square())),
+            torch.exp(-((t - .28) / .16).square()),
+            torch.sin(math.pi * (2.65 * t + .35 * t.square())),
+            torch.sigmoid(18 * (t - .57)) - .5,
+        ], 1),
+        torch.stack([
+            torch.exp(-((x - center) / width).square()) *
+            torch.sin(math.pi * frequency * x + phase)
+            for center, width, frequency, phase in [
+                (.18, .16, 1.45, .2), (.38, .21, 2.35, -.4),
+                (.64, .17, 3.55, .7), (.82, .12, 4.40, -.8),
+                (.53, .30, 6.30, .1),
+            ]
+        ], 1),
+        torch.stack([
+            torch.cos(k * angle + phase) + .18 * torch.sin((k + 2) * angle - phase)
+            for k, phase in [(8, .1), (9, -.4), (10, .7), (11, -.2), (12, .5)]
+        ], 1),
+    ]
+    for mode, (n, basis, eigenvalues, rank, candidates) in enumerate(
+            zip(shape, learner_bases, [pair[1] for pair in basis_pairs],
+                ranks, smooth_off_candidates)):
+        learner_q = torch.linalg.qr(basis, mode="reduced").Q
+        coefficients = torch.randn(basis.shape[1], rank, generator=generator)
+        coefficients *= (1 + eigenvalues).pow(-.45)[:, None]
+        # Excluding the periodic constant keeps every generated tensor centered.
+        if mode == 2:
+            coefficients[0] = 0
+        aligned_q = torch.linalg.qr(basis @ coefficients, mode="reduced").Q
+        candidates = candidates - learner_q @ (learner_q.T @ candidates)
+        off_q = torch.linalg.qr(candidates, mode="reduced").Q[:, :rank]
+        # Reproject once after QR to suppress leakage when a smooth candidate
+        # has a large but not exact component in the learner span.
+        off_q = off_q - learner_q @ (learner_q.T @ off_q)
+        off_q = torch.linalg.qr(off_q, mode="reduced").Q[:, :rank]
+        aligned.append(aligned_q * math.sqrt(n))
+        orthogonal.append(off_q * math.sqrt(n))
+
+    # If q is the retained amplitude in each of three modes, the squared
+    # product-space projection energy is q^6.  This choice makes the requested
+    # mismatch exactly sqrt(1 - q^6).
+    retained = (1 - mismatch ** 2) ** (1 / 6)
+    rejected = math.sqrt(max(0., 1 - retained ** 2))
+    factors = [retained * inside + rejected * outside
+               for inside, outside in zip(aligned, orthogonal)]
+    core = torch.randn(*ranks, generator=generator)
+    core *= torch.linspace(1, .35, ranks[0])[:, None, None]
+    core *= torch.linspace(1, .30, ranks[1])[None, :, None]
+    core *= torch.linspace(1, .30, ranks[2])[None, None, :]
+    values = torch.einsum("abc,ta,xb,yc->txy", core, *factors)
+    values = values / values.std().clamp_min(1e-8)
+    return FieldDataset(
+        f"operator_basis_mismatch_{mismatch:.2f}", values.float(),
+        ("time", "range", "angle"), specs, (False, False, True),
+        "generated:geoaware.tensor_data.operator_basis_mismatch_tensor",
+        f"Rank-(4,5,5) Tucker field with oracle relative operator-space "
+        f"projection error {mismatch:.2f}.")
+
+
 def explicit_mode_bases(data: FieldDataset, kind: str="correct", seed: int=919) -> tuple[list[torch.Tensor],list[torch.Tensor]]:
     basis=[]; eig=[]
     for n,spec in zip(data.shape,data.basis_specs):

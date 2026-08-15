@@ -7,6 +7,9 @@
 四条线各自的完整 formulation、实现、inference、数据、baseline 与测试审计见
 [`tech_reports/`](tech_reports/README.md)。
 
+根据《青基正文 v1.8》重新复核后的方向 3/4 路线决策见
+[`R7 技术路线复核`](tech_reports/ROUND4_STRATEGY_REVIEW.md)。简要结论是：方向 3 的 global kernel dictionary 降级为机制 sanity，候选主线回到 PDE 联合谱的 mode-wise kernel 分离；方向 4 的 geometry operator 已收口，候选新任务改为不完整 simulation combinations 上的 functional tensor operator completion。这两项尚未写成既成结果。
+
 ## 一句话总纲
 
 这个项目只研究一个核心问题：**当物理场定义在不规则边界、孔洞或非均匀网格上时，怎样把这种几何放进低秩函数张量，而不是只把坐标交给一个黑盒网络。**
@@ -28,9 +31,9 @@
 
 | 方向 | 当前最可信结果 | 决策 |
 |---|---|---|
-| 1 | aligned 2/5/10%：Operator Tucker `0.258/0.169/0.077`；strong non-aligned 10%：Operator Tucker `0.822` vs Neural F-CP `0.489` | 主张改为 ratio×operator-mismatch 适用域 |
+| 1 | calibrated mismatch：\(\delta\le .30\) 时 2/5/10% 均稳定胜；2% 在 `.30--.45`、5/10% 在 `.45--.60` 反转 | bias--variance phase boundary 已连续跑通 |
 | 2 | clean traveling harmonic：correct phase `1.4859±0.0806`，zero `1.0000` | STOP / DOWNGRADE |
-| 3 | matched mixture `0.0725±0.0046`，near-match `0.1432±0.0096`，elliptic mixture `0.3116±0.0055` | kernel-selection 方法 GO；hybrid 泛化仍待证 |
+| 3 | matched mixture `0.0725±0.0046`，near-match `0.1432±0.0096`，elliptic mixture `0.3116±0.0055` | 机制 GO；global dictionary 降为 sanity，候选主线改为 mode-wise operator kernels |
 | 4 | local CP ID/OOD `0.2480/0.2553`；DeepSets gate `0.2533/0.2550`，仅 1/3 seeds 胜 local | 正式收口 local geometry CP |
 
 ## 方向 1：Operator-informed Bayesian Tucker

@@ -139,3 +139,28 @@
 - fallback Boundary-DeepSets rank gate 在 3 seeds 下为 ID/OOD `0.2533±0.0086 / 0.2550±0.0020`；local CP 为 `0.2480±0.0058 / 0.2553±0.0060`。DeepSets 仅 1/3 seeds 胜 local，正确 boundary 仅 2/3 胜 wrong boundary。
 - Boundary-Augmented NO、BI-GreenNet 等已有工作也意味着“使用边界积分”本身不是新意。
 - 决策：方向 4 正式收口为 geometry-coordinate/SDF functional CP；FNO、boundary integral 和 rank modulation 只保留为可复现负消融，不再增加组件。
+
+## R7：连续 operator mismatch 与青基路线复核（2026-08-15）
+
+### 方向 1：可校准 bias--variance phase boundary
+
+- 新 generator 固定 Tucker core、rank 和信号能量，只旋转三个 mode factors；横轴 \(\delta\) 精确等于 truth 投影到 learner operator product space 后的相对 Frobenius 残差。
+- 完成 7 个 \(\delta\in\{0,.15,.30,.45,.60,.75,.90\}\) × 2%/5%/10% observations × 3 seeds × 5 models，统一 500 steps、cold start 和 10% noise。
+- `Neural F-Tucker NRMSE - Operator Tucker NRMSE` 在 2% 下为 `+.43,+.29,+.13,-.06,-.27,-.14,-.18`；5% 为 `+.39,+.35,+.23,+.07,-.07,-.13,-.07`；10% 为 `+.41,+.30,+.25,+.13,-.02,-.06,-.10`。
+- \(\delta\le .30\) 时三种 observation ratios 均稳定为正；2% 在 `.30--.45` 之间反转，5%/10% 在 `.45--.60` 之间反转。
+- 论文主张因此收敛为：operator factor space 在可诊断的低/中 approximation error 区域提高 sample efficiency，并存在可测量 phase boundary；不再宣称极稀疏时普遍占优。
+
+### 方向 3：核字典降级为 Stage-0 sanity
+
+- 重新阅读《青基正文 v1.8》后确认，原始主线不是对四个完整 kernels 做全局加权，而是从 PDE/Green 算子得到联合物理协方差，再分离到不同 functional tensor modes。
+- 当前 global nonnegative kernel mixture 保留为 ELBO、PSD 与 kernel-identification sanity，以及下一版的 baseline/初始化。
+- 候选主线升级为 mode-wise operator spectral kernels：对非负 PDE 功率谱做低秩乘积分离，使每个 coordinate mode/rank 使用不同的合法 GP kernel，再与 Tucker core 一起做 ELBO inference。
+- 这属于同一方向的数学升级，复用现有 domain kernels、finite features、ELBO 和数据协议；不新开第五个方向或 repo。
+
+### 方向 4：弱化 geometry 后的候选新任务
+
+- 直接组合 functional low-rank、continuous coordinates 与 neural operator 已与 Low-rank NO、MG-TFNO、MIONet、CORAL 和 2026 NO-CTR 高度重叠，不能单独作为 selling point。
+- 首选 proposal 改为 incomplete simulation campaign：把 `coefficient function × forcing function × parameter × continuous output` 视为不完整响应张量，从未运行组合和每个已运行案例的稀疏输出中做 operator completion。
+- MIONet 是必须优先复现的最近 baseline；只有在 held-out entire combinations/fibers 上稳定超过 MIONet，故事才成立。random-entry completion 不构成充分证据。
+- 第二候选是 operator prior + low-rank Bayesian core correction，用极少测试传感器做 backprop-free adaptation；它与第一版 campaign POC 不同时堆叠。
+- 完整复核与否证条件见 `tech_reports/ROUND4_STRATEGY_REVIEW.md`。

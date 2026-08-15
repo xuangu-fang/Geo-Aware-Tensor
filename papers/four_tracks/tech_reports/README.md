@@ -8,8 +8,10 @@
 |---|---|---|
 | 1. Operator-informed Bayesian Tensor | [`TRACK1_OPERATOR_TUCKER.md`](TRACK1_OPERATOR_TUCKER.md) | operator factor space、ratio×mismatch phase diagram、CP/Tucker decoder |
 | 2. Phase-factorized Wave Tensor | [`TRACK2_PHASE_WAVE.md`](TRACK2_PHASE_WAVE.md) | 波场相位恒等式、传播距离、专项 wave benchmark |
-| 3. Domain-kernel GP Functional Tensor | [`TRACK3_DOMAIN_KERNEL_GP.md`](TRACK3_DOMAIN_KERNEL_GP.md) | geometry-kernel dictionary、ELBO evidence selection、finite GP |
-| 4. Geometry-coordinate Functional CP | [`TRACK4_NEURAL_FUNCTIONAL_TUCKER.md`](TRACK4_NEURAL_FUNCTIONAL_TUCKER.md) | coordinate/SDF/source continuous CP；NO/boundary modules 仅负消融 |
+| 3. Domain-kernel GP Functional Tensor | [`TRACK3_DOMAIN_KERNEL_GP.md`](TRACK3_DOMAIN_KERNEL_GP.md) | global kernel dictionary 是 sanity；候选主线为 mode-wise operator spectral kernels |
+| 4. Geometry-coordinate Functional CP | [`TRACK4_NEURAL_FUNCTIONAL_TUCKER.md`](TRACK4_NEURAL_FUNCTIONAL_TUCKER.md) | 原 geometry 路线收口；候选新任务为 incomplete simulation campaign |
+
+青基原始设想与当前 POC 的路线复核、方向 3/4 的候选新 formulation 和文献重叠见 [`ROUND4_STRATEGY_REVIEW.md`](ROUND4_STRATEGY_REVIEW.md)。其中新路线均为待审阅 proposal，不与已经跑完的结果混写。
 
 共享实验审计规则见 [`SHARED_AUDIT_PROTOCOL.md`](SHARED_AUDIT_PROTOCOL.md)。四份报告可以有不同方法，但不得使用不同的指标定义、数据泄漏标准或 baseline 命名口径。
 

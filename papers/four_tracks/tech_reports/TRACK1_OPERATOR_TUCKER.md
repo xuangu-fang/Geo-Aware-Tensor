@@ -505,7 +505,60 @@ memorization。二者共同形成清楚的 phase diagram：operator bias 只有�
 operator approximation error，存在一个 bias--variance 区域，使有限 operator factor space 比高容量 neural
 factor 更稳定。下一步应沿 mismatch strength × observation ratio 二维图做连续控制，而不是只选有利的一个点。
 
-### 8.7 active acquisition 是明确负结果
+### 8.7 R6：可校准的 operator mismatch × observation ratio 二维相图
+
+![方向 1：连续 operator mismatch 下的 held-out NRMSE](../results/track1_mismatch_phase_summary_r6/mismatch_ratio_curves.png)
+
+上一轮的 aligned / mixed / non-aligned 三点仍混入了 generator format、频率和局部残差等多个变化，不能把
+横轴解释为单一的 operator approximation error。本轮新增一个只改变 factor subspace alignment 的
+rank-$(4,5,5)$ Tucker generator：core、rank 和总信号能量固定，每个 mode 的 factor 写成
+
+$$
+A_m(\delta)=qA_m^{\parallel}+\sqrt{1-q^2}A_m^{\perp},\qquad
+q=(1-\delta^2)^{1/6},
+$$
+
+其中 $A_m^{\parallel}$ 位于 learner operator span，$A_m^{\perp}$ 与它正交。对三模乘积投影
+$\Pi=P_1\otimes P_2\otimes P_3$，构造保证
+
+$$
+\frac{\|Y-\Pi Y\|_F}{\|Y\|_F}=\delta.
+$$
+
+因此 $\delta$ 是可审计的 oracle relative approximation error，而不是任意数据混合权重。它只用于机制
+诊断，不假设真实 PDE 的失配一定是一维的。实验锁定 $\delta\in\{0,.15,.30,.45,.60,.75,.90\}$、
+2%/5%/10% random observations、3 seeds (`41,42,43`)、500 steps、10% noise 和 cold start；五个模型仍共享
+mask、noise realization 与 observed-only normalization。
+
+下表给出 `Neural F-Tucker NRMSE − Operator Tucker NRMSE`；正值表示 Operator Tucker 更好。
+
+| Observed | $\delta=0$ | .15 | .30 | .45 | .60 | .75 | .90 |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 2% | +0.43 | +0.29 | +0.13 | -0.06 | -0.27 | -0.14 | -0.18 |
+| 5% | +0.39 | +0.35 | +0.23 | +0.07 | -0.07 | -0.13 | -0.07 |
+| 10% | +0.41 | +0.30 | +0.25 | +0.13 | -0.02 | -0.06 | -0.10 |
+
+![方向 1：Operator Tucker 相对 Neural F-Tucker 的二维优势图](../results/track1_mismatch_phase_summary_r6/operator_advantage_phase_map.png)
+
+这次得到的是比“极稀疏一定更有利”更具体、也更诚实的真信号：
+
+1. **低到中等失配区稳定为正。** $\delta\leq.30$ 时三种 ratios 下 Operator Tucker 的平均优势均为
+   `0.13--0.43` NRMSE；除 2%/$\delta=.30$ 为 2/3 seeds 外，其余格点均为 3/3 seeds 获胜。
+2. **phase boundary 可见。** 2% 的均值排序在 $.30$--$.45$ 之间反转；5% 和 10% 在 $.45$--$.60$
+   之间反转。10%/$\delta=.60$ 仅差 `-0.017`，属于近似平局，不应选边宣称。
+3. **更多 observations 略微扩大可容忍失配，而不是削弱 operator prior。** 2%/$\delta=.45$ 时两者都接近
+   无效（`1.027 vs 0.967`）；5% 和 10% 同一点仍有绝对有效预测，Operator Tucker 分别为
+   `0.570 vs 0.638`、`0.495 vs 0.622`。
+4. **高失配区的失败来自可见 bias。** $\delta=.90$、10% 时 Operator Tucker observed NRMSE 已达
+   `0.822`，held-out 为 `1.017`，而 Neural F-Tucker 为 `0.918`；增加 observations 无法消除截断
+   subspace 的 approximation error。
+
+因此当前最稳妥的 Paper-A claim 是：**operator factor space 在可诊断的低/中等 approximation-error
+区域提供 sample-efficiency；它存在可测量的 bias--variance phase boundary，而不是普遍优于 functional
+tensor。** 这仍是 controlled synthetic mechanism evidence；下一步优先把横轴换成 PDE/operator 参数扰动
+和真实 solver projection residual，而不是继续加密同一个 synthetic 网格。
+
+### 8.8 active acquisition 是明确负结果
 
 1% 初始观测再增加 1%：correct core-IV `0.206±0.014`，random `0.137±0.010`。原因是 acquisition 只优化固定 factors 下的 core variance，而新点加入后 factors 会重拟合。除非将 factor uncertainty 纳入 acquisition，否则不再继续包装这条支线。
 
@@ -531,7 +584,7 @@ factor 更稳定。下一步应沿 mismatch strength × observation ratio 二维
 ### 中风险
 
 1. rank、basis cutoff、$p$、$\rho$ 固定，暂无自动选择；
-2. random permutation 是过强 wrong-geometry control；需要连续 operator perturbation；
+2. calibrated factor-subspace mismatch 已完成，但仍需 PDE/operator 参数扰动来验证相图不是 generator 特例；
 3. current order-3 implementation 不支持任意 ragged modes；
 4. graph eigenbasis 的构建和 storage 在大 mesh 上会成为成本瓶颈；
 5. 当前 irregular-grid eigenproblem 使用普通 Euclidean inner product；对真正非均匀 mesh，应解带 mass matrix 的 generalized eigenproblem $L\phi=\lambda M\phi$，否则节点密度会改变所谓“低频”；
@@ -624,6 +677,10 @@ convergence sweep；不能在某一 seed 或某一方法上临时延长训练。
 - `experiments/analyze_track1_ratio_phase.py`：强制 ratio 不超过 10%，汇总 observed/held-out error 与 phase curve；
 - `papers/four_tracks/results/track1_ratio_phase_{aligned,mixed,nonaligned}_r5/`：2/5/10%、3-seed raw artifacts；
 - `papers/four_tracks/results/track1_ratio_phase_summary_r5/`：统一 summary JSON 与 phase-curve 图；
+- `src/geoaware/tensor_data.py::operator_basis_mismatch_tensor`：投影残差精确等于给定 $\delta$ 的连续失配 generator；
+- `experiments/analyze_track1_mismatch_phase.py`：汇总二维相图、seed wins 与 observed/held-out error；
+- `papers/four_tracks/results/track1_mismatch_phase_{0.00,...,0.90}_r6/`：7-level、2/5/10%、3-seed raw artifacts；
+- `papers/four_tracks/results/track1_mismatch_phase_summary_r6/`：统一 summary JSON、误差曲线和优势热图；
 - `papers/four_tracks/results/track1_*_smoke/`：本轮 smoke artifacts。
 
 复现本轮 cold-start 主表：
@@ -663,4 +720,23 @@ python3 experiments/run_tensor_bayes.py \
   --steps 500 --noise .1 --init random --device cuda
 ```
 
-当前方向 1 定向测试：`tests/test_paper_methods.py` 共 20 项通过。
+复现 R6 calibrated mismatch phase diagram：
+
+```bash
+export PYTHONPATH=.python-packages:src
+
+for MISMATCH in 0.00 0.15 0.30 0.45 0.60 0.75 0.90; do
+  python3 experiments/run_tensor_bayes.py \
+    --output papers/four_tracks/results/track1_mismatch_phase_${MISMATCH}_r6 \
+    --task basis_mismatch --mismatch $MISMATCH \
+    --models geo_btucker,geo_bcp,neural_functional_tucker,neural_functional_cp,siren_inr \
+    --ratios .02,.05,.10 --masks random --seeds 41,42,43 \
+    --rank 5 --tucker-ranks 4,5,5 --steps 500 --noise .1 --init random --device cuda
+done
+
+python3 experiments/analyze_track1_mismatch_phase.py \
+  --inputs papers/four_tracks/results/track1_mismatch_phase_{0.00,0.15,0.30,0.45,0.60,0.75,0.90}_r6 \
+  --output papers/four_tracks/results/track1_mismatch_phase_summary_r6
+```
+
+当前方向 1 定向测试：`tests/test_paper_methods.py` 共 21 项通过。
