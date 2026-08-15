@@ -35,6 +35,18 @@ def _normalize_columns(values: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor
     return values / rms, rms
 
 
+def _normalized_spectral_coefficients(basis: torch.Tensor,
+                                      coefficients: torch.Tensor) -> torch.Tensor:
+    """Coefficients of the unit-RMS factor represented in ``basis``.
+
+    Forward factors are normalized to remove CP/Tucker scale ambiguity.  Their
+    Sobolev penalty must use the same normalization; otherwise shrinking every
+    coefficient changes the penalty while leaving the decoded tensor unchanged.
+    """
+    _, rms = _normalize_columns(basis.to(coefficients.device) @ coefficients)
+    return coefficients / rms
+
+
 class OperatorBayesianCP(nn.Module):
     """CP factorization with mode-wise operator bases and component ARD.
 
@@ -76,9 +88,10 @@ class OperatorBayesianCP(nn.Module):
 
     def factor_prior(self) -> torch.Tensor:
         total = self.amplitude.square().mean()
-        for u, eig in zip(self.coeff, self.eigenvalues):
+        for b, u, eig in zip(self.basis, self.coeff, self.eigenvalues):
             precision = (1 + eig.to(u.device)).pow(self.power)[:, None]
-            total = total + (precision * u.square()).mean()
+            normalized = _normalized_spectral_coefficients(b, u)
+            total = total + (precision * normalized.square()).mean()
         return total
 
     @torch.no_grad()
@@ -222,8 +235,9 @@ class OperatorBayesianCP(nn.Module):
         alpha=self._posterior["alpha"].cpu(); energy=(mean_w.square()+cov.diagonal()).cpu()
         effective=int(((alpha<100.) & (energy>1e-4)).sum())
         spectral=[]
-        for u,eig in zip(self.coeff,self.eigenvalues):
-            spectral.append(((1+eig[:,None]).pow(self.power)*u.detach().cpu().square()).sum(0))
+        for b,u,eig in zip(self.basis,self.coeff,self.eigenvalues):
+            normalized=_normalized_spectral_coefficients(b,u).detach().cpu()
+            spectral.append(((1+eig[:,None]).pow(self.power)*normalized.square()).sum(0))
         return TensorBayesPrediction(mean,std,effective,alpha,energy,spectral,factor_std,
                                      self._posterior["history"],
                                      {"rank_cap":self.rank,"ard":self.ard,"power":self.power,
@@ -274,9 +288,10 @@ class OperatorBayesianTucker(nn.Module):
 
     def factor_prior(self) -> torch.Tensor:
         total = self.core.square().mean()
-        for u, eig in zip(self.coeff, self.eigenvalues):
+        for b, u, eig in zip(self.basis, self.coeff, self.eigenvalues):
             precision = (1 + eig.to(u.device)).pow(self.power)[:, None]
-            total = total + (precision * u.square()).mean()
+            normalized = _normalized_spectral_coefficients(b, u)
+            total = total + (precision * normalized.square()).mean()
         return total
 
     @torch.no_grad()
@@ -386,8 +401,8 @@ class OperatorBayesianTucker(nn.Module):
         var = torch.cat(variances)
         std = (var + self._posterior["noise"] ** 2).sqrt() * self._posterior["calibration"]
         spectral = [((1 + eig[:, None]).pow(self.power) *
-                     u.detach().cpu().square()).sum(0)
-                    for u, eig in zip(self.coeff, self.eigenvalues)]
+                     _normalized_spectral_coefficients(b, u).detach().cpu().square()).sum(0)
+                    for b, u, eig in zip(self.basis, self.coeff, self.eigenvalues)]
         core_energy = mean_core.cpu().square() + cov.diagonal().cpu()
         core_precision = torch.full_like(core_energy, self._posterior["alpha"])
         return TensorBayesPrediction(

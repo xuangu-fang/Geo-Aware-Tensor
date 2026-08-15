@@ -1,0 +1,64 @@
+{
+  "experiment_id": "TRACK2-INDEPENDENT-WAVE-R1-LOCKED-VALIDATION",
+  "status": "NEGATIVE_ABSOLUTE_EFFECTIVENESS",
+  "protocol": {
+    "task": "1% sparse training-target supervision; source-conditioned zero-shot transfer",
+    "train": "5 geometries x 2 sources at resolution 24",
+    "validation": "1 unseen geometry x 2 sources at resolution 32",
+    "test_files_read": [],
+    "steps": 800,
+    "checkpoint_rule": "minimum loss on all 2222 observed training labels",
+    "seeds": [0, 1, 2],
+    "absolute_gate": "global NRMSE <= 0.8 and >=20% MSE skill over strongest trivial baseline"
+  },
+  "aggregate": {
+    "ordinary_functional_cp": {
+      "global_nrmse_mean": 3.267930746078491,
+      "global_nrmse_std": 0.5370332058349095,
+      "late_nrmse_mean": 3.8815515836079917,
+      "boundary_nrmse_mean": 1.2315237720807393,
+      "passed_absolute_gate": false
+    },
+    "joint_inr": {
+      "global_nrmse_mean": 1.4819941918055217,
+      "global_nrmse_std": 0.1839394631621343,
+      "late_nrmse_mean": 1.5012598037719727,
+      "boundary_nrmse_mean": 1.1066004435221355,
+      "passed_absolute_gate": false
+    },
+    "paired_phase_cp": {
+      "global_nrmse_mean": 3.4732207457224527,
+      "global_nrmse_std": 0.5043989263774095,
+      "late_nrmse_mean": 4.387701352437337,
+      "boundary_nrmse_mean": 1.5850345492362976,
+      "passed_absolute_gate": false
+    },
+    "wrong_euclidean_phase": {
+      "global_nrmse_mean": 2.8920125166575112,
+      "global_nrmse_std": 0.3071160913686514,
+      "late_nrmse_mean": 3.784109433492025,
+      "boundary_nrmse_mean": 1.2154527107874553,
+      "passed_absolute_gate": false
+    },
+    "zero": {
+      "global_nrmse_mean": 1.0067529678344727,
+      "global_nrmse_std": 0.0,
+      "late_nrmse_mean": 1.0176167488098145
+    },
+    "train_observed_mean": {
+      "global_nrmse_mean": 1.0001705884933472,
+      "global_nrmse_std": 0.0001419640000622715,
+      "late_nrmse_mean": 1.0031552116076152
+    }
+  },
+  "diagnosis": {
+    "correct_geometry_attribution": "failed; wrong Euclidean phase is better than correct travel-time phase on all three seeds",
+    "overfit_signal": "paired phase reaches observed-train normalized MSE 0.0021-0.0051 but validation NRMSE is 3.01-4.01",
+    "decision": "do not open locked test geometries; do not promote to public data"
+  },
+  "seed_artifacts": [
+    "track2_independent_wave_r1_seed0.json",
+    "track2_independent_wave_r1_seed1.json",
+    "track2_independent_wave_r1_seed2.json"
+  ]
+}

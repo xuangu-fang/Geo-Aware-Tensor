@@ -4,6 +4,8 @@
 
 快速 POC 的逐轮负信号、修正与冻结记录见
 [`ITERATIONS.md`](ITERATIONS.md)。
+四条线各自的完整 formulation、实现、inference、数据、baseline 与测试审计见
+[`tech_reports/`](tech_reports/README.md)。
 
 ## 一句话总纲
 
@@ -48,6 +50,8 @@ p(W_m)\propto\exp\{-\tfrac12\Vert(1+\Lambda_m)^{p/2}W_m\Vert_F^2\}.
 
 这条线不能只对标传统 Bayesian Tucker。现有 controlled tensor 结果是正信号，但不规则椭圆场上 operator Tucker 弱于 SDF functional CP，说明它目前更适合作为“算子先验何时降低样本复杂度”的论文，而不是通用不规则域 SOTA。
 
+本轮审计发现并修复了一个实质问题：前向 factor 做 unit-RMS normalization，旧谱惩罚却作用在 raw coefficients，因此缩小系数可降低惩罚而不改变预测。修正后 2% seed-30 smoke 为 `0.155`，operator CP `0.410`，flat GP `0.597`，wrong Tucker `1.489`；正信号保留，但旧 10-seed 主表必须重跑。新的 neural functional Tucker 在 500→2000 steps 从 `0.523` 改善到 `0.307`，也证明所有 baseline 机械地同跑 500 steps 不公平。
+
 ## 方向 2：Phase-factorized Wave Tensor
 
 ### 最简公式
@@ -69,7 +73,7 @@ p(W_m)\propto\exp\{-\tfrac12\Vert(1+\Lambda_m)^{p/2}W_m\Vert_F^2\}.
 
 ### 论文边界
 
-这是一条**特殊场结构**路线。主数据应使用 WaveBench、自建 Helmholtz/声学或浅水波，不再把它包装成任意 PDE 的通用 geometry model。现有受控 harmonic 数据为正；moving envelope 和 The Well 为负。下一步只保留一个很小的 phase-envelope 扩展，并首先通过“绝对有效”门槛。
+这是一条**特殊场结构**路线，不再包装成任意 PDE 的通用 geometry model。审计发现原 `0.0952` 正结果的 generator 与模型频带对齐，且主体更接近驻波 harmonic，只能作 mechanism sanity。新的 independent-wave locked validation 中，trivial mean 为 `1.0002±0.0001`，paired phase 为 `3.4732±0.5044`，wrong Euclidean phase 反而为 `2.8920±0.3071`。因此方向 2 当前为 **PAUSE / NARROW GO**：只允许一次无频带泄漏的真正 traveling-harmonic 修正，不晋级 WaveBench，不继续堆 phase-envelope。
 
 ## 方向 3：Domain-kernel Bayesian Functional Tucker
 
@@ -90,7 +94,7 @@ u(z_1,z_2,z_3)=\sum_{a,b,c}G_{abc}
 f_{1a}(z_1)f_{2b}(z_2)f_{3c}(z_3).
 \]
 
-当前快速 POC 用多个 \(k_\Omega(x,s)\) kernel section 做有限特征，并以二次正则做 MAP；这等价于核/GP 后验均值的有限基近似。**目前还不能称为完整 Bayesian GP 方法**。只有 POC 过门槛后，才实现 inducing-point variational posterior、核超参数后验和校准 UQ。
+当前快速 POC 只把多个 \(k_\Omega(x,s)\) kernel sections 作为 MLP 输入。它没有显式 Gaussian prior、kernel-ridge solve、variational posterior 或 posterior variance，因此严格名称是 **domain-kernel-section conditioned neural Tucker**，目前连 GP-MAP 都不能宣称。只有实现显式 GP coefficients/posterior 后，才升级为 Bayesian 方法。
 
 ### 与方向 1 的本质区别
 
@@ -100,24 +104,16 @@ f_{1a}(z_1)f_{2b}(z_2)f_{3c}(z_3).
 
 ### 快速 POC 结果
 
-训练使用 4 个不规则域的 24 网格、每个完整张量仅 1% entries；评估在未见形状的 32 网格上。模型和超参数先在 slanted-channel validation 冻结，再读取带孔洞的 test geometry。下表为 3 个独立训练 seed 的 mean ± sample standard deviation。
+新的 method-matched 消融只在 `slanted_channel_r32` validation 上运行，不读取旧 hole test：
 
-| 模型 | validation NRMSE | validation 边界 | hole test NRMSE | hole test 边界 |
-|---|---:|---:|---:|---:|
-| domain-kernel functional Tucker | 0.1839±0.0122 | **0.1851±0.0124** | **0.1526±0.0148** | **0.1667±0.0169** |
-| topology-erased kernel Tucker | 0.1962±0.0185 | 0.2091±0.0094 | 0.1731±0.0140 | 0.1998±0.0185 |
-| SDF neural functional Tucker | 0.1931±0.0181 | 0.2192±0.0255 | 0.1756±0.0151 | 0.2053±0.0089 |
-| coordinate neural functional Tucker | 0.2027±0.0243 | 0.2213±0.0214 | 0.1854±0.0142 | 0.2354±0.0187 |
-| SDF neural functional CP | 0.1972±0.0253 | 0.2211±0.0159 | 0.1587±0.0152 | 0.1971±0.0135 |
-| joint SDF INR | **0.1775±0.0219** | 0.2093±0.0298 | 0.1592±0.0078 | 0.1960±0.0057 |
-| observed global mean | 1.0009±0.0008 | 1.0003±0.0007 | 1.0006±0.0010 | 1.0012±0.0014 |
+| 输入 | Validation NRMSE | Boundary NRMSE |
+|---|---:|---:|
+| intrinsic sections only | **0.2602±0.0055** | **0.2809±0.0086** |
+| Euclidean RBF sections only | 0.3320±0.0212 | 0.3080±0.0381 |
+| intrinsic + identical local inputs | **0.1905±0.0219** | **0.1905±0.0188** |
+| Euclidean RBF + identical local inputs | 0.2031±0.0297 | 0.2267±0.0152 |
 
-当前可下的结论只有：
-
-- 在普通未见形状上，domain kernel 尚未超过 joint INR；不能宣称整体胜出。但 correct kernel 在 3/3 seeds 均优于 topology-erased kernel，平均边界误差降低约 11.5%。
-- 在带孔洞的未见域上，正确 domain kernel 相对 topology-erased kernel 平均降低约 11.8% 全域误差、16.6% 边界误差。
-- 在 hole test 上，它也平均优于 joint INR/SDF-CP 的全域误差约 4%，边界误差约 15%。这是方向 3 值得继续的第一条稳定正信号。
-- 以上仍只有两个 held-out geometries；3 seeds 只够做 POC，不是论文统计证据。
+intrinsic section 的机制信号在三个 seeds 上为正，加入相同局部输入后边界误差仍约改善 16%。但这验证的是 neural input representation，不是 GP posterior。旧 `topology_erased` 实际仍使用正确边界距离、坐标和 descriptor，只能称 `bbox-kernel channel ablation`；旧 hole case 已被读取，不再是 untouched confirmation。
 
 ## 方向 4：Geometry-conditioned Neural Functional Tucker
 
@@ -125,28 +121,28 @@ f_{1a}(z_1)f_{2b}(z_2)f_{3c}(z_3).
 
 \[
 u(\Omega,p,x,s)=\sum_{a,b,c}G_{abc}\,
-g_a(q_\Omega)\,h_b(p)\,r_c(x,s,\operatorname{SDF}_\Omega(x)).
+g_a(q_\Omega)\,h_b(p)\,r_c(x,s,d_{\partial\Omega}(x)).
 \]
 
-三个 mode factor 都是连续函数，但交互只能经过一个小 Tucker core。最小版本只用坐标、source、物理参数和 SDF；暂不加入复杂几何 encoder、attention 或 learned metric。
+三个 factor 都是连续函数，但交互只能经过一个小 Tucker core。当前 \(d_{\partial\Omega}\) 是活动域内到最近外边界/孔洞边界的正距离，并按每域 Q95 归一化；它不是在共享 ambient grid 上定义的完整 signed distance field。
 
 ### 独特贡献
 
 1. 可在不同节点数与不同网格上查询，不要求规则矩形张量。
-2. SDF 让内部孔洞和外边界以连续条件进入 factor。
-3. 与 joint INR 的区别不是“也用了 SDF”，而是显式低秩 core、可控 mode ranks 与可解释的 factor sharing。
+2. interior boundary distance 让孔洞和外边界的局部信息进入 factor。
+3. 与 joint INR 的区别是显式低秩 core、可控 mode ranks 与 factor sharing，而不是独占几何输入。
 
 ### 当前证据边界
 
-- hole test 中，SDF Tucker 相对 coordinate Tucker 平均降低约 5.3% 全域误差和 12.8% 边界误差，说明 SDF 确实在使用孔洞几何。
-- SDF Tucker 当前平均不如更简单的 SDF CP。因此现阶段只支持“geometry-conditioned functional factorization 能跑通”，不支持“Tucker core 已经带来性能贡献”。
-- joint SDF INR 在 validation 上平均最好。方向 4 若要成为主会论文，必须先解决 Tucker 优化/秩选择，再在多形状、多孔洞、cross-resolution 和 structured missing 下稳定超过它，并与 GINO/DAFNO/Geo-FNO/Transolver 对比。
+- 修正 checkpoint 为完整 observed-set loss 后，CP-shaped-core Tucker 三 seed validation 为 `0.1922±0.0305`，functional CP 为 `0.1958±0.0312`，但 Tucker 只赢 1/3 seeds，差异无法支持 Tucker 贡献。
+- 相同输入的 joint INR 为 `0.1723±0.0175`，仍明显更强。
+- `coordinate Tucker` 仍读取包含 fluid fraction/boundary quantiles 的全局 descriptor，它不是 no-geometry baseline。旧 hole case 已被读取，下一轮必须新生成多孔洞冻结 test set。
 
 ## 四条线共享什么，不共享什么
 
 共享：
 
-- `DomainCase`：coordinates、mesh/graph operator、boundary mask、SDF、source、physical parameters、target field；
+- `DomainCase`：coordinates、mesh/graph operator、boundary mask、interior boundary distance/ambient SDF、source、physical parameters、target field；
 - `ObservationSplit`：entry-random、fixed sensors、fiber missing、region missing，且精确记录 ratio；
 - 模型协议：`fit(train_cases, observations)` 与 `predict(case, query_indices)`；
 - 指标：global NRMSE、boundary/hole-band NRMSE、absolute skill、参数量、耗时；
@@ -194,9 +190,9 @@ papers/
 
 ## 接下来三步
 
-1. **先加 seed，不加新组件。** 对方向 3/4 在 validation 跑 3 个 selection seeds；若 correct-vs-erased 与 SDF-vs-coordinate 不稳定，立即降级故事。
-2. **再扩数据。** 首选 AirfRANS scarce split 验证 SDF/孔洞边界，WaveBench 只服务方向 2；同时自建多孔洞 Poisson/Helmholtz phase diagram。
-3. **最后加重 baseline。** 方向 4 接 GINO/DAFNO/Transolver；方向 3 接 Euclidean RBF GP、geometry-only GP、functional Bayesian tensor。只有此时仍有优势，才投入完整变分 GP。
+1. **先重建数据证据链。** 扩到 80–200 个参数化形状、多孔洞/无孔洞、family-held-out 和全新 hash-locked test；分开 Task C 测试域 few-shot completion 与 Task O zero-shot surrogate。
+2. **再补最短 baseline。** 方向 1 重跑修正后谱先验与 neural functional Tucker；方向 3 接 Euclidean/domain KRR/GP 与 FunBaT；方向 4 先接 F-INR/CORAL，训练几何足够后再接 GINO/DAFNO/Transolver。
+3. **按负信号收缩路线。** 方向 2 暂停外部数据扩张；方向 4 若真实 CP warm start + off-diagonal residual 仍不超过 CP/INR，就降级为 functional CP 学生项目；方向 3 只在显式 GP/KRR 过门后实现 variational posterior。
 
 ## 相关一手工作与代码
 

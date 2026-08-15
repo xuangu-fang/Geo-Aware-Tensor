@@ -41,3 +41,37 @@
 | 3. Domain-kernel Functional Tucker | PILOT positive | 域核在孔洞/边界上提供稳定增益 | 已完成 full Bayesian GP、已具论文级统计 |
 | 4. Geometry-conditioned Neural Functional Tucker | POC mixed | SDF 条件因子能使用孔洞几何 | Tucker 已优于 CP/INR、已具主会结果 |
 
+## R3：四方向独立技术审计（2026-08-15）
+
+本轮不把旧 hole 结果继续升格，而是重新审计任务、优化、baseline 和命名。详细结果见 `tech_reports/`。
+
+### 共享协议修正
+
+- 旧 runner 用单个随机 minibatch loss 选 checkpoint；现改为定期在全部 fixed observed entries 上评估。
+- 当前 1% 是训练域 target-label fraction，验证域没有 target context；任务是 sparse-supervision zero-shot surrogate，不是 test-domain 1% completion。
+- 当前 `boundary_distance` 是域内无符号正距离，不是完整 ambient SDF。
+- 旧 hole case 已被多次读取，之后只能作 development evidence。
+
+### 方向 1
+
+- 修复 unit-RMS forward factor 与 raw-coefficient spectral penalty 不一致的 scale loophole。
+- 修正后 2% smoke 仍为正：operator Tucker `0.155`，operator CP `0.410`，flat GP `0.597`，wrong `1.489`。
+- neural functional Tucker 需要更长优化：500-step `0.523`，2000-step `0.307`。旧确认表需重跑。
+
+### 方向 2
+
+- independent-wave locked validation 使用 5 train geometries×2 sources@24、1 unseen validation geometry@32、2222 个训练标签，test 未读。
+- mean `1.0002`，joint INR `1.4820`，ordinary CP `3.2679`，wrong phase `2.8920`，paired phase `3.4732`。所有 gate 失败，且 wrong 在 3/3 seeds 超过 correct。
+- 决策：PAUSE / NARROW GO；不读 locked test，不晋级 WaveBench。
+
+### 方向 3
+
+- 当前是 kernel-section neural input，没有 GP prior/posterior，不得称 GP-MAP。
+- 参数匹配的 intrinsic-only 为 `0.2602±0.0055`，Euclidean-RBF-only `0.3320±0.0212`；intrinsic+local 为 `0.1905±0.0219`，Euclidean+local `0.2031±0.0297`。
+- 机制信号为正，但下一个里程碑是显式 KRR/GP 与 FunBaT baseline，不是直接加变分组件。
+
+### 方向 4
+
+- 完整-observed checkpoint 修复后，CP-shaped-core Tucker `0.1922±0.0305`，functional CP `0.1958±0.0312`，joint INR `0.1723±0.0175`。
+- Tucker 只赢 CP 1/3 seeds；CP-shaped core 只是代数初值，不是 trained-CP warm start。
+- 决策：新生成 80–200 shapes 与冻结多孔洞 test；只允许真实 CP warm start + off-diagonal residual 这一个最小方法修正。

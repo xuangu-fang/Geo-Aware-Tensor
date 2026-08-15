@@ -18,7 +18,12 @@ def _mlp(input_dim: int, output_dim: int, hidden: int) -> nn.Sequential:
 
 def sdf_query_features(case: dict, indices: torch.Tensor,
                        *, use_sdf: bool = True) -> torch.Tensor:
-    """Build continuous query features ``(x, SDF, source, distance, 1)``."""
+    """Build ``(x, boundary distance, source, Euclidean distance, 1)``.
+
+    ``boundary_distance`` is currently stored only on active-domain nodes and
+    is nonnegative.  The historical function/flag name is kept for API
+    compatibility; this is not a full signed distance field on an ambient grid.
+    """
     source, _, node = indices.T
     device = indices.device
     xy = case["coords"].to(device)[node]
@@ -41,16 +46,24 @@ def scalar_parameter_features(case: dict, indices: torch.Tensor) -> torch.Tensor
 class FunctionalTucker(nn.Module):
     """Three functional mode maps contracted through an explicit small core."""
 
-    def __init__(self, spatial_dim: int, ranks=(6, 8, 16), hidden: int = 64):
+    def __init__(self, spatial_dim: int, ranks=(6, 8, 16), hidden: int = 64,
+                 core_init: str = "random"):
         super().__init__()
         self.ranks = tuple(int(rank) for rank in ranks)
         rg, rp, rs = self.ranks
         self.geometry_factor = _mlp(7, rg, hidden)
         self.parameter_factor = _mlp(2, rp, hidden)
         self.spatial_factor = _mlp(spatial_dim, rs, hidden)
-        self.core = nn.Parameter(
-            torch.randn(rg, rp, rs) / math.sqrt(rg * rp * rs)
-        )
+        if core_init == "random":
+            core = torch.randn(rg, rp, rs) / math.sqrt(rg * rp * rs)
+        elif core_init == "cp_diagonal":
+            core = torch.zeros(rg, rp, rs)
+            diagonal_rank = min(rg, rp, rs)
+            index = torch.arange(diagonal_rank)
+            core[index, index, index] = 1 / math.sqrt(diagonal_rank)
+        else:
+            raise ValueError(f"unknown core initialization: {core_init}")
+        self.core = nn.Parameter(core)
 
     def forward_features(self, geometry: torch.Tensor, parameter: torch.Tensor,
                          spatial: torch.Tensor) -> torch.Tensor:
@@ -61,10 +74,12 @@ class FunctionalTucker(nn.Module):
 
 
 class GeometryConditionedNeuralFunctionalTucker(FunctionalTucker):
-    """Track 4: SDF-conditioned neural factors with an explicit Tucker core."""
+    """Track 4: boundary-distance-conditioned factors and a Tucker core."""
 
-    def __init__(self, ranks=(6, 8, 16), hidden: int = 64, use_sdf: bool = True):
-        super().__init__(spatial_dim=7, ranks=ranks, hidden=hidden)
+    def __init__(self, ranks=(6, 8, 16), hidden: int = 64, use_sdf: bool = True,
+                 core_init: str = "random"):
+        super().__init__(spatial_dim=7, ranks=ranks, hidden=hidden,
+                         core_init=core_init)
         self.use_sdf = bool(use_sdf)
 
     def forward_case(self, case: dict, indices: torch.Tensor) -> torch.Tensor:
@@ -94,18 +109,17 @@ class GeometryConditionedNeuralFunctionalCP(nn.Module):
 
 
 class DomainKernelFunctionalTucker(FunctionalTucker):
-    """Track 3 POC: domain-Matérn kernel factors and an explicit Tucker core.
+    """Track 3 POC: domain-kernel-section inputs and a Tucker core.
 
-    The kernel sections are finite GP covariance features. Training this model
-    with a quadratic coefficient penalty is the MAP approximation; a scalable
-    inducing-point posterior is intentionally deferred until the POC passes.
+    The sections are inspired by a finite GP covariance, but the current MLP
+    and AdamW fit have no explicit Gaussian prior or posterior.  This class is
+    therefore a deterministic feature POC, not GP or GP-MAP inference.
     """
 
     def __init__(self, kernel_channels: int = 5, ranks=(6, 8, 12),
                  hidden: int = 64, composite_local_kernel: bool = True):
-        # A useful GP on physical fields normally adds a local coordinate/SDF
-        # covariance to the intrinsic domain covariance.  The boolean keeps a
-        # pure-domain-kernel ablation available without a second model class.
+        # Concatenating local coordinates/boundary distance with kernel sections
+        # is an input-feature composite, not an additive or product GP kernel.
         self.composite_local_kernel = bool(composite_local_kernel)
         spatial_dim = kernel_channels + (7 if composite_local_kernel else 0)
         super().__init__(spatial_dim=spatial_dim, ranks=ranks, hidden=hidden)

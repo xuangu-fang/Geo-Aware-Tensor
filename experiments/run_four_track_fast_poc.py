@@ -30,7 +30,7 @@ from geoaware.functional_tucker import (
 from run_irregular_elliptic_paper_b import case_payload, fixed_mask
 
 
-class JointSDFINR(nn.Module):
+class JointBoundaryDistanceINR(nn.Module):
     """Monolithic neural regression baseline with exactly the same inputs."""
 
     def __init__(self, hidden: int = 96):
@@ -61,6 +61,21 @@ def all_indices(shape: tuple[int, ...]) -> torch.Tensor:
 
 
 @torch.no_grad()
+def observed_mse(model: nn.Module, batches: list[tuple], center: torch.Tensor,
+                 scale: torch.Tensor, device: torch.device) -> float:
+    """Evaluate a checkpoint on every observed entry, without resampling."""
+    squared_error = 0.
+    count = 0
+    for case, indices, values in batches:
+        query = indices.to(device)
+        target = ((values - center) / scale).to(device)
+        error = model.forward_case(case, query) - target
+        squared_error += float(error.square().sum())
+        count += len(indices)
+    return squared_error / max(1, count)
+
+
+@torch.no_grad()
 def predict_case(model: nn.Module, case: dict, device: torch.device,
                  chunk: int = 65536) -> torch.Tensor:
     indices = all_indices(tuple(case["target"].shape))
@@ -77,19 +92,22 @@ def model_factories() -> dict[str, tuple[callable, str]]:
         "domain_kernel_functional_tucker": (
             lambda: DomainKernelFunctionalTucker(
                 kernel_channels=5, ranks=(6, 8, 12), hidden=64), "correct"),
-        "topology_erased_kernel_tucker": (
+        "bbox_kernel_with_local_geometry_tucker": (
             lambda: DomainKernelFunctionalTucker(
                 kernel_channels=5, ranks=(6, 8, 12), hidden=64), "bbox"),
-        "sdf_neural_functional_tucker": (
+        "boundary_distance_neural_functional_tucker": (
             lambda: GeometryConditionedNeuralFunctionalTucker(
-                ranks=(6, 8, 16), hidden=64, use_sdf=True), "correct"),
-        "coordinate_neural_functional_tucker": (
+                ranks=(12, 12, 12), hidden=64, use_sdf=True,
+                core_init="cp_diagonal"), "correct"),
+        "descriptor_coordinate_neural_functional_tucker": (
             lambda: GeometryConditionedNeuralFunctionalTucker(
-                ranks=(6, 8, 16), hidden=64, use_sdf=False), "correct"),
-        "sdf_neural_functional_cp": (
+                ranks=(12, 12, 12), hidden=64, use_sdf=False,
+                core_init="cp_diagonal"), "correct"),
+        "boundary_distance_neural_functional_cp": (
             lambda: GeometryConditionedNeuralFunctionalCP(
                 rank=24, hidden=64, use_sdf=True), "correct"),
-        "joint_sdf_inr": (lambda: JointSDFINR(hidden=96), "correct"),
+        "joint_boundary_distance_inr": (
+            lambda: JointBoundaryDistanceINR(hidden=96), "correct"),
     }
 
 
@@ -146,7 +164,8 @@ def main() -> None:
         best = (float("inf"), None)
         started = time.perf_counter()
         model.train()
-        for _ in range(args.steps):
+        checkpoint_interval = max(10, args.steps // 20)
+        for step in range(args.steps):
             case, indices, values = observed_batches[
                 int(generator.integers(len(observed_batches)))]
             chosen = torch.from_numpy(generator.integers(
@@ -159,9 +178,10 @@ def main() -> None:
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 5.)
             optimizer.step()
-            score = float(loss.detach())
-            if score < best[0]:
-                best = (score, copy.deepcopy(model.state_dict()))
+            if step % checkpoint_interval == 0 or step + 1 == args.steps:
+                score = observed_mse(model, observed_batches, center, scale, device)
+                if score < best[0]:
+                    best = (score, copy.deepcopy(model.state_dict()))
         model.load_state_dict(best[1])
         model.eval()
 
@@ -246,4 +266,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

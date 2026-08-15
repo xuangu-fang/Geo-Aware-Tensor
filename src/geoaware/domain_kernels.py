@@ -14,6 +14,12 @@ from collections.abc import Sequence
 import torch
 
 
+def _rms_normalize_sections(sections: torch.Tensor) -> torch.Tensor:
+    """Normalize channels without using any field/target values."""
+    rms = sections.square().mean(dim=(0, 1), keepdim=True).sqrt().clamp_min(1e-6)
+    return sections / rms
+
+
 def matern_domain_kernel_sections(
     basis: torch.Tensor,
     eigenvalues: torch.Tensor,
@@ -46,6 +52,37 @@ def matern_domain_kernel_sections(
     filters = (1 + scale_tensor[:, None] * lam[None]).pow(-smoothness)
     sections = torch.einsum("nk,sk,qk->snq", phi, source_phi, filters)
     sections = sections / max(1, basis.shape[1])
-    rms = sections.square().mean(dim=(0, 1), keepdim=True).sqrt().clamp_min(1e-6)
-    return sections / rms
+    return _rms_normalize_sections(sections)
 
+
+def euclidean_rbf_kernel_sections(
+    coordinates: torch.Tensor,
+    source_nodes: torch.Tensor,
+    *,
+    lengthscales: Sequence[float] = (0.08, 0.16, 0.32, 0.64, 1.28),
+) -> torch.Tensor:
+    """Return normalized Euclidean RBF sections ``[source, node, scale]``.
+
+    This is the method-matched geometry-agnostic control for
+    :func:`matern_domain_kernel_sections`: both expose covariance sections
+    centred at exactly the same source nodes and have the same channel count.
+    Unlike the intrinsic sections, Euclidean distance can connect points that
+    are close through a wall or across a hole.
+
+    The returned sections are deterministic geometry features.  They become a
+    GP covariance only when an inference method actually uses the corresponding
+    kernel and Gaussian prior; passing them through an MLP is *not* GP inference.
+    """
+    if coordinates.ndim != 2:
+        raise ValueError("coordinates must be [node, coordinate]")
+    if not lengthscales:
+        raise ValueError("at least one lengthscale is required")
+    if min(lengthscales) <= 0:
+        raise ValueError("lengthscales must be positive")
+
+    coords = coordinates.float()
+    source_coords = coords[source_nodes.long()]
+    squared_distance = (source_coords[:, None] - coords[None]).square().sum(-1)
+    ell = torch.as_tensor(lengthscales, dtype=coords.dtype, device=coords.device)
+    sections = torch.exp(-squared_distance[..., None] / (2 * ell.square()))
+    return _rms_normalize_sections(sections)

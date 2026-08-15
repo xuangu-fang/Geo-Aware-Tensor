@@ -11,6 +11,34 @@ def _mlp(in_dim, out_dim, hidden):
                          nn.GELU(), nn.Linear(hidden, out_dim))
 
 
+def paired_phase_carriers(distance: torch.Tensor, time: torch.Tensor,
+                          bands: torch.Tensor, speeds: torch.Tensor
+                          ) -> tuple[torch.Tensor, torch.Tensor]:
+    """Build the canonical four-term CP carriers for ``k(d-c t)``.
+
+    Component order is ``(band, speed, trig-term)`` with trig terms
+    ``cos(d)cos(t)``, ``sin(d)sin(t)``, ``cos(d)sin(t)``, and
+    ``sin(d)cos(t)``.  Keeping this construction in one pure function makes
+    the angle-addition claim directly testable and prevents a silent reshape
+    change from invalidating the claimed phase pairing.
+    """
+    if distance.ndim != 2 or distance.shape[1] != 1:
+        raise ValueError("distance must have shape (N, 1)")
+    if time.ndim != 2 or time.shape[1] != 1:
+        raise ValueError("time must have shape (N, 1)")
+    if len(distance) != len(time):
+        raise ValueError("distance and time must have the same batch size")
+    kd = distance[:, :, None] * bands[None, :, None]
+    kd = kd.expand(-1, -1, len(speeds)).reshape(len(distance), -1)
+    kct = time[:, :, None] * bands[None, :, None] * speeds[None, None, :]
+    kct = kct.reshape(len(time), -1)
+    sd, cd = torch.sin(kd), torch.cos(kd)
+    st, ct = torch.sin(kct), torch.cos(kct)
+    spatial = torch.stack([cd, sd, cd, sd], -1).reshape(len(distance), -1)
+    temporal = torch.stack([ct, st, st, ct], -1).reshape(len(time), -1)
+    return spatial, temporal
+
+
 def tensor_mode_features(task: WaveTask, wrong_geometry: bool = False,
                          use_phase: bool = True):
     """Return separate `(geometry, time, spatial)` mode features."""
@@ -139,16 +167,8 @@ class SpeedAlignedPhaseCP(nn.Module):
 
     def _carriers(self,t,x):
         # x[:,3] is intrinsic/Euclidean source distance; t[:,0] is time.
-        kd=x[:,3:4,None]*self.bands[None,:,None]
-        # broadcast N x band x speed then flatten band-major, speed-minor
-        kd=kd.expand(-1,-1,len(self.speeds)).reshape(len(x),-1)
-        kct=t[:,0:1,None]*self.bands[None,:,None]*self.speeds[None,None,:]
-        kct=kct.reshape(len(t),-1)
-        sx,cx=torch.sin(kd),torch.cos(kd);st,ct=torch.sin(kct),torch.cos(kct)
-        # cosd*cost, sind*sint, cosd*sint, sind*cost span cos/sin(k[d-ct])
-        spatial=torch.stack([cx,sx,cx,sx],-1).reshape(len(x),-1)
-        temporal=torch.stack([ct,st,st,ct],-1).reshape(len(t),-1)
-        return spatial,temporal
+        return paired_phase_carriers(x[:, 3:4], t[:, 0:1], self.bands,
+                                     self.speeds)
 
     def forward_points(self,g,t,x):
         dev=self.weight.device;g,t,x=g.to(dev),t.to(dev),x.to(dev)

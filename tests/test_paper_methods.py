@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import torch
 
@@ -15,6 +17,8 @@ from geoaware.neural_tensor import (
     SpeedAlignedPhaseCP,
 )
 from geoaware.tensor_bayes import OperatorBayesianCP, OperatorBayesianTucker
+from geoaware.operator_tucker_baselines import NeuralFunctionalCP, NeuralFunctionalTucker
+from geoaware.masks import make_observation_split
 from geoaware.tensor_data import explicit_mode_bases, operator_cp_tensor, operator_tucker_tensor
 from geoaware.the_well_pilot import block_mean_256_to_64, fixed_random_mask, nrmse_on_mask
 from geoaware.well_baselines import WellUNetClassic
@@ -83,6 +87,54 @@ def test_operator_bayesian_tucker_keeps_small_explicit_core():
     assert design.shape == (13, 18)
     assert model.core.shape == (2, 3, 3)
     assert torch.isfinite(model(indices[:13])).all()
+
+
+def test_operator_tucker_spectral_prior_matches_factor_normalization():
+    data = operator_tucker_tensor(shape=(7, 8, 9), seed=26)
+    basis, eigenvalues = explicit_mode_bases(data, "correct")
+    model = OperatorBayesianTucker(
+        basis, eigenvalues, ranks=(2, 3, 3), device="cpu"
+    )
+    indices = data.flat_indices()[:19]
+    prediction = model(indices).detach()
+    prior = model.factor_prior().detach()
+    with torch.no_grad():
+        for coefficient in model.coeff:
+            coefficient.mul_(3.7)
+    assert torch.allclose(model(indices), prediction, atol=1e-6)
+    assert torch.allclose(model.factor_prior(), prior, atol=1e-6)
+
+
+def test_operator_tucker_functional_baselines_are_continuous_and_explicit():
+    coordinates = torch.rand(17, 3)
+    cp = NeuralFunctionalCP((False, False, True), rank=4, hidden=12)
+    tucker = NeuralFunctionalTucker(
+        (False, False, True), ranks=(2, 3, 4), hidden=12
+    )
+    assert cp(coordinates).shape == (17,)
+    assert tucker(coordinates).shape == (17,)
+    assert tucker.core.shape == (2, 3, 4)
+    # A periodic factor must agree exactly across the 0/1 seam.
+    seam = torch.tensor([[.2, .4, 0.], [.2, .4, 1.]])
+    assert torch.allclose(cp(seam), cp(seam.flip(0)), atol=1e-6)
+    assert torch.allclose(tucker(seam), tucker(seam.flip(0)), atol=1e-6)
+
+
+def test_operator_tucker_structured_masks_preserve_the_declared_geometry():
+    data = operator_tucker_tensor(shape=(10, 12, 16), seed=16)
+    gap = make_observation_split(data, ratio=.05, kind="periodic_gap", seed=3)
+    angle = data.flat_indices()[:, 2].float() / data.shape[2]
+    excluded_sector = (angle < .125) | (angle >= .875)
+    assert not gap.observed[excluded_sector].any()
+    assert gap.held_out[excluded_sector].all()
+    assert int(gap.observed.sum()) == round(.05 * data.values.numel())
+
+    sensors = make_observation_split(data, ratio=.10, kind="sensor_tracks", seed=4)
+    observed = sensors.observed.reshape(data.shape)
+    # A selected spatial location contributes its complete time trajectory;
+    # unselected locations contribute none of it.
+    assert torch.all(observed == observed[:1].expand_as(observed))
+    assert int(observed[0].sum()) == round(.10 * math.prod(data.shape[1:]))
 
 
 def test_neural_cp_and_tucker_contract_separate_point_factors():
@@ -226,3 +278,13 @@ def test_new_functional_tuckers_keep_explicit_small_cores():
     assert kernel.core.shape == (2, 3, 4)
     assert torch.isfinite(neural.forward_case(case, indices)).all()
     assert torch.isfinite(kernel.forward_case(case, indices)).all()
+
+
+def test_neural_functional_tucker_can_start_from_nested_cp_core():
+    model = GeometryConditionedNeuralFunctionalTucker(
+        ranks=(4, 4, 4), hidden=8, core_init="cp_diagonal")
+    diagonal = model.core.detach()[torch.arange(4), torch.arange(4), torch.arange(4)]
+    off_diagonal = model.core.detach().clone()
+    off_diagonal[torch.arange(4), torch.arange(4), torch.arange(4)] = 0
+    assert torch.allclose(diagonal, torch.full((4,), .5))
+    assert torch.count_nonzero(off_diagonal) == 0

@@ -1,0 +1,508 @@
+# 方向 1 技术报告：Operator-informed Bayesian Tucker
+
+更新时间：2026-08-15  
+状态：**受控机制实验为正，外部有效性尚未成立；保留，但暂不按完整主会论文宣称。**
+
+## 0. 先给结论
+
+这条线不应该删除。它有一个很清楚、也很实用的定位：
+
+> 已知每个 tensor mode 上的几何或物理算子时，用算子的低频函数空间约束一个很小的 Tucker 模型；因子用正则化点估计，固定因子后对 core 做解析高斯推断。
+
+它也确实可以理解为“每个因子都是 GP”的复杂模型的一个有限谱、低成本近似。若
+
+\[
+K_m=\Phi_m( I+\Lambda_m)^{-p}\Phi_m^\top,
+\]
+
+则令 $U_m=\Phi_mW_m$、对 $W_m$ 施加相应二次惩罚，就是把因子限制在由
+$K_m$ 定义的有限维 RKHS/GP 空间里。不过，当前实现**没有对因子做完整后验推断**，因此准确名称应是：
+
+**operator-regularized Tucker with a conditional empirical-Bayes core posterior**。
+
+当前证据分成两部分：
+
+1. 在与方法结构高度一致的受控 Tucker tensor 上，2% 观测、结构缺失和高噪声均有明显正信号；
+2. 在不规则椭圆场和 The Well 声学场上，绝对性能或相对性能为负。
+
+所以现在最重要的不是继续加组件，而是完成两个验证：
+
+- 加入真正 method-matched 的 neural functional CP/Tucker 与 INR；
+- 换掉“真值恰好由同一组 eigenfunctions 生成”的 inverse-crime 主实验，并在至少一个公开数据集上通过绝对有效门槛。
+
+## 1. 科学问题与论文故事
+
+### 1.1 要回答的问题
+
+普通 Tucker completion 写作
+
+\[
+Y_{i_1i_2i_3}
+\approx\sum_{a=1}^{R_1}\sum_{b=1}^{R_2}\sum_{c=1}^{R_3}
+G_{abc}U_1(i_1,a)U_2(i_2,b)U_3(i_3,c).
+\]
+
+传统 factor table 把 mode index 当作没有关系的类别。例如，它无法预先知道：
+
+- 一个 mode 是周期圆周，首尾应连接；
+- 一个 mode 是有 Dirichlet/Neumann 边界的区间；
+- 一个 mode 是不规则 mesh，其邻接关系和孔洞会改变平滑函数空间。
+
+方向 1 的问题是：**在 0.5%–5% 的极稀疏观测下，已知算子所定义的函数空间，能否降低 Tucker 因子的样本复杂度？**
+
+### 1.2 最小贡献应该只有三个
+
+1. **因子空间由 mode operator 定义。** 几何不是额外输入，而是直接限制每个 mode factor 可以是什么函数。
+2. **保留显式小 Tucker core。** 与 CP 相比，它允许跨 mode 的非对角交互；与 flat product GP 相比，它不需要保留大量笛卡尔积特征。
+3. **轻量条件后验。** 因子固定后，小 core 是标准 Bayesian linear regression，可解析得到均值和协方差。
+
+不应把“全贝叶斯因子”“自动 Tucker rank”“通用不规则域模型”写进当前贡献。
+
+## 2. Formulation
+
+### 2.1 算子因子
+
+对 mode $m\in\{1,2,3\}$，给定自伴算子
+
+\[
+\mathcal A_m\phi_{mk}=\lambda_{mk}\phi_{mk},
+\qquad
+\Phi_m(i,k)=\phi_{mk}(x_i).
+\]
+
+保留 $K_m$ 个 eigenfunctions，并定义
+
+\[
+\widetilde U_m=\Phi_mW_m,
+\qquad
+U_m(:,r)=\frac{\widetilde U_m(:,r)}
+{\sqrt{N_m^{-1}\|\widetilde U_m(:,r)\|_2^2}}.
+\]
+
+单位 RMS 约束去掉 Tucker 的 mode/core 连续缩放歧义。预测为
+
+\[
+\widehat Y_{ijk}
+=\sum_{abc}G_{abc}U_1(i,a)U_2(j,b)U_3(k,c).
+\]
+
+### 2.2 归一化后的谱能量
+
+本轮审计发现并修正了一个重要问题。旧实现对原始 $W_m$ 做惩罚，但前向使用归一化后的 $U_m$。把 $W_m$ 整体缩小几乎不改变预测，却会减小旧惩罚，这与声称的 MAP 目标不一致。
+
+修正后令
+
+\[
+s_{mr}=\sqrt{N_m^{-1}\|\Phi_mW_m(:,r)\|_2^2},
+\qquad \bar W_m(:,r)=W_m(:,r)/s_{mr},
+\]
+
+并使用
+
+\[
+E_m(\bar W_m)=
+\frac{1}{K_mR_m}\sum_{kr}(1+\lambda_{mk})^p\bar W_{mkr}^2.
+\]
+
+这样同时缩放一个 factor column 不再改变预测或先验能量；不同 basis 的整体数值标度也不会直接改变比较结果。实现位于
+`src/geoaware/tensor_bayes.py::_normalized_spectral_coefficients`。
+
+### 2.3 代码真正优化的目标
+
+当前训练目标是
+
+\[
+\mathcal L=
+\frac1{|\Omega|}\sum_{q\in\Omega}
+(y_q-\widehat y_q)^2
++\rho\left[
+\frac{\|G\|_F^2}{R_1R_2R_3}
++\sum_mE_m(\bar W_m)
+\right].
+\]
+
+严格说，这是 **penalized MAP / regularized point estimation**。给定观测噪声方差以及维度相关的先验精度，它可重写为 Gaussian MAP；但当前代码没有在这一阶段联合学习一个完整概率生成模型。因此论文里不应仅用一句“MAP under the prior”掩盖 loss 的 mean-normalization 与 $\rho$ 的作用。
+
+## 3. Inference 到底做了什么
+
+### 3.1 初始化
+
+默认随机初始化。主结果使用 `--init flat_gp`：
+
+1. 只用观测 entries 拟合 finite-feature operator GP；
+2. 在全网格上取该 GP 的 posterior mean；
+3. 对 posterior mean 做 HOSVD；
+4. 把 HOSVD factors 投影回各 mode basis，并解一个 ridge core。
+
+它没有读取 held-out truth，因而不是数据泄漏。但是它给 proposed model 一个很强的 observation-only warm start；functional neural baselines 当前从随机初始化开始。后续公平实验必须给 neural Tucker 多次重启或 CP/HOSVD 类 warm start，不能把优化优势误写成先验优势。
+
+### 3.2 因子与 core 的联合点估计
+
+AdamW 同时优化 $W_1,W_2,W_3,G$，保存训练目标最小的 checkpoint。没有独立 validation early stopping；超参数应在 selection seeds 上选完，再冻结到 confirmation seeds。
+
+### 3.3 固定因子后的 core 后验
+
+训练完成后固定 $U_1,U_2,U_3$，对每个观测构造
+
+\[
+z_q=U_1(i_q)\otimes U_2(j_q)\otimes U_3(k_q),
+\qquad Z_\Omega=[z_q^\top]_q.
+\]
+
+条件模型为
+
+\[
+g=\operatorname{vec}(G)\sim\mathcal N(0,\alpha^{-1}I),
+\qquad y_\Omega\mid g\sim\mathcal N(Z_\Omega g,\beta^{-1}I).
+\]
+
+因此
+
+\[
+\Sigma_g=(\beta Z_\Omega^\top Z_\Omega+\alpha I)^{-1},
+\qquad
+\mu_g=\beta\Sigma_gZ_\Omega^\top y_\Omega.
+\]
+
+代码用 evidence updates 迭代估计标量 $\alpha,\beta$：
+
+\[
+\gamma=P-\alpha\operatorname{tr}(\Sigma_g),\quad
+\alpha\leftarrow\gamma/\|\mu_g\|^2,\quad
+\beta\leftarrow(|\Omega|-\gamma)/\|y-Z\mu_g\|^2,
+\]
+
+其中 $P=R_1R_2R_3$。这叫 **conditional empirical Bayes**：
+
+- 对固定 factors、固定 $\alpha,\beta$，core Gaussian posterior 是解析且精确的；
+- factors、ranks、basis、$p$ 和正则系数的不确定性没有积分；
+- $\alpha,\beta$ 是 evidence 点估计，不是后验随机变量。
+
+### 3.4 预测不确定性
+
+对 query design $z_*$：
+
+\[
+\mathbb E[y_*]=z_*^\top\mu_g,
+\qquad
+\operatorname{Var}(y_*)=z_*^\top\Sigma_gz_*+\beta^{-1}.
+\]
+
+当前再用 analytic LOO residual 的 95% quantile 对标准差乘一个 scalar calibration factor。它只使用 observations，但不是独立 calibration set。`--split-calibration` 可做 observation-only split calibration。
+
+目前 UQ 主张有三项限制：
+
+1. factor uncertainty 被忽略，interval 往往会过窄；
+2. proposed Tucker 默认带 LOO calibration，而现有 `flat_geo_gp` 路径输出的是 raw standard deviation，二者 NLL/coverage 并非完全公平；
+3. CP 的 diagonal factor Laplace 忽略 RMS normalization 的导数，Tucker 更没有 factor Laplace。
+
+因此在统一 calibration protocol 前，只应把 NRMSE/MAE 当主结果；coverage/NLL 是诊断，不是贡献证据。
+
+## 4. 公式与实现逐项对应
+
+| 概念 | 实现 | 审计判断 |
+|---|---|---|
+| $U_m=\Phi_mW_m$ | `OperatorBayesianTucker.factor_tables` | 正确，输出每列单位 RMS |
+| Tucker row design | `OperatorBayesianTucker.tucker_design` | 正确，order-3，大小为 $R_1R_2R_3$ |
+| operator energy | `factor_prior` | 本轮已改成对归一化 factors 的系数惩罚 |
+| HOSVD warm start | `initialize_from_tensor` | 算法正确；公平性取决于 initializer 是否只用 observations |
+| joint point fit | `fit` | 是正则化点估计，不是全后验 |
+| core posterior | `_fit_core_posterior` | 固定 factors 后是标准 Bayesian linear regression |
+| predictive mean/variance | `predict` | 只传播 core 与 noise uncertainty |
+| rank inference | 固定 `ranks` | 没有自动 rank；`effective_rank` 只是返回给定 tuple |
+| active acquisition | `run_tensor_core_iv_acquisition.py` | 已证伪：只看 core uncertainty 会选出不利于 factor refit 的点 |
+
+## 5. 当前数据集审计
+
+### 5.1 `operator_tucker_tensor`：适合机制 sanity，不足以做唯一主实验
+
+- shape：`20×28×36`；mode 为 time interval、bounded range、periodic angle；
+- 真值：使用与 learner 相同的 Neumann/Dirichlet/periodic basis，multilinear rank 为 `(4,5,5)`；
+- 优点：能干净检查“正确 operator + non-diagonal core”是否工作；
+- 致命局限：真值恰好在 learner 的有限 basis 和 rank 中，是明显的 model alignment / inverse crime。
+
+所以它可以保留为 Figure 1 的 phase diagram 或 recovery sanity，但不能单独支撑“物理场上有效”。
+
+### 5.2 CP/mixed synthetic
+
+`operator_cp_tensor` 检查 CP 真值，`operator_mixed_tensor` 在 CP 与 dense Tucker 真值之间插值。它们能检查 core format mismatch，但两端仍使用相同 eigenfunction dictionary，不能检查 operator misspecification。
+
+下一版 controlled truth 必须增加：
+
+- 从更高分辨率 Matérn/operator GP 中抽样，再只给 learner 截断低频 basis；
+- basis/operator 有连续扰动，而不是仅“完全正确”与“随机 permutation”；
+- 局部尖峰、弱间断或非平稳长度尺度；
+- 真 rank 与拟合 rank 不同。
+
+### 5.3 The Well Active Matter
+
+它有真实 `time×x×y` tensor 和严格 periodic x/y，几何语义与方向 1 匹配。官方数据包含 81 steps、256² grid 和 225 simulations，并明确是周期边界。现有本地 adapter 只取单条 trajectory 做 within-field completion，不能代表跨轨迹泛化。更重要的是，低频 global modes 未覆盖局部高频动力学，现有结果没有形成正信号。
+
+它仍可作为公开 stress test，但任务应改成多 trajectory 的 `trajectory×time×space-node`，或明确只研究单场稀疏传感器重建。官方说明：[The Well Active Matter](https://polymathic-ai.org/the_well/datasets/active_matter/)。
+
+### 5.4 The Well Acoustic Scattering
+
+现有 1% smoke：operator Tucker NRMSE `1.309`，wrong operator `1.328`，flat Tucker `1.489`，operator CP `1.312`。后续 full graph-mode validation 约为 `1.000`。这说明模型没有完成有用重建，不能把 correct-vs-wrong 的小差距当正证据。
+
+原因与当前模型假设也一致：声学场局部、高频，少量最低 graph modes 并不是合适 factor space。这条数据更适合方向 2，而不是继续为方向 1 调参。
+
+### 5.5 不规则边界 wave/elliptic
+
+1% irregular elliptic gate 的 macro NRMSE：correct Tucker `0.895`，correct operator CP `0.668`，coordinate CP `0.180`，SDF-coordinate CP `0.180`。这明确说明：低 graph modes 虽能编码拓扑，但对这组 source-conditioned field 的表达不如简单连续坐标因子。
+
+还有一个评估语义问题：这些脚本主要是**在每个 geometry 内重新拟合**，不是对 unseen geometry 做共享模型泛化。方向 1 本来就是 fixed-tensor/few-shot completion，这并非错误；但论文不能把它称为 zero-shot geometry generalization。
+
+### 5.6 下一批公开数据的优先级
+
+1. **The Well `planetswe` 小子集。** 这是球面浅水场，天然适合把空间合并为一个 spherical node mode，再使用 spherical Laplacian/spherical harmonics；另两个 mode 可用 trajectory 和 time。它比把球面错误拆成独立 latitude/longitude operator 更合理。[The Well 数据总览](https://polymathic-ai.org/the_well/datasets_overview/)
+2. **PDEBench 2D diffusion-reaction 或 shallow water。** 官方数据统一为 `[sample,time,x1,x2,variable]`，便于构造 `sample×time×space-node`。必须从官方 metadata 读取 BC，不能按数据名字猜 operator。[PDEBench 数据](https://darus.uni-stuttgart.de/dataset.xhtml?persistentId=doi%3A10.18419%2Fdarus-2986&version=7.0)
+3. **WeatherBench2 64×32 ERA5。** 可测试 sphere-aware operator，但应合并空间节点并使用球面算子；它的数据量和气候基线复杂度更高，放第三优先级。[WeatherBench2 数据指南](https://weatherbench2.readthedocs.io/en/latest/data-guide.html)
+
+## 6. Mask 与测试协议审计
+
+### 6.1 现有 mask
+
+- `random`：从所有 entries 均匀抽取，实际数量为 `round(ratio*N)`；
+- `periodic_gap`：整个周期 seam 周围 25% sector 永不观测，再从其余位置抽取总 tensor 的指定比例；
+- `block`：中心空间 block 永不观测，再从其他位置抽取指定比例；
+- `sensor_tracks`：选定空间 sensors，并观测每个 sensor 的完整时间轨迹。
+
+本轮增加了测试，确保 periodic gap 没有漏入 observation、指定 sector 全部进入 held-out，以及 sensor mask 真的是完整时间 fiber。
+
+### 6.2 哪些 mask 回答什么问题
+
+| mask | 能回答的问题 | 不能回答的问题 |
+|---|---|---|
+| random entry | 极稀疏插值、rank sample complexity | 真实传感器部署、外推 |
+| periodic gap | 周期拓扑能否跨 seam 外推 | 一般不规则边界 |
+| center block | 连通缺失区域的空间外推 | 未见 geometry |
+| sensor tracks | 固定传感器的时空重建 | 任意 entry completion |
+| missing fibers/slices（待加） | tensor sharing 是否补全整个 mode fiber | 局部随机插值 |
+
+论文主表至少应包含 random、一个完整 fiber/slice missing、一个 geometry-specific gap。只用 random entry 会偏向低秩模型，也不能证明 operator geometry。
+
+### 6.3 防泄漏规则
+
+必须冻结：
+
+1. normalize 只能使用 noisy observed values；现有实现满足；
+2. GP initializer 只能使用 observations；现有实现满足；
+3. rank、$p$、$\rho$、basis cutoff 和 neural steps 在 selection seeds 决定；
+4. confirmation seeds 不得用于模型选择；
+5. 外部数据按 trajectory/geometry 分组切分，不能把同一 trajectory 的相邻帧同时放入 train/test 后声称跨实例泛化。
+
+## 7. Baseline 审计
+
+### 7.1 已有且必要
+
+| baseline | 隔离的因素 | 当前判断 |
+|---|---|---|
+| discrete Bayesian Tucker | 没有 side information | 必留，但当前 factors 也只是 MAP，命名需谨慎 |
+| wrong/permuted operator Tucker | operator 与 index 对齐是否重要 | 必留；是强破坏性 control，不代表现实轻微 misspecification |
+| topology-erased/bounding-box Tucker | 忽略孔洞/边界 | 不规则域实验必留 |
+| operator CP | non-diagonal Tucker core 是否必要 | 必留 |
+| flat product operator GP | multilinear compression是否必要 | 必留；需匹配 calibration protocol |
+
+### 7.2 本轮补上的 method-matched baselines
+
+新增 `src/geoaware/operator_tucker_baselines.py`：
+
+- `NeuralFunctionalCP`：每个 scalar mode 一个小 MLP，通过 CP 相乘；
+- `NeuralFunctionalTucker`：相同 mode MLP，通过显式 dense small core 收缩；
+- 周期 mode 使用 `(sin(2πx),cos(2πx))`，因此不会因错误 raw-coordinate seam 吃亏；
+- `SirenINR`：不做 tensor separation 的强 coordinate regression control。
+
+`experiments/run_tensor_bayes.py` 已能运行 `neural_functional_cp`、`neural_functional_tucker`、`siren_inr`。它们是 deterministic reconstruction baselines，因此只输出 RMSE/NRMSE/MAE，不伪造 NLL 或 coverage。
+
+### 7.3 仍然缺失
+
+1. **经典 fully Bayesian CP/Tucker。** Zhao 等方法对所有 factors 与 hyperparameters 做 variational posterior，并自动裁剪 rank；当前方法不能用“Bayesian”一词绕过这一对比。[Bayesian CP](https://arxiv.org/abs/1401.6497)，[Bayesian Sparse Tucker](https://arxiv.org/abs/1505.02343)
+2. **带 side-information 的 variational Bayesian CP。** 这是最接近方向 1 的传统对手：给定 fiber-span subspaces，并做自动 rank inference。区别应是我们的 subspace 来自物理 operator 且带 spectral energy，而不是假设 side-information 已精确包含真值 span。[Budzinskiy & Zamarashkin](https://arxiv.org/abs/2206.12486)
+3. **deterministic operator Tucker。** 同样的 $\Phi,\Lambda$ 和 point optimization，但不做 conditional core posterior，用来隔离 Bayesian core 对重建与 UQ 的贡献。
+4. **graph/Laplacian-regularized Tucker。** 使用完整 factor table 加 graph smoothness，而不是截断 eigenbasis；它可检查优势来自 spectral truncation 还是 operator smoothness 本身。
+5. **parameter-matched neural sweep。** 当前 neural Tucker 比 proposed 大很多；需要“same ranks strong-capacity”主对照和“近似参数量”附录对照。
+
+functional neural tensor 本身不是新结构，已有工作用分离 neural CP/Tucker 逼近连续 PDE 函数；它必须作为架构 baseline，而不是被写成弱 INR。[Functional Tensor Decompositions for PINNs](https://arxiv.org/abs/2408.13101)
+
+### 7.4 公平性规则
+
+- 同一个 noisy observation tensor、同一个 mask、同一个 normalization；
+- rank-matched 比较回答 inductive bias，parameter-matched 比较回答效率，两者不要混成一个表；
+- proposed 有 flat-GP/HOSVD warm start时，neural Tucker 至少做 5 restarts 或 CP-diagonal warm start；
+- 每个 baseline 使用自己的 validation convergence budget，不能机械地都跑 500 steps；
+- UQ 模型使用完全相同的 raw/LOO/split calibration protocol；
+- 报告参数量、peak GPU memory、wall time，以及是否读取 operator/SDF/boundary metadata。
+
+## 8. 当前证据
+
+### 8.1 冻结的旧参数化结果
+
+受控 Tucker truth、10 seeds：
+
+| 设置 | Proposed Tucker | Operator CP | Flat operator GP | Wrong Tucker | Discrete Tucker |
+|---|---:|---:|---:|---:|---:|
+| 1% random | 0.676±0.072 | 0.809±0.072 | 0.752±0.030 | 1.462±0.097 | — |
+| 2% random | **0.125±0.015** | 0.367±0.055 | 0.612±0.028 | 1.712±0.201 | 1.976±0.131 |
+| 2% + center block | **0.174±0.074** | 0.515±0.103 | 0.631±0.030 | 1.640±0.119 | — |
+| 2% + 30% noise | **0.487±0.091** | 0.969±0.134 | 0.661±0.025 | 1.631±0.111 | — |
+
+这些结果证明机制在 aligned regime 中很强，但不能解决 external validity。
+
+### 8.2 本轮 normalized-prior smoke
+
+修正谱惩罚后，在相同 2% random、seed 30、500 steps：
+
+| 模型 | NRMSE |
+|---|---:|
+| corrected operator Tucker | **0.155** |
+| operator CP | 0.410 |
+| flat operator GP | 0.597 |
+| wrong operator Tucker | 1.489 |
+
+旧参数化同一 seed 的 proposed 为 `0.153`。这一 smoke 表明修正没有消灭信号，但它不等价于重新确认旧十 seed 结果；完整结果需要重跑。
+
+### 8.3 新 functional baseline smoke
+
+相同 2% mask、seed 30：
+
+| 模型 | 500 steps | 2000 steps | trainable parameters |
+|---|---:|---:|---:|
+| operator Tucker（旧惩罚，仅比较该 smoke） | 0.153 | — | 247 |
+| neural functional CP | 0.596 | 0.618 | 8,872 |
+| neural functional Tucker | 0.523 | **0.307** | 8,178 |
+| SIREN INR | 0.857 | 0.850 | 19,105 |
+
+这里有两个信息：
+
+- method-matched neural Tucker 仍未追上 operator Tucker，方向是正的；
+- neural Tucker 从 500 到 2000 steps 大幅改善，说明统一 500-step budget 对 neural baseline 不公平。后续必须各自调收敛预算。
+
+该表只有一个已查看 seed，且 truth 与 operator 对齐，只能作为接口 smoke，不能进入论文结论。
+
+### 8.4 active acquisition 是明确负结果
+
+1% 初始观测再增加 1%：correct core-IV `0.206±0.014`，random `0.137±0.010`。原因是 acquisition 只优化固定 factors 下的 core variance，而新点加入后 factors 会重拟合。除非将 factor uncertainty 纳入 acquisition，否则不再继续包装这条支线。
+
+## 9. 与相关工作的准确边界
+
+- 经典 Bayesian CP/Tucker 对全部 latent factors 做 posterior inference，并可自动定 rank；当前方法计算更轻，但 Bayesian 程度更弱。[Bayesian CP](https://arxiv.org/abs/1401.6497)，[Bayesian Sparse Tucker](https://arxiv.org/abs/1505.02343)
+- side-information CP 已表明低维 fiber-span side information 可降低 sample complexity；方向 1 的新增点必须是“operator-defined function space + spectral shrinkage + Tucker core”，而不能只说“factor 有 side information”。[Variational Bayesian CP with side information](https://arxiv.org/abs/2206.12486)
+- smooth tensor decomposition 已经研究 factor smoothness；我们的 operator/topology 语义和 extreme sparse physical-field protocol需要构成差异。[Tensor Decomposition with Smoothness](https://proceedings.mlr.press/v70/imaizumi17a.html)
+- finite eigenfunction GP 是成熟的 reduced-rank GP 思路；我们应主动把方向 1 定位为 factor-GP 的便宜近似，而不是假装与 GP 无关。
+- neural functional CP/Tucker 已是明确文献方向，必须作为 baseline。[Functional Tensor Decompositions for PINNs](https://arxiv.org/abs/2408.13101)
+- 非线性/GP tensor decomposition 也有大量先例，例如 [Gaussian-process nonparametric tensor estimator](https://proceedings.mlr.press/v48/kanagawa16.html)、[Streaming Nonlinear Bayesian Tensor Decomposition](https://proceedings.mlr.press/v124/pan20a.html) 与 [NONFAT](https://proceedings.mlr.press/v162/wang22ar.html)。这些方法的任务不完全相同，但限定了“GP + tensor”不能单独作为创新。
+
+## 10. 风险清单
+
+### 高风险
+
+1. **inverse crime：** strongest evidence 由 learner 的同一 basis/rank 生成。
+2. **外部无效：** The Well acoustic 与 irregular elliptic 均未支持通用物理场 claim。
+3. **factor uncertainty 缺失：** conditional core interval 不能代表完整 posterior。
+4. **baseline 优化不公平：** proposed 有 GP/HOSVD warm start；neural baseline 需要更多 steps。
+5. **名称风险：** 若标题直接写 Bayesian Tucker，reviewer 会合理要求与 fully Bayesian Tucker 比 posterior、rank selection 和 calibration。
+
+### 中风险
+
+1. rank、basis cutoff、$p$、$\rho$ 固定，暂无自动选择；
+2. random permutation 是过强 wrong-geometry control；需要连续 operator perturbation；
+3. current order-3 implementation 不支持任意 ragged modes；
+4. graph eigenbasis 的构建和 storage 在大 mesh 上会成为成本瓶颈；
+5. 当前 irregular-grid eigenproblem 使用普通 Euclidean inner product；对真正非均匀 mesh，应解带 mass matrix 的 generalized eigenproblem $L\phi=\lambda M\phi$，否则节点密度会改变所谓“低频”；
+6. scalar $\alpha$ 对整个 core 各向同性，不能做 multilinear rank shrinkage。
+
+## 11. 下一轮实验矩阵
+
+### E1：修正后受控 phase diagram（先做）
+
+| 轴 | 设置 |
+|---|---|
+| truth | exact spectral Tucker；截断 Matérn draw；非平稳 smooth field；弱局部尖峰 |
+| fitted rank | under / matched / over-specified |
+| observation | 0.5%、1%、2%、5% |
+| noise | 0%、10%、30% field std |
+| mask | random、periodic gap、center block、missing fibers、sensor tracks |
+| geometry | correct、轻微 operator perturbation、topology erased、random permutation |
+| seeds | 5 selection + 10 fresh confirmation |
+
+主比较：correct operator Tucker、operator CP、flat GP、discrete Tucker、graph-regularized Tucker、neural functional CP/Tucker、SIREN。
+
+### E2：The Well Active Matter，多 trajectory
+
+- tensor：`trajectory × time × flattened periodic spatial node`；
+- spatial operator：2D periodic Laplacian；
+- 两个 protocol：within-trajectory sparse sensing、held-out-trajectory few-shot adaptation；
+- masks：random entries 与 persistent sensors；
+- baseline：neural functional Tucker/CP、SIREN、flat operator GP，以及同任务下适当的 FNO/TFNO；
+- 不再用单条 trajectory 结果代表 dataset-level evidence。
+
+### E3：球面 shallow water
+
+- 首选 The Well `planetswe` 的 streaming/downsampled subset；
+- tensor：`trajectory × time × sphere-node`，空间 mode 用 spherical Laplacian/harmonics；
+- wrong geometry：equirectangular planar Laplacian，而不是随机 permutation；
+- 重点看 structured sensors、跨纬度区域缺失和极区误差。
+
+### E4：UQ 审计
+
+- raw posterior、LOO calibrated、独立 split calibrated 三种协议分别报告；
+- proposed、flat GP、经典 Bayesian Tucker 使用相同 calibration data；
+- 指标：NLL、coverage、interval width、error-uncertainty rank correlation；
+- 若不实现 factor posterior，不再做 active acquisition。
+
+## 12. GO / NO-GO 门槛
+
+### 继续作为完整论文（GO）
+
+必须同时满足：
+
+1. 在**非 model-aligned controlled truth** 上，correct operator Tucker 相对最强 functional/neural Tucker 或 flat GP 至少降低 15% NRMSE，10 个 fresh seeds 中至少 8 个获胜；
+2. 在至少一个公开物理数据集上 macro NRMSE ≤ 0.8，并且相对最佳 trivial predictor 至少有 20% MSE skill；
+3. correct operator 相对轻微错 operator/topology-erased control 至少降低 10% MSE，证明几何而非单纯容量；
+4. Tucker 相对 method-matched CP 至少降低 10% MSE，证明 dense small core；
+5. 所有 neural baselines 单独调到 validation convergence，并补 classical Bayesian/side-information tensor baseline；
+6. 若保留 UQ contribution，统一 calibration 后 coverage 在 0.90–0.98，且 interval 比同 coverage 的 flat GP 更窄，或实现 factor uncertainty。
+
+### 降级为学生项目/机制短文（LIMITED GO）
+
+- controlled misspecification phase diagram 稳定为正；
+- 但只有一个较简单 public dataset 或 UQ 不够完整；
+- 标题和摘要明确写“finite operator-feature / conditional Bayesian core”，不宣称 fully Bayesian 或通用 geometry learning。
+
+### 停止扩展（NO-GO）
+
+出现任一项：
+
+1. 正信号只在 exact eigenbasis-generated truth 上存在；
+2. 收敛充分的 neural functional Tucker/CP 在 misspecified truth 上稳定持平或更好；
+3. 两个合理公开数据 task 均 NRMSE 约 1，或 geometry control 差异小于 5% MSE；
+4. 需要不断增加 architecture 特例才能保持优势。
+
+此时保留代码作为方向 3 的 finite-feature baseline，不继续包装成独立完整论文。
+
+## 13. 本轮新增与复现
+
+新增/修改：
+
+- `src/geoaware/operator_tucker_baselines.py`：method-matched neural functional CP/Tucker；
+- `experiments/run_tensor_bayes.py`：支持 neural functional baselines，并禁止 deterministic baseline 输出伪 UQ；
+- `src/geoaware/tensor_bayes.py`：修正归一化 factor 与谱惩罚不一致；
+- `tests/test_paper_methods.py`：增加 factor-prior scale invariance、periodic seam、structured mask 语义测试；
+- `papers/four_tracks/results/track1_*_smoke/`：本轮 smoke artifacts。
+
+复现修正后 smoke：
+
+```bash
+export PYTHONPATH=src
+PY=/home/ubuntu/project/yanjiu/.venv/bin/python
+
+$PY experiments/run_tensor_bayes.py \
+  --output papers/four_tracks/results/track1_normalized_prior_smoke \
+  --task tucker \
+  --models geo_btucker,wrong_btucker,geo_bcp_noard,flat_geo_gp \
+  --ratios .02 --masks random --seeds 30 \
+  --tucker-ranks 4,5,5 --rank 10 --steps 500 \
+  --reg .002 --noise .1 --init flat_gp --device cuda
+```
+
+当前测试：`tests/test_paper_methods.py` 共 18 项通过。

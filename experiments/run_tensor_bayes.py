@@ -11,6 +11,8 @@ import torch
 from geoaware.bayes_models import ExactFeatureBayes
 from geoaware.data import load_active_matter
 from geoaware.masks import make_observation_split
+from geoaware.models import SirenINR
+from geoaware.operator_tucker_baselines import NeuralFunctionalCP,NeuralFunctionalTucker
 from geoaware.tensor_bayes import OperatorBayesianCP,OperatorBayesianTucker
 from geoaware.tensor_data import (operator_cp_tensor,operator_tucker_tensor,
                                   operator_mixed_tensor,explicit_mode_bases,
@@ -22,13 +24,51 @@ def seed_all(seed):
 
 
 def metrics(truth,mean,std,held):
-    y=truth[held]; p=mean[held]; s=std[held].clamp_min(1e-7); err=p-y
-    rmse=err.square().mean().sqrt(); z=err.abs()/s
-    return {"rmse":float(rmse),"nrmse":float(rmse/y.std().clamp_min(1e-8)),
-            "mae":float(err.abs().mean()),
-            "nll":float((.5*(err/s).square()+torch.log(s)+.5*math.log(2*math.pi)).mean()),
-            "coverage95":float((z<=1.96).float().mean()),"width95":float(3.92*s.mean()),
-            "selective_gain50":float(1-torch.sqrt(err[torch.argsort(s)[:len(s)//2]].square().mean())/rmse)}
+    y=truth[held]; p=mean[held]; err=p-y
+    rmse=err.square().mean().sqrt()
+    result={"rmse":float(rmse),"nrmse":float(rmse/y.std().clamp_min(1e-8)),
+            "mae":float(err.abs().mean())}
+    # Deterministic functional/INR baselines answer the reconstruction
+    # question only.  Fabricating a residual variance for them would make NLL
+    # and coverage comparisons look method-matched when they are not.
+    if std is None:
+        return result
+    s=std[held].clamp_min(1e-7); z=err.abs()/s
+    result.update({
+        "nll":float((.5*(err/s).square()+torch.log(s)+.5*math.log(2*math.pi)).mean()),
+        "coverage95":float((z<=1.96).float().mean()),"width95":float(3.92*s.mean()),
+        "selective_gain50":float(1-torch.sqrt(err[torch.argsort(s)[:len(s)//2]].square().mean())/rmse)})
+    return result
+
+
+def fit_functional_baseline(name,data,obs,y,steps,seed,device,tucker_ranks,rank):
+    """Fit a deterministic continuous baseline using observed entries only."""
+    seed_all(seed); dev=torch.device(device if torch.cuda.is_available() else "cpu")
+    if name=="neural_functional_cp":
+        model=NeuralFunctionalCP(data.periodic,rank=rank,hidden=48)
+    elif name=="neural_functional_tucker":
+        model=NeuralFunctionalTucker(data.periodic,ranks=tucker_ranks,hidden=48)
+    elif name=="siren_inr":
+        model=SirenINR(len(data.shape),hidden=96,depth=3,omega=20.)
+    else:
+        raise ValueError(name)
+    model=model.to(dev); coordinates=data.flat_coordinates(); x=coordinates[obs].to(dev); yy=y.to(dev)
+    optimizer=torch.optim.AdamW(model.parameters(),lr=2e-3,weight_decay=1e-6)
+    best=(float("inf"),None)
+    for _ in range(steps):
+        prediction=model(x)
+        regularization=model.regularization() if hasattr(model,"regularization") else prediction.new_zeros(())
+        loss=(prediction-yy).square().mean()+1e-5*regularization
+        optimizer.zero_grad(set_to_none=True); loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(),5.); optimizer.step()
+        score=float(loss.detach())
+        if score<best[0]:
+            best=(score,{key:value.detach().cpu().clone() for key,value in model.state_dict().items()})
+    model.load_state_dict(best[1]); model.eval(); chunks=[]
+    with torch.no_grad():
+        for start in range(0,len(coordinates),8192):
+            chunks.append(model(coordinates[start:start+8192].to(dev)).cpu())
+    return torch.cat(chunks),sum(parameter.numel() for parameter in model.parameters())
 
 
 def load_task(name,mismatch=0.):
@@ -65,7 +105,14 @@ def main():
         initial_cache={}
         for name in models:
             seed_all(seed); started=time.perf_counter()
-            if name=="flat_geo_gp":
+            if name in ("neural_functional_cp","neural_functional_tucker","siren_inr"):
+                ranks=tuple(map(int,args.tucker_ranks.split(",")))
+                normalized_mean,parameter_count=fit_functional_baseline(
+                    name,data,obs,y,args.steps,seed,args.device,ranks,args.rank)
+                mean=normalized_mean*scale+center; std=None; effective_rank=None
+                meta={"parameters":parameter_count,"inference":"deterministic_regularized_fit",
+                      "uncertainty_metrics_supported":False}
+            elif name=="flat_geo_gp":
                 phi,eig=flat_product_features(data,512)
                 split_scale=1.0
                 if args.split_calibration:

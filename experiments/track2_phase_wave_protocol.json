@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "track": "phase_factorized_wave_tensor",
+  "scope": "wave-specific sparse field reconstruction or wave surrogate; not a generic PDE model",
+  "absolute_external_gate": {
+    "max_macro_nrmse": 0.8,
+    "min_mse_skill_over_strongest_trivial": 0.2,
+    "rule": "Do not inspect pairwise learned-model significance until both conditions pass."
+  },
+  "datasets": {
+    "eikonal_harmonic_control": {
+      "role": "mechanism_sanity_only",
+      "status": "positive_but_simulator_aligned",
+      "warning": "Generator frequencies 7,13,19 are a subset of model frequencies 7,13,19,27,37 and the dominant field is standing rather than traveling."
+    },
+    "moving_envelope_control": {
+      "role": "misspecification_boundary",
+      "status": "negative"
+    },
+    "independent_wave_smoke": {
+      "role": "next_internal_physics_gate",
+      "status": "locked_validation_r1_negative_absolute_effectiveness",
+      "split": "experiments/dataset_splits/independent_wave_smoke.json"
+    },
+    "irregular_boundary_wave": {
+      "role": "geometry_stress_test",
+      "status": "negative_one_seed_smoke"
+    },
+    "the_well_acoustic_scattering_maze": {
+      "role": "external_stress_test",
+      "status": "rejected_absolute_effectiveness",
+      "warning": "Multiple sources, reflections and finite-speed walls violate the current single-arrival phase model."
+    },
+    "wavebench": {
+      "role": "future_public_operator_benchmark",
+      "status": "not_integrated",
+      "warning": "WaveBench tasks are forward/inverse operator learning, not the current sparse completion protocol."
+    }
+  },
+  "minimum_baselines": {
+    "all_tasks": [
+      "zero_or_training_mean",
+      "strongest_causal_trivial_predictor",
+      "joint_inr",
+      "ordinary_neural_cp",
+      "ordinary_neural_tucker",
+      "wrong_or_euclidean_phase"
+    ],
+    "regular_grid_operator_tasks": ["unet", "fno", "tfno"],
+    "irregular_mesh_operator_tasks": ["gino_or_equivalent_graph_operator"],
+    "require_same_inputs": true,
+    "require_same_observed_targets": true
+  }
+}
