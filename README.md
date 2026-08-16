@@ -4,11 +4,11 @@
 
 | Track | Repository | 本轮结论 |
 |---|---|---|
-| 1. Operator-prior tensor | [xuangu-fang/operator-prior-tensor](https://github.com/xuangu-fang/operator-prior-tensor) | 条件 GO：10% 有稳定信号；2%--5% 尚不稳定 |
-| 3. Operator-spectral FunBaT | [xuangu-fang/operator-spectral-funbat](https://github.com/xuangu-fang/operator-spectral-funbat) | 条件 GO：operator spectra + generic escape atoms |
-| 4. Functional operator completion | [xuangu-fang/functional-operator-completion](https://github.com/xuangu-fang/functional-operator-completion) | NO-GO：公平增强后 MIONet 显著领先 Tucker |
+| 1. Operator-prior tensor | [xuangu-fang/operator-prior-tensor](https://github.com/xuangu-fang/operator-prior-tensor) | 条件 GO：10% random/receiver-fiber 通过；极稀疏与 source-fiber 失败 |
+| 3. Operator-spectral FunBaT | [xuangu-fang/operator-spectral-funbat](https://github.com/xuangu-fang/operator-spectral-funbat) | 条件 GO：各向异性扩散 + fixed support floor；输运为 limitation |
+| 4. Functional operator completion | [xuangu-fang/functional-operator-completion](https://github.com/xuangu-fang/functional-operator-completion) | 旧路线 NO-GO；Domain-Heat MIONet 新任务为 validation-level 条件 GO |
 
-先读[本轮三方向收口报告](CURRENT_REVIEW_2026-08-15.md)；中心仓库职责、冻结 commit、共享 baseline discipline 和下一道 GO/NO-GO 门槛见 [`RESEARCH_HUB.md`](RESEARCH_HUB.md)。`papers/four_tracks/` 与下文代码作为迁移前 provenance 保留；新的方法迭代只进入三个独立仓库。
+先读[投稿 Gate 后技术收口](CURRENT_REVIEW_2026-08-16.md)；上一轮拆仓报告保留在 [`CURRENT_REVIEW_2026-08-15.md`](CURRENT_REVIEW_2026-08-15.md)。中心仓库职责、冻结 commit、共享 baseline discipline 和下一道 GO/NO-GO 门槛见 [`RESEARCH_HUB.md`](RESEARCH_HUB.md)。`papers/four_tracks/` 与下文代码作为迁移前 provenance 保留；新的方法迭代只进入三个独立仓库。
 
 ## 中文研究文档
 

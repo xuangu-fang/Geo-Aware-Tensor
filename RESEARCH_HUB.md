@@ -1,6 +1,6 @@
 # Physics-Informed Tensor Learning：中心 research hub
 
-更新时间：2026-08-15。
+更新时间：2026-08-16。
 
 ## 1. 中心仓库职责
 
@@ -16,11 +16,11 @@
 
 ## 2. 活跃仓库 registry
 
-| Track | Local folder | GitHub | 初始迁移 commit | 当前状态 |
+| Track | Local folder | GitHub | 当前冻结 commit | 当前状态 |
 |---|---|---|---|---|
-| 1. Operator-prior tensor | `/home/ubuntu/project/operator-prior-tensor` | <https://github.com/xuangu-fang/operator-prior-tensor> | `07de48d` | **条件 GO**：10% 稳定，2%--5% 尚不稳定 |
-| 3. Operator-spectral FunBaT | `/home/ubuntu/project/operator-spectral-funbat` | <https://github.com/xuangu-fang/operator-spectral-funbat> | `08bc6db` | **条件 GO**：算子谱原子 + generic escape atoms |
-| 4. Functional operator completion | `/home/ubuntu/project/functional-operator-completion` | <https://github.com/xuangu-fang/functional-operator-completion> | `e265748` | **NO-GO**：公平增强后 MIONet 显著领先 Tucker |
+| 1. Operator-prior tensor | `/home/ubuntu/project/operator-prior-tensor` | <https://github.com/xuangu-fang/operator-prior-tensor> | `3d6eeda` | **条件 GO**：10% random/receiver-fiber 通过；极稀疏和 source-fiber 失败 |
+| 3. Operator-spectral FunBaT | `/home/ubuntu/project/operator-spectral-funbat` | <https://github.com/xuangu-fang/operator-spectral-funbat> | `558829f` | **条件 GO**：各向异性扩散主线 + fixed generic support floor |
+| 4. Functional operator completion | `/home/ubuntu/project/functional-operator-completion` | <https://github.com/xuangu-fang/functional-operator-completion> | `ea2180b` | **重启后条件 GO**：Domain-Heat MIONet；旧 Tucker replacement 仍 NO-GO |
 
 迁移规则：中心仓库保留迁移前快照，不从子仓库机械反向复制全部代码。Hub 只引用已推送 commit、摘要表和必要的共享协议修订。
 
@@ -32,7 +32,7 @@
 |---|---|---|---|
 | 1 | 已知 operator basis 与 spectral shrinkage | 极稀疏时降低 factor variance | basis mismatch 产生不可消除 bias |
 | 3 | GP covariance / operator-induced spectrum | mode-wise function prior 与 UQ | kernel 不可识别或分离近似失真 |
-| 4 | 函数输入 encoder + 不完整组合的 Tucker interaction | 跨 simulation combinations 共享统计强度 | 退化为已有 MIONet 或只会 random-entry interpolation |
+| 4 | MIONet + 域内多尺度 heat transport features | 未见孔洞拓扑下改善稀疏场恢复 | 只对当前 diffusion 生成器有效，或 wave 任务完全失败 |
 
 方向 2 的 phase-factorized wave tensor 已 STOP/DOWNGRADE，保留在 `papers/four_tracks/`，不迁移为活跃仓库。
 
@@ -65,26 +65,29 @@
 
 ## 5. 本轮决策与跨方向优先级
 
-### Track 3：条件 GO，优先继续
+### Track 3：条件 GO，优先进入外部 PDE gate
 
-- 1%/2%/5% planted 数据上，per-mode/rank NRMSE 为 `0.482/0.072/0.033`，global dictionary 为 `0.593/0.088/0.045`；5% 已追平 oracle。
-- diffusion/advection/wave 联合谱的 rank-4 非负分离误差分别为 `0.0028/0.0325/0.1079`，说明扩散和输运更适合，波动是当前困难区。
-- kernel atom top-1 恢复率只有 22%--33%，所以不得宣称发现了真实 kernel 标签。
-- 删除真实高频 support 后，operator-only NRMSE 恶化到 `0.631`；加入 generic atoms 后恢复到 `0.068`。下一步主线应是 **operator-centered robust kernel bank**，而不是不受约束的字典学习。
+- fresh seeds 201--205、2% 观测下，各向异性扩散的 operator per-mode/rank NRMSE 为 `0.1183±0.0582`，generic per-mode/rank 为 `0.1567±0.0990`，5/5 paired wins，并匹配 oracle 均值。
+- 相对 operator-global 只有 3/5 wins 和约 2.4% 均值提升，所以 per-rank routing 不单独作为贡献。
+- fixed 25% generic support floor 在 reference/shifted/anisotropic strict mismatch 中分别把 `0.672/0.632/0.615` 降到 `0.040/0.085/0.130`，全部 5/5；matched anisotropic 代价约 `+0.012`。
+- full signed rank-4 分离误差在 advection 约为 `0.18`，anisotropic diffusion 为 `0.0043`。主线限定为 even/axis-separable operator spectra；输运降为 limitation。
+- 下一门槛：不由相同 finite atoms 生成的 PDE solutions、structured sensors 和 FunBaT/RR-FBTC/neural functional tensor 公平对比。
 
-### Track 4：NO-GO，停止堆模型
+### Track 4：旧路线 NO-GO，新任务 validation-level 条件 GO
 
-- 60% simulation-combination coverage、10% output-coordinate coverage 时，原始 Tucker/MIONet NRMSE 为 `0.576/0.536`。
-- 给双方完全相同的 Fourier coordinate lifting 后，Tucker/MIONet 变为 `0.317/0.098`；高 coefficient contrast 下为 `0.346/0.141`。
-- 原先接近来自双方共同的弱 coordinate trunk，不是 functional tensor 的独立优势。继续添加 operator encoder 会逐渐退化成已有 MIONet/NO-CTR。
-- 保留 incomplete-campaign protocol、代码和负结果；除非提出 MIONet 未利用的新统计结构，否则不再作为主会论文推进。
+- 旧 Functional Tucker replacement 结果不变：公平增强 coordinate trunk 后 MIONet 明显领先，停止堆叠 Tucker 组件。
+- 新任务保留强 Spectral MIONet，并加入 source-conditioned multiscale domain heat features，处理未见双孔域和每场 1%--10% 输出标签。
+- fresh seeds 下 1% 标签的 Spectral/SDF/Domain-Heat MIONet NRMSE 为 `0.219/0.231/0.146`；孔边界误差为 `0.362/—/0.188`。2%/5%/10% 时 Domain-Heat 为 `0.118/0.125/0.112`。
+- geodesic-wave stress 中所有方法约 `1.02--1.09`，因此只定位于 screened/diffusive operator，不宣称通用优势。
+- 下一门槛：冻结 2/3-hole test、外部 irregular-mesh PDE 数据和更强 geometry-aware operator baseline。
 
-### Track 1：条件 GO，先做冻结确认
+### Track 1：冻结确认后条件 GO
 
-- 新增变系数 Neumann diffusion Green tensor；coefficient contrast 由 0 增至 2 时，实测 projection residual 从 `0.0459` 增至 `0.0965`。
-- contrast=1、10% 观测时，Operator Tucker/Neural Functional Tucker NRMSE 为 `0.158/0.189`；2% 时为 `0.273/0.262`，说明正信号目前只在 10% 较稳定。
-- basis cutoff 5/8/12 的 residual 为 `0.1645/0.0699/0.0253`，但 2% NRMSE 为 `0.293/0.273/0.331`。这证伪了“投影误差越低，恢复必然越好”，主线应明确为 bias--variance phase boundary。
-- 下一门槛：冻结 cutoff/rank 后做 5 个 fresh seeds 和 structured source/receiver fibers；至少 4/5 seeds 获胜且绝对 NRMSE 显著低于 1，才升级为论文主线。
+- cutoff 8、rank `(4,5,5)`、400 steps、fresh seeds 101--105。
+- 10% random 下 Operator/宽 Neural Tucker 为 `0.1645/0.2065`，4/5 wins；receiver-fiber 为 `0.2165/0.2695`，4/5 wins。
+- source-fiber 为 `0.2937/0.2562`，只有 3/5；2% structured masks 明显失败。
+- 参数匹配控制为 212 对 210 参数，wrong operator 约 `0.94--0.96`。论文主线是可测量的 bias--variance phase boundary，不是无条件极稀疏优势。
+- 下一门槛：外部 PDE families、operator mismatch 连续曲线和更强 functional/neural Tucker baselines。
 
 ## 6. 工程边界
 
