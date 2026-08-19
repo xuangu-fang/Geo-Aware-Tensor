@@ -12,6 +12,8 @@
 4. 已完成的历史代码和原始结果，作为迁移前 provenance；
 5. 哪些发现可以共享，哪些结论只能属于某一个任务。
 
+共享大型数据、runs 和 cache 的机器级布局见 [`DATA_STORAGE.md`](DATA_STORAGE.md)。仓库内只跟踪数据 manifest、split、checksum、小型汇总和最终图。
+
 新的模型实现、方向特定实验和逐轮研究日志必须进入对应独立仓库。
 
 ## 2. 活跃仓库 registry

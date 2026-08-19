@@ -2,6 +2,8 @@
 
 > 本仓库现在是中心 research hub。三条活跃方法线已经迁移到独立仓库；这里追踪它们的证据、共享数据/baseline 协议与跨方向 roadmap，并保留迁移前历史结果。
 
+大规模 benchmark 与实验数据已经迁移到 `/mnt/data/xuangu-fang/` 下的共享公共层和本方向专属层，原项目路径由符号链接保持兼容。目录规范、完整映射、可靠性边界和运行前检查见 [`DATA_STORAGE.md`](DATA_STORAGE.md)。
+
 | Track | Repository | 本轮结论 |
 |---|---|---|
 | 1. Operator-prior tensor | [xuangu-fang/operator-prior-tensor](https://github.com/xuangu-fang/operator-prior-tensor) | 条件 GO：10% random/receiver-fiber 通过；极稀疏与 source-fiber 失败 |
