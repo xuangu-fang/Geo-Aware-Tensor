@@ -20,9 +20,9 @@
 
 | Track | Local folder | GitHub | 当前冻结 commit | 当前状态 |
 |---|---|---|---|---|
-| 1. Operator-prior tensor | `/home/ubuntu/project/operator-prior-tensor` | <https://github.com/xuangu-fang/operator-prior-tensor> | `3d6eeda` | **条件 GO**：10% random/receiver-fiber 通过；极稀疏和 source-fiber 失败 |
-| 3. Operator-spectral FunBaT | `/home/ubuntu/project/operator-spectral-funbat` | <https://github.com/xuangu-fang/operator-spectral-funbat> | `558829f` | **条件 GO**：各向异性扩散主线 + fixed generic support floor |
-| 4. Functional operator completion | `/home/ubuntu/project/functional-operator-completion` | <https://github.com/xuangu-fang/functional-operator-completion> | `ea2180b` | **重启后条件 GO**：Domain-Heat MIONet；旧 Tucker replacement 仍 NO-GO |
+| 1. Operator-prior tensor | `/home/ubuntu/project/operator-prior-tensor` | <https://github.com/xuangu-fang/operator-prior-tensor> | `9701d64` | **条件 GO**：10% random/receiver-fiber 通过；极稀疏和 source-fiber 失败 |
+| 3. Operator-spectral FunBaT | `/home/ubuntu/project/operator-spectral-funbat` | <https://github.com/xuangu-fang/operator-spectral-funbat> | `8a8b184` | **条件 GO**：各向异性扩散主线 + fixed generic support floor |
+| 4. Functional operator completion | `/home/ubuntu/project/functional-operator-completion` | <https://github.com/xuangu-fang/functional-operator-completion> | `40badd6` | **重启后条件 GO**：Domain-Heat MIONet；旧 Tucker replacement 仍 NO-GO |
 
 迁移规则：中心仓库保留迁移前快照，不从子仓库机械反向复制全部代码。Hub 只引用已推送 commit、摘要表和必要的共享协议修订。
 
