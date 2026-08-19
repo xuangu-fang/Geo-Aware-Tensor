@@ -1,16 +1,17 @@
 # Physics-Informed Tensor Learning Hub
 
-> 本仓库现在是中心 research hub。三条活跃方法线已经迁移到独立仓库；这里追踪它们的证据、共享数据/baseline 协议与跨方向 roadmap，并保留迁移前历史结果。
+> 本仓库现在是中心 research hub。方向特定实现已经迁移到独立仓库；这里追踪它们的证据、共享数据/baseline 协议与跨方向 roadmap，并保留迁移前历史结果。
 
 大规模 benchmark 与实验数据已经迁移到 `/mnt/data/xuangu-fang/` 下的共享公共层和本方向专属层，原项目路径由符号链接保持兼容。目录规范、完整映射、可靠性边界和运行前检查见 [`DATA_STORAGE.md`](DATA_STORAGE.md)；本机已有数据、官方公开资源、各方向适配性和统一 manifest 见 [`SHARED_DATASETS.md`](SHARED_DATASETS.md)。
 
 | Track | Repository | 本轮结论 |
 |---|---|---|
 | 1. Operator-prior tensor | [xuangu-fang/operator-prior-tensor](https://github.com/xuangu-fang/operator-prior-tensor) | Green 实验条件 GO；下一步验证 group-wise joint operator 与 per-axis approximation |
+| 2. Wavefield low-rank representation | [xuangu-fang/wavefield-low-rank-representation](https://github.com/xuangu-fang/wavefield-low-rank-representation) | 长期 representation-first 重启；保留旧 phase-CP 负结果，暂不绑定投稿 |
 | 3. Operator-spectral FunBaT | [xuangu-fang/operator-spectral-funbat](https://github.com/xuangu-fang/operator-spectral-funbat) | 条件 GO：各向异性扩散 + fixed support floor；输运为 limitation |
-| 4. Functional operator completion | [xuangu-fang/functional-operator-completion](https://github.com/xuangu-fang/functional-operator-completion) | 旧路线 NO-GO；Domain-Heat MIONet 新任务为 validation-level 条件 GO |
+| 4. Functional operator completion | [xuangu-fang/functional-operator-completion](https://github.com/xuangu-fang/functional-operator-completion) | 当前暂停；旧路线 NO-GO，Domain-Heat 条件正信号与两个未来候选均保留 |
 
-先读[投稿 Gate 后技术收口](CURRENT_REVIEW_2026-08-16.md)；上一轮拆仓报告保留在 [`CURRENT_REVIEW_2026-08-15.md`](CURRENT_REVIEW_2026-08-15.md)。中心仓库职责、冻结 commit、共享 baseline discipline 和下一道 GO/NO-GO 门槛见 [`RESEARCH_HUB.md`](RESEARCH_HUB.md)。`papers/four_tracks/` 与下文代码作为迁移前 provenance 保留；新的方法迭代只进入三个独立仓库。
+先读[投稿 Gate 后技术收口](CURRENT_REVIEW_2026-08-16.md)；上一轮拆仓报告保留在 [`CURRENT_REVIEW_2026-08-15.md`](CURRENT_REVIEW_2026-08-15.md)。中心仓库职责、冻结 commit、共享 baseline discipline 和下一道 GO/NO-GO 门槛见 [`RESEARCH_HUB.md`](RESEARCH_HUB.md)。`papers/four_tracks/` 与下文代码作为迁移前 provenance 保留；新的方向特定迭代只进入对应独立仓库。
 
 ## 中文研究文档
 

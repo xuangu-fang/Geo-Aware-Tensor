@@ -2,7 +2,7 @@
 
 更新时间：2026-08-19
 
-本文件是三个活跃方向共同的数据入口。它回答四个问题：数据实际放在哪里、是否已经可读、它是否带几何/PDE/算子元数据、以及它适合哪个实验。存储迁移和完整性检查见 [DATA_STORAGE.md](DATA_STORAGE.md)。
+本文件是四个独立方向共同的数据入口。它回答四个问题：数据实际放在哪里、是否已经可读、它是否带几何/PDE/算子元数据、以及它适合哪个实验。存储迁移和完整性检查见 [DATA_STORAGE.md](DATA_STORAGE.md)。
 
 ## 1. 准入原则
 
@@ -26,7 +26,7 @@
 | cfdbench/raw、cfdbench/extracted | 已迁移，可审计 | 多工况流场；需逐 scenario 核对 boundary/mesh metadata | Track 4 operator baseline 压力测试；Track 3 只作失配外测 |
 | realpde_cylinder_subset/{raw,prepared} | 已迁移 | 圆柱边界、真实/模拟流场；精确离散算子未随数据直接提供 | Track 4 unseen-condition/geometry 测试；geometry-only prior |
 | realpde_active_physics_confirmation/raw | 已迁移 | paired real/simulation，需使用冻结 metadata/split | sim-to-real 压力测试，不用于初始方法选择 |
-| openfwi_curvefault_a | 已迁移 | velocity map 与多炮地震记录；source/receiver/time 语义强 | Track 1 后期非自伴/波动压力测试；Track 3 kernel stress |
+| openfwi_curvefault_a | 已迁移 | velocity map 与多炮地震记录；source/receiver/time 语义强 | Track 2 表征/预训练优先外部数据；Track 1/3 后期波动压力测试 |
 | kolmogorov_mno/raw | 已迁移 | 周期流场、Re 梯度；规则网格 | Track 3 operator-spectrum 外测；不证明不规则几何 |
 | active_matter_* | 已迁移 | 规则网格动态图 | 通用时空 stress；不作为几何主证据 |
 | Geo-Aware-Tensor/data | 已迁移 | The Well acoustic 子集及历史不规则合成数据 | 历史复现与快速 smoke test |
@@ -41,7 +41,7 @@
 
 ## 3. 官方公开资源
 
-| 资源 | 官方入口 | 可用内容 | 对三个方向的判断 |
+| 资源 | 官方入口 | 可用内容 | 方向适配判断 |
 |---|---|---|---|
 | PDEBench | [GitHub](https://github.com/pdebench/PDEBench)、[DaRUS 数据 DOI](https://doi.org/10.18419/darus-2986) | 多类 PDE、数据生成代码、forward/inverse baselines | Track 1/3 最优先的外部机制数据；可从生成器补存 operator metadata。多数数据为规则网格，不单独证明孔洞泛化 |
 | AirfRANS | [GitHub](https://github.com/Extrality/airfrans_lib)、[dataset API](https://airfrans.readthedocs.io/en/latest/modules/dataset.html) | 1000 个 airfoil RANS simulations、非结构点云/mesh、full/scarce/Re/AoA tasks | Track 4 优先 irregular-geometry 外测；Track 1 只能称 geometry-Laplacian prior，不能声称知道完整 RANS operator |
@@ -61,8 +61,20 @@
 
 P0 用于确认机制；P1 用于外部有效性；P2 用于暴露边界。不得用一个数据集同时完成调参、模型选择和最终 confirmation。
 
+### Track 2：Wavefield low-rank representation（长期探索）
+
+Track 2 不按“主数据越多越好”推进，而按表示难度分层：
+
+1. analytic direct/reflection 与独立 wave solver：只用于 carrier、multipath 和 rank diagnostics；
+2. 本机 OpenFWI CurveFault-A：source–receiver–time 表征、稀疏 receiver completion 与后续预训练；
+3. WaveBench：保持官方 forward/inverse operator 输入，不与稀疏场回归混表；
+4. The Well acoustic scattering maze / Helmholtz staircase：作为强 multipath 和复杂相位 stress；
+5. APEX 的 SimpleWave/Helmholtz/Maxwell setting：若代码/数据可用，用于幅度 anchor、phase prior 与生成式 residual 的直接对照。
+
+建议专属根目录为 `/mnt/data/xuangu-fang/physics-informed-tensor-learning/datasets/wavefield_lr/`。新 Track 2 仓库的 `docs/DATASETS_AND_PROTOCOLS.md` 维护 axes、task 和 baseline 的详细协议；本中心文件只登记共享资源与准入状态。
+
 ## 5. 统一 manifest 最低字段
 
 每个 manifest 至少包含 dataset_id、official_url、license、local_root、version_or_commit、raw_checksums、physics、geometry_representation、operator_metadata、tensor_axes、train_val_test_unit、observation_protocol、normalization_scope 和 generator_or_preprocess_command。
 
-各子仓库可以增加方向专属字段，但不能删除这些公共字段。Track 1、3、4 的具体选择见各自的 docs/DATASETS_AND_RESOURCES.md。
+各子仓库可以增加方向专属字段，但不能删除这些公共字段。Track 1、3、4 的具体选择见各自的 `docs/DATASETS_AND_RESOURCES.md`；Track 2 见 `docs/DATASETS_AND_PROTOCOLS.md`。
