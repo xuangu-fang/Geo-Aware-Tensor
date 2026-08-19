@@ -2,7 +2,7 @@
 
 > 本仓库现在是中心 research hub。三条活跃方法线已经迁移到独立仓库；这里追踪它们的证据、共享数据/baseline 协议与跨方向 roadmap，并保留迁移前历史结果。
 
-大规模 benchmark 与实验数据已经迁移到 `/mnt/data/xuangu-fang/` 下的共享公共层和本方向专属层，原项目路径由符号链接保持兼容。目录规范、完整映射、可靠性边界和运行前检查见 [`DATA_STORAGE.md`](DATA_STORAGE.md)。
+大规模 benchmark 与实验数据已经迁移到 `/mnt/data/xuangu-fang/` 下的共享公共层和本方向专属层，原项目路径由符号链接保持兼容。目录规范、完整映射、可靠性边界和运行前检查见 [`DATA_STORAGE.md`](DATA_STORAGE.md)；本机已有数据、官方公开资源、各方向适配性和统一 manifest 见 [`SHARED_DATASETS.md`](SHARED_DATASETS.md)。
 
 | Track | Repository | 本轮结论 |
 |---|---|---|
