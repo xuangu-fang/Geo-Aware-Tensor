@@ -20,7 +20,7 @@
 
 | Track | Local folder | GitHub | 当前冻结 commit | 当前状态 |
 |---|---|---|---|---|
-| 1. Operator-prior tensor | `/home/ubuntu/project/operator-prior-tensor` | <https://github.com/xuangu-fang/operator-prior-tensor> | `9701d64` | **条件 GO**：10% random/receiver-fiber 通过；极稀疏和 source-fiber 失败 |
+| 1. Operator-prior tensor | `/home/ubuntu/project/operator-prior-tensor` | <https://github.com/xuangu-fang/operator-prior-tensor> | `277b9d5` | **条件 GO**：Green confirmation 保留；group-wise joint-operator 扩展待执行 |
 | 3. Operator-spectral FunBaT | `/home/ubuntu/project/operator-spectral-funbat` | <https://github.com/xuangu-fang/operator-spectral-funbat> | `8a8b184` | **条件 GO**：各向异性扩散主线 + fixed generic support floor |
 | 4. Functional operator completion | `/home/ubuntu/project/functional-operator-completion` | <https://github.com/xuangu-fang/functional-operator-completion> | `40badd6` | **重启后条件 GO**：Domain-Heat MIONet；旧 Tucker replacement 仍 NO-GO |
 
@@ -89,7 +89,8 @@
 - 10% random 下 Operator/宽 Neural Tucker 为 `0.1645/0.2065`，4/5 wins；receiver-fiber 为 `0.2165/0.2695`，4/5 wins。
 - source-fiber 为 `0.2937/0.2562`，只有 3/5；2% structured masks 明显失败。
 - 参数匹配控制为 212 对 210 参数，wrong operator 约 `0.94--0.96`。论文主线是可测量的 bias--variance phase boundary，不是无条件极稀疏优势。
-- 下一门槛：外部 PDE families、operator mismatch 连续曲线和更强 functional/neural Tucker baselines。
+- 方法扩展：operator 绑定其真实 coordinate group；联合 $(x,y)$ operator 不再默认拆成每轴一条 PDE，未知 groups 使用 neural factors。
+- 下一门槛：先做规则二维 joint operator vs per-axis approximation，并以 operator separability/subspace residual 形成相图；通过后再进入不规则边界/孔洞，最后才消费外部 PDE。
 
 ## 6. 工程边界
 

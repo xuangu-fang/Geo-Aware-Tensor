@@ -6,7 +6,7 @@
 
 | Track | Repository | 本轮结论 |
 |---|---|---|
-| 1. Operator-prior tensor | [xuangu-fang/operator-prior-tensor](https://github.com/xuangu-fang/operator-prior-tensor) | 条件 GO：10% random/receiver-fiber 通过；极稀疏与 source-fiber 失败 |
+| 1. Operator-prior tensor | [xuangu-fang/operator-prior-tensor](https://github.com/xuangu-fang/operator-prior-tensor) | Green 实验条件 GO；下一步验证 group-wise joint operator 与 per-axis approximation |
 | 3. Operator-spectral FunBaT | [xuangu-fang/operator-spectral-funbat](https://github.com/xuangu-fang/operator-spectral-funbat) | 条件 GO：各向异性扩散 + fixed support floor；输运为 limitation |
 | 4. Functional operator completion | [xuangu-fang/functional-operator-completion](https://github.com/xuangu-fang/functional-operator-completion) | 旧路线 NO-GO；Domain-Heat MIONet 新任务为 validation-level 条件 GO |
 
